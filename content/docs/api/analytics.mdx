@@ -304,3 +304,8 @@ curl "https://wax.alcor.exchange/api/v3/analytics/global/charts?window=24h&resol
 
 `charts` holds `tvl`, `volume`, `fees`, `swapVolume`, `spotVolume`, `swapFees` and `spotFees` as `[{t, v}]` series;
 `items` holds the same values per point. `t` is the point's start time.
+
+Every bucket of the window is present, oldest first: TVL carries over from the last snapshot into a
+quiet bucket, while volume and fees are 0 there. The window starts on a bucket boundary, so the first point
+is a whole bucket and the last one is the bucket in progress. Weekly buckets start on Monday 00:00 UTC.
+A request for more than 5000 points (such as `window=all&resolution=1h`) answers `400`.
