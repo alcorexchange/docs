@@ -67,7 +67,7 @@ Several pools can share a ticker_id (one pair, different fee tiers); `pool_id` t
     "volume_usd_24h": 568.4,
     "base_cmc_ucid": 9119,
     "target_cmc_ucid": 2300,
-    "global_ticker_id": "TLM-WAX",
+    "global_ticker_id": "TLM-WAXP",
     "trade_url": "https://alcor.exchange/v/wax/spot/tlm-alien.worlds_wax-eosio.token"
   }
 ]
@@ -85,7 +85,7 @@ Several pools can share a ticker_id (one pair, different fee tiers); `pool_id` t
 | high, low | number or null | 24h range, null without a trade in 24h |
 | volume_usd_24h | number | 24h volume in USD |
 | base_cmc_ucid, target_cmc_ucid | number or null | CoinMarketCap ids of the tokens, when known |
-| global_ticker_id | string or null | `BASE-TARGET` when both tokens have a CoinMarketCap id |
+| global_ticker_id | string or null | `BASE-TARGET` in CoinMarketCap symbols, when both tokens have a CoinMarketCap id |
 | trade_url | string | The market on alcor.exchange |
 
 ## Order book
@@ -141,3 +141,41 @@ Swaps in the pair's pools and fills on its order book, merged, oldest first.
 ```
 
 `type` is the side of the base token: `buy` took it out of the pool or the book, `sell` put it in.
+
+## Merged by asset (CoinMarketCap)
+
+`https://api.alcor.exchange/v3/feed/cmc/{pairs,tickers,orderbook,historical_trades}` is the same feed with
+one market per pair of assets instead of one per pool. Every pool, fee tier, order book and chain that trades
+the same two assets is one market:
+
+- A token CoinMarketCap lists is its asset, named by the CoinMarketCap symbol. A bridged token counts as its
+  origin: `usdc-wrap.alcor` on WAX, XPR and Telos and `xusdc-xtokens` on XPR are all `USDC`.
+- A token CoinMarketCap does not list stays its own `<chain>:<symbol>-<contract>`.
+- The pair is quoted in a stablecoin first, then in a chain coin (`TLM_WAXP`, `WAXP_USDT`); otherwise its
+  assets go in alphabetical order. A pool trading one asset on both sides (`usdc-wrap.alcor` / `xusdc-xtokens`)
+  is a bridge and is left out.
+
+```json
+{
+  "ticker_id": "USDC_USDT",
+  "base_currency": "USDC",
+  "target_currency": "USDT",
+  "base_cmc_ucid": 3408,
+  "target_cmc_ucid": 825,
+  "global_ticker_id": "USDC-USDT",
+  "last_price": 1.00057,
+  "base_volume": 3874.18,
+  "target_volume": 3854.25,
+  "liquidity_in_usd": 15222.38,
+  "high": null,
+  "low": null,
+  "volume_usd_24h": 3864.21,
+  "pool_id": "wax:amm:12397",
+  "pools": ["wax:amm:12397", "wax:amm:12498", "xpr:amm:0"],
+  "trade_url": "https://alcor.exchange/v/wax/swap/usdc-wrap.alcor_usdt-wrap.alcor"
+}
+```
+
+Volumes and liquidity are the sums over `pools`. `last_price`, `pool_id` and `trade_url` are the most liquid
+pool's; `bid`, `ask` and `/orderbook` are the most liquid order book's. `/historical_trades` merges the trades
+of every pool in `pools`, each naming its own `pool_id`.
