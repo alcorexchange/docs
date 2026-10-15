@@ -1,0 +1,14 @@
+// Cloudflare Workers serves the static export in out/ as assets; there is no server code.
+// Without this file Cloudflare detects Next.js and tries to build it as a server app (OpenNext).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Must match the Worker's name in the Cloudflare dashboard.
+  "name": "docs",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./out",
+    // /api/swap is out/api/swap.html, /api is out/api.html.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

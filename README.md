@@ -31,8 +31,9 @@ then list it in the folder's `meta.json`. Components available in every page:
 
 ## Deploy
 
-Cloudflare Pages, connected to this repository:
+A Cloudflare Worker serving `out/` as static assets (`wrangler.jsonc`), built from this repository:
 
 - Build command: `npm run build`
-- Output directory: `out`
-- Node version: 20 or newer
+- Deploy command: `npx wrangler deploy`
+
+The Worker's name in the dashboard must match `name` in `wrangler.jsonc`.
