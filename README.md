@@ -1,47 +1,38 @@
-# docs
+# Alcor Docs
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
-
-It is a Next.js app with [Static Export](https://nextjs.org/docs/app/guides/static-exports) configured.
-
-Run development server:
+Source of [docs.alcor.exchange](https://docs.alcor.exchange): the user guides and the API reference.
+Built with [Fumadocs](https://fumadocs.dev) as a static site for Cloudflare Pages.
 
 ```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+npm install
+npm run dev     # http://localhost:3000
+npm run build   # static site in out/
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+## Where things are
 
-## Explore
+| Path | What |
+| --- | --- |
+| `content/docs/` | Pages, one `.mdx` per URL: `alcor-swap/pool-page.mdx` is `/alcor-swap/pool-page` |
+| `content/docs/api/` | The API reference, at `/api` |
+| `content/docs/**/meta.json` | Sidebar order and section titles |
+| `public/images/` | Images used by the pages |
+| `lib/shared.ts` | Site name, routes and the GitHub repo |
 
-In the project, you can see:
+Pages are served from the site root, so the URLs of the old GitBook site still work.
+The search index is at `/search.json`, which leaves `/api` to the reference.
 
-- `lib/source.ts`: Code for content source adapter, [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the interface to access your content.
-- `lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to keep.
+## Writing a page
 
-| Route                     | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `app/(home)`              | The route group for your landing page and other pages. |
-| `app/docs`                | The documentation layout and pages.                    |
-| `app/api/search/route.ts` | The Route Handler for search.                          |
+Add an `.mdx` file with a `title` (and optionally a `description`) in its frontmatter,
+then list it in the folder's `meta.json`. Components available in every page:
+`<Callout type="info|warn|error|success">`, `<Tabs items={[...]}>` with `<Tab value="...">`,
+`<Cards>` and `<Card>`.
 
-### Fumadocs MDX
+## Deploy
 
-Collections are defined with the [Macro API](https://fumadocs.dev/docs/mdx/macro) in `lib/source.ts`.
+Cloudflare Pages, connected to this repository:
 
-Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
-
-## Learn More
-
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.dev) - learn about Fumadocs
+- Build command: `npm run build`
+- Output directory: `out`
+- Node version: 20 or newer
