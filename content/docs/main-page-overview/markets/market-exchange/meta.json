@@ -1,0 +1,10 @@
+{
+  "title": "Market Exchange",
+  "pages": [
+    "index",
+    "order-books",
+    "graph",
+    "order-history",
+    "placing-trades"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Alcor Swap",
+  "pages": [
+    "index",
+    "referral-custom-market-fee",
+    "introduction",
+    "swap-page",
+    "locking-liquidity",
+    "providing-liquidity",
+    "ranges-everything-you-need-to-know",
+    "pool-page",
+    "liquidity-provider-faq",
+    "concentrated-liquidity-faq",
+    "alcorswap-v2-price-oracles"
+  ]
+}

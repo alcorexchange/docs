@@ -1,0 +1,59 @@
+---
+title: "WebSocket"
+description: "WebSocket API"
+---
+
+Alcor Exchange using Socket.IO for interact via WebSocket technology.
+
+#### There are two commands for subscribing to and channel with specific information.
+
+1. **subscribe:** Subscribing for an specific room.
+2. **unsubscribe:** Unsubscribe from sprcific room.
+
+#### Available rooms, and params that they receive.
+
+1. **deals:** chain, market. -> Subscribe to new deals. (first update will be last 200 deals).
+2. **ticker:** chain, market, resolution. -> Subscribe to chart updates.
+3. **account**: chain, name. -> Subscribe to account notifications. (only order match for now)
+4. **orderbook:** chain, side(sell/buy), market(id). -> Subscribe to orderbook updates. (first update is full order book state)
+
+Currect events to receive:
+
+* match: Account new match
+* orderbook\_sell: new orderbook update on sell side
+* orderbook\_buy: new orderbook update on sell buy
+* new\_deals: update on new deal on specific market
+
+#### Example of connection:
+
+```
+import { io } from 'socket.io-client'
+const socket = io('https://alcor.exchange')
+
+// Subscribe to deals
+socket.emit('subscribe', { room: 'deals', params: { chain: 'wax', market: 26 } })
+
+// Unsubscribe from deals (will unsubscribe from all markets)
+socket.emit('unsubscribe', { room: 'deals', params: { chain: 'wax' } })
+
+// Subscribe to buy orderbook of 26 (TLM on wax) market.
+socket.emit('subscribe', { room: 'orderbook', params: { chain: 'wax', market: 26, side: 'buy' } })
+
+// Unsubscribe from orderbook (all, buy and sell)
+socket.emit('unsubscribe', { room: 'orderbook', params: { chain: 'wax', market: 26 } })
+
+// Subscribe to account updates
+socket.emit('subscribe', { room: 'account', params: { chain: 'wax', 'name': 'avra.pro' } })
+
+
+// Listen for updates
+
+// On account new match
+socket.on('match', match => { ... })
+
+// On orderbook update (bid for example)
+socket.on('orderbook_buy', bids => { ... })
+
+// On new deals of market
+socket.on('new_deals', deals => { ... })
+```

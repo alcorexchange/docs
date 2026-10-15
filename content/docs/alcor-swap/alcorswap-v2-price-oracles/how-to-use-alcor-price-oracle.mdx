@@ -1,0 +1,25 @@
+---
+title: "How to Use Alcor Price Oracle"
+description: "In 4 easy steps!"
+---
+
+We've made it even easier for you to get started with the Alcor Price Oracle! You can find the full interface project at this **GitHub repository:** \<https://github.com/alcorexchange/alcor-oracle-price>
+
+Here's a step-by-step guide to help you effectively utilize the Alcor Price Oracle:
+
+**Step 1**: Copy the hpp folder from our repository where we've provided a full interface for using the Alcor Price Oracle and paste it into your own project. 
+
+**Step 2:** Access the Alcor Price Oracle within your cpp project by simply adding the following line of code:
+
+| uint128\_t AlcorPriceOracle::getPriceTwapX64(poolId, twapInterval) |
+| ------------------------------------------------------------------ |
+
+Note: Most protocols use a 30-minute running TWAP, but it's essential to understand the trade-offs involved. Longer TWAPs are more tamper-resistant but may provide less accurate data during volatility. Shorter TWAPs offer more accurate data during volatility but may be less tamper-resistant. Consider your project needs and risks when selecting the TWAP length. 
+
+**Step 3:** Modify and adapt it to work with your DApp's architecture and requirements. 
+
+**Step 4:** Collaborate with the [**Community**](https://t.me/alcorexchange) We encourage you to join our community and engage with developers who are using the Alcor Price Oracle in their projects. Collaboration and knowledge-sharing are essential for building a stronger WAX Defi ecosystem.
+
+By following these steps and using our provided interface, you can effortlessly integrate the Alcor Price Oracle into your project and leverage accurate and reliable asset prices on the WAX blockchain.
+
+<br />

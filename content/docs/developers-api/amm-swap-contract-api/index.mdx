@@ -1,0 +1,35 @@
+---
+title: "Amm Swap Contract API"
+description: "Swap contract API explanation"
+---
+
+All chains have Alcor Swap contract by same account name: **swap.alcor**
+
+**Swap**
+
+There is two types of swap:
+
+**swapexactin:** To swap all input amount to maximum amount of out token.
+
+**swapexactout:** Swap input tokens to exact out token amount and return change from input token.
+
+To swap one token to another, transfer input token to swap contract with specifit memo:
+
+```
+<swapexactin/swapexactout>#<Pool ID's>#<Recipient>#<Output Token>#<Deadline>#market
+
+// Example
+swapexactin#0#alcordexfund#3.9167 TLM@alien.worlds#0
+
+// OR // where market.contract your market contract to receive market fee
+swapexactin#0#alcordexfund#3.9167 TLM@alien.worlds#0#market.contract
+```
+
+**Params:**
+
+* **swapexactin/swapexactout** - Swap type
+* **Pool ID's**: Sequence of the pools id's that swap will use
+* **Recipient:** Account to receive swap output token
+* **Output token:** Desired output token amount as extended asset string.
+* **Deadline:** limit time in seconds when swap transaction is valid.
+* **Market:** account to receive additional swap fee (use **regmarket** action to set your market).

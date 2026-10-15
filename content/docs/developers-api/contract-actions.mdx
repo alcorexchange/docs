@@ -1,0 +1,53 @@
+---
+title: "Contract actions"
+description: "Description of contract actions and memo format."
+---
+
+**Open new market**
+
+Transfer 3.0000 EOS to dex contract account with memo:\
+\
+`new_market|0.<token_precision> <token_symbol>@<token_contract>`
+
+Example memo:
+
+```
+new_market|0.00000000 WEED@weedcashnt
+```
+
+<Callout type="info">
+
+ Check dex contract account name on Developers API main page.
+
+</Callout>
+
+**Submit order**
+
+Send the amoun&#x74;**(bid)** you want to sell to dex contract account, and specify the amount you **ask** in the memo, the price and market will be automatically determined in the contract. Memo format(**ask** token):\
+\
+`<token_amount> <token_symbol>@<token_contract>`
+
+Example:
+
+```
+1000.0000 TKT@eossanguotkt
+```
+
+<Callout type="info">
+
+Make sure you provide token contract and correct precision!
+
+</Callout>
+
+**Order cancelation**
+
+Call action `cancelsell` or `cancelbuy` with parameters
+
+* **executor** - order owner account name
+* **market\_id -** id of the order related market
+* **order\_id -** order id.
+
+**View actions on bloks.io** (Links)
+
+[Cancelbuy](https://bloks.io/account/eostokensdex?loadContract=true\&tab=Actions\&table=markets\&account=eostokensdex\&scope=eostokensdex\&limit=100\&action=cancelbuy)\
+[Cancelsell](https://bloks.io/account/eostokensdex?loadContract=true\&tab=Actions\&table=markets\&account=eostokensdex\&scope=eostokensdex\&limit=100\&action=buyreceipt)

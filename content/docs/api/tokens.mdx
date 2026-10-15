@@ -1,0 +1,100 @@
+---
+title: "Tokens"
+---
+
+## Token price
+```shell
+curl https://alcor.exchange/api/v2/tokens/tlm-alien.worlds
+
+```
+
+> The above command returns JSON structured like this:
+
+```json
+{
+  "contract": "alien.worlds",
+  "decimals": 4,
+  "symbol": "TLM",
+  "id": "tlm-alien.worlds",
+  "system_price": 0.252009,
+  "usd_price": 0.010197
+}
+```
+
+Get single token price by id
+
+### HTTP Request
+
+`GET https://alcor.exchange/api/v2/tokens/:<token_id>`
+
+### Responce
+Name | Type | Description
+---------- | --------------------------- | ----------- | -----------
+contract | string | token contract
+decimals | number | token precision
+symbol | string | token symbol
+id | string | token-id
+system_price | number | token price in chain system token
+usd_price | number | token price in USD
+
+## All tokens prices
+```shell
+curl https://alcor.exchange/api/v2/tokens
+```
+
+> The above command returns JSON structured like this:
+
+```json
+[
+  {
+    "contract": "alien.worlds",
+    "decimals": 4,
+    "symbol": "TLM",
+    "id": "tlm-alien.worlds",
+    "system_price": 0.252009,
+    "usd_price": 0.010197
+  },
+  ...
+]
+```
+
+Get all tokens with it's prices
+
+### HTTP Request
+
+`GET https://alcor.exchange/api/v2/tokens`
+
+### Responce
+Name | Type | Description
+---------- | --------------------------- | ----------- | -----------
+contract | string | token contract
+decimals | number | token precision
+symbol | string | token symbol
+id | string | token-id
+system_price | number | token price in chain system token
+usd_price | number | token price in USD
+
+## Token Logo
+```shell
+curl https://wax.alcor.exchange/api/v2/tokens/wax-eosio.token/logo
+```
+
+Get token logo image (PNG) by token id.
+
+### HTTP Request
+
+`GET https://alcor.exchange/api/v2/tokens/<token_id>/logo`
+
+### URL Parameters
+Name | Type | Description
+---------- | --------------------------- | -----------
+token_id | string | Token identifier (symbol-contract)
+
+### Response
+Returns PNG image file if logo exists, or 404 error if not found.
+
+<Callout type="info">
+
+Logo URL can be constructed from token id: /api/v2/tokens/\{token_id\}/logo
+
+</Callout>

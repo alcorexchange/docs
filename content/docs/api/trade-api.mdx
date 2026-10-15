@@ -1,0 +1,79 @@
+---
+title: "Trade API"
+---
+
+To trade assets you sould use Blockchain API directly. More information on Interaction/NodeAPI.
+
+## Place order
+```shell
+cleos push action tktoken transfer \
+    '[bob, alcordexmain, "0.5000 TKT", "0.0010 EOS@eosio.token"]' -p bob
+```
+```javascript
+const actions = [{
+  account: 'tktoken', // token contract
+  name: 'transfer',
+  authorization: [{
+    actor: 'useraaaaaaaa', // account placing order (owner)
+    permission: 'active',
+  }],
+  data: {
+    from: 'useraaaaaaaa',
+    to: 'alcordexmain',
+    quantity: '0.5000 TKT', // Bid
+    memo: '0.0001 EOS@eosio.token' // Ask
+  }
+}]
+
+// Result of transaction
+const r = await api.transact(actions)
+```
+
+> Bob are selling 0.5 TKT and buying 0.001 EOS.
+
+
+Send the amount(bid) you want to sell to dex contract account, and specify the amount you ask in the memo, the price and market will be automatically determined in the contract.
+
+Memo format(ask token):
+`<token_amount> <token_symbol>@<token_contract>`
+
+<Callout type="info">
+
+Orders can not be updated. To update order simply cancel current and place new one.
+
+</Callout>
+
+### Place multiple orders
+Same way as described but transaction may contain multiple actions(array).
+
+## Cancel order
+```shell
+cleos push action alcordexmain cancelsell \
+    '[bob, 262, 1284277]' -p bob
+```
+```javascript
+const result = await api.transact([
+    {
+        account: 'tktoken',
+        name: 'transfer',
+        authorization: [{
+          actor: 'useraccountname',
+          permission: 'active',
+        }],
+        data: {
+          from: 'useraccountname',
+          to: 'alcordexmain',
+          quantity: '0.5000 TKT',
+          memo: '0.0010 EOS@eosio.token'
+        }
+    }
+]);
+```
+
+> Bob are canceling sell order on 262 market.
+
+Call action **cancelsell** or **cancelbuy** with parameters:
+
+* **executor** - order owner account name
+* **market_id** - id of the order related market
+* **order_id** - order id.

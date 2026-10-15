@@ -1,0 +1,113 @@
+---
+title: "Contract Tables"
+description: "Alcor contract tables structure for contracts communication."
+---
+
+#### Markets
+
+```
+struct[[eosio::table]] market {
+  uint64_t id;
+
+  extended_symbol base_token;
+  extended_symbol quote_token;
+
+  asset min_buy;
+  asset min_sell;
+
+  bool frozen = false;
+
+  uint8_t fee = 0;
+
+  uint64_t primary_key() const { return id; }
+  checksum256 get_secondary_1() const {
+    return make256key(
+      quote_token.get_contract().value,
+      quote_token.get_symbol().code().raw(),
+      base_token.get_contract().value,
+      base_token.get_symbol().code().raw()
+    );
+  }
+
+  string get_market_symbol() const {
+    return quote_token.get_symbol().code().to_string() + "/" + base_token.get_symbol().code().to_string();
+  }
+};
+
+typedef eosio::multi_index<"markets"_n, market,
+  indexed_by<"bytokens"_n, const_mem_fun<market, checksum256, &market::get_secondary_1 >
+> > markets_index;
+
+
+// Helper function for market 256 id
+
+uint128_t make128key(uint64_t a, uint64_t b) {
+    uint128_t aa = a;
+    uint128_t bb = b;
+    return (aa << 64) + bb;
+}
+
+checksum256 make256key(uint64_t a, uint64_t b, uint64_t c, uint64_t d) {
+  if (make128key(a, b) < make128key(c, d))
+    return checksum256::make_from_word_sequence < uint64_t > (a, b, c, d);
+  else
+    return checksum256::make_from_word_sequence < uint64_t > (c, d, a, b);
+}
+```
+
+256key **JavaScript** function: \<https://github.com/avral/alcor-ui/blob/7bd8483435c26bc3cdd1017d8f6efe1f5b0fe6e2/utils/index.js#L28>
+
+#### Order
+
+in contract it's two same structure tables: **buyorder** and **sellorder**
+
+```
+struct [[eosio::table]] sellorder {
+    uint64_t id;
+    name account;
+    asset bid;
+    asset ask;
+    uint128_t unit_price;
+    uint32_t timestamp;
+        
+    uint64_t primary_key() const { return id; }
+    uint64_t get_account() const { return account.value; }
+};
+    
+typedef eosio::multi_index< "buyorder"_n, buyorder, 
+  indexed_by<"byprice"_n, const_mem_fun<buyorder, uint128_t, &buyorder::get_price> >,
+  indexed_by<"byaccount"_n, const_mem_fun<buyorder, uint64_t, &buyorder::get_account> >
+> buyorders_t;
+
+
+```
+
+#### Swap liquidity pool Pairs table
+
+```
+struct[[eosio::table]] pairs_struct {
+  uint64_t id;
+
+  asset supply;
+  extended_asset pool1;
+  extended_asset pool2;
+
+  int fee;
+  name fee_contract;
+
+  uint64_t primary_key() const {
+    return id;
+  }
+  
+  checksum256 secondary_key() const {
+    return make256key( // this function can be find in markets table example above.
+      pool1.contract.value, pool1.quantity.symbol.code().raw(),
+      pool2.contract.value, pool2.quantity.symbol.code().raw()
+    );
+  }
+};
+
+typedef eosio::multi_index< "pairs"_n, pairs_struct,
+indexed_by<"extended"_n, const_mem_fun<pairs_struct, checksum256, 
+  &pairs_struct::secondary_key>> > pairs_index;
+```

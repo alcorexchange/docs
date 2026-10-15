@@ -1,0 +1,19 @@
+---
+title: "Formulas"
+---
+
+For application development, we recommend to use our [SDK](https://github.com/alcorexchange/alcor-v2-sdk). But here you can find formulas for interaction at a low level.
+
+Here you can find formulas for **swap.alcor** contract.
+
+#### Pool token price calculation
+
+```
+tokenA price in terms of tokenB:
+sqrtPriceX64 ** 2 / 2 ** 128 * 10 ** (precisionA-precisionB)
+
+tokenB price in terms of tokenA:
+2 ** 128 / sqrtPriceX64 ** 2 * 10 ** (precisionB-precisionA)
+```
+
+[^1]:

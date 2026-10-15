@@ -1,0 +1,22 @@
+---
+title: "AlcorSwap v2 Price Oracles"
+description: "Time-weighted average price (TWAP) overview"
+---
+
+![](/images/s2M3INZV0HwWhcBtO1qy-image.png)
+
+By drawing inspiration from [**Uniswap V3 Price Oracle**](https://blog.uniswap.org/uniswap-v3-oracles), Alcor introduces a decentralized solution to provide accurate asset prices on the blockchain.
+
+Alcor Price Oracle is a mechanism that provides asset prices on the blockchain. Since blockchains are isolated ecosystems, there is no direct way of querying external data, and there are difficulties in ensuring data validity and authenticity. 
+
+DelphiOracle is presented as one of the first working solutions to these problems on EOSIO(Antelope). It runs a decentralized network of oracles that fetch asset prices from centralized exchanges via APIs, average them, and provide them on-chain. 
+
+DelphiOracle is essentially a smart contract with one state variable, asset price, that can be read by anyone but can only be written to by oracles (top block producers). However, DelphiOracle only provides the last price while the Defi Dapp needs the price by timestamp for various purposes. Furthermore, DelphiOracle exclusively supports a limited number of well-known tokens: BTC/USD, ETH/USD, WAX/USD, EOS/USD, whereas there is a multitude of tokens available on WAX/EOS that require price data for integration with the Defi Dapp.
+
+**AlcorSwap v2 facilitated the creation of on-chain price oracles known as time-weighted average price (**[**TWAP**](https://en.wikipedia.org/wiki/Time-weighted_average_price)**) oracles**. These oracles are highly decentralized and provide a solution for many of the challenges involved in creating robust blockchain protocols. 
+
+Manipulation on most AlcorSwap v2 TWAP oracles isn’t currently feasible, bad actors both need to source incredibly high levels of capital and then need to make enough money back to make up for money lost to fees. Make sure that your Dapps use a rolling time window for TWAP to calculate the price because spot prices are easy and relatively cheap to manipulate.
+
+In Alcor, historical price data is stored as an array of observations. Initially, each pool tracks only one observation, overwriting it as new blocks are added. As a result, the data can only be accessed for a limited period. However, **any party can expand the period of data availability by paying RAM to increase the number of tracked observations and the maximum of observations is unlimited.**
+
+<br />

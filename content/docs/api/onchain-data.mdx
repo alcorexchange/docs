@@ -1,0 +1,129 @@
+---
+title: "OnChain Data"
+---
+
+To fetch data (orders/markets) directly from blockchain you have to use NodeAPI
+
+Contract tables structute can be found here [https://docs.alcor.exchange](https://docs.alcor.exchange/developers-api/contract-tables)
+
+## Markets
+```shell
+cleos -u https://wax.greymass.com get table alcordexmain alcordexmain markets
+```
+
+```javascript
+import fetch from 'node-fetch'
+import { Api, JsonRpc, RpcError } from 'eosjs'
+
+const rpc = new JsonRpc('https://wax.greymass.com', { fetch })
+
+// Get markets
+const { rows } = await rpc.get_table_rows({
+  code: 'alcordexmain', // dex account
+  table: 'buyorder', // side
+  limit: 1000,
+  scope: 'alcordexmain', // scope same as contract name
+})
+```
+
+> The above command returns JSON structured like this:
+
+```json
+{
+  "rows": [{
+      "id": 0,
+      "base_token": {
+        "sym": "8,WAX",
+        "contract": "eosio.token"
+      },
+      "quote_token": {
+        "sym": "4,PGL",
+        "contract": "prospectorsw"
+      },
+      "min_buy": "0.00000100 WAX",
+      "min_sell": "0.0001 PGL",
+      "frozen": 0,
+      "fee": 0
+    }, ...]
+}
+```
+Markets are stored in **markets** table, scoped by contract name.
+
+<Callout type="info">
+
+<b>ATTENTION!</b> <br /> Due the legacy codebase of dex smart contract, the naming of <b>base</b> and <b>quote</b> are mixed up in places.
+So in the market table on dex contract, the <b>base_token</b> is actually <b>quote_token</b> and vice versa.
+
+</Callout>
+
+**market_id** are used as scope for orders table and should be provided as parameter for canceling order.
+
+### Table structute
+key | description
+---- | -----
+id | market_id
+base_token | target currency
+quote_token | base_token currency
+min_buy |  Min buy amount
+min_sell | Min sell amount
+frozen | Market are frozen if 1
+fee | Market fee
+
+## Orders
+```shell
+cleos -u https://wax.greymass.com get table alcordexmain 26 buyorder -l 2
+```
+
+```javascript
+import fetch from 'node-fetch'
+import { Api, JsonRpc, RpcError } from 'eosjs'
+
+const rpc = new JsonRpc('https://wax.greymass.com', { fetch })
+
+// Get buy orderbook from conract table
+
+const { rows } = await rpc.get_table_rows({
+  code: 'alcordexmain',
+  table: 'buyorder',
+  limit: 1000, // limit up to 1000
+  scope: 26, // Market id from /api/markets or markets table
+  key_type: 'i128', // we are using it for getting order sorted by price.
+  index_position: 2
+})
+```
+> The above command returns JSON structured like this:
+
+
+```json
+{
+  "rows": [{
+      "id": 28,
+      "account": "pxawpxawpxaw",
+      "bid": "10.00000000 WAX",
+      "ask": "1999.9560 TLM",
+      "unit_price": "500012",
+      "timestamp": 1603653505
+    },{
+      "id": 276,
+      "account": "e43am.waa",
+      "bid": "35.00000000 WAX",
+      "ask": "5000.0000 TLM",
+      "unit_price": "700000",
+      "timestamp": 1609173873
+    }
+  ],
+  "more": true,
+  "next_key": "558"
+}
+```
+
+Orders are stored in **buyorder** and **sellorder** tables.
+Scoped by market_id(you can find one in **markets** table)
+
+### Table structute
+key | description
+---- | -----
+id | order id
+account | order owner account
+unit_price | Price in integer
+timestamp | Order time creation

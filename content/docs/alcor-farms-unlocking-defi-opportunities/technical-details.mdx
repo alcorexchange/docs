@@ -1,0 +1,20 @@
+---
+title: "Technical details"
+---
+
+**Onchain Farming:** Alcor Farming operates entirely on-chain, leveraging a reward calculation algorithm without relying on any backend services. This ensures transparency and security throughout the farming process.
+
+**Claiming Rewards:** Users have the flexibility to claim accumulated rewards at any time. Additionally, they can easily finish or resume their participation in farming as per their preferences.
+
+**Farm Parameters:** Each farm is characterized by two main parameters:
+
+1. **Reward Amount:** Calculated proportionally to the liquidity value in the position, offering fair compensation for your contribution.
+2. **Duration:** Specifies the timeframe during which users can participate in farming and earn rewards.
+
+**Key Tables in swap.alcor Contract:** Understanding the backend, there are three essential tables within the swap.alcor contract related to farming:
+
+1. **Incentives:** Contains details about reward incentives.
+2. **Stakingpos:** Maps positions to corresponding arrays of incentives, illustrating the staked positions.
+3. **Stakes:** Scoped by incentive ID, this table holds the state of farming positions.
+
+**Whitelisting Tokens:** To enhance the farming experience, Alcor maintains a whitelist containing available tokens that users can earn as rewards.

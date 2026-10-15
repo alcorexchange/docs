@@ -1,0 +1,65 @@
+---
+title: "Referral / Custom Market Fee"
+description: "Referral program for additional earnings for providing UI for Alcor Swap"
+---
+
+Register your market
+
+To receive additional commission as a referral or as an additional UI provider. First, you need to register your account  which will receive your additional fee, specifying the amount of the desired fee. The fee will be charged from input token amount and sent to market account.
+
+![](https://1106702801-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F-MJILKtslrmNIVV9CYCR%2Fuploads%2FSKXbu6wP6bVAdwvyr14g%2FScreenshot%202024-02-07%20at%2012.46.33.png?alt=media\&token=87396fa1-f3a4-465f-8e6d-ba9617f6f4bc)\
+\<https://wax.bloks.io/account/swap.alcor?loadContract=true&tab=Actions&account=swap.alcor&scope=swap.alcor&limit=100&action=regmarket> (for example WAX contract)
+
+Call **regmarket** action on swap.alcor contract with following parameters:
+
+* **marketName**: account for receiving fee.
+* **marketFee:** as part of 10^6
+
+**marketFee** Percent should be part of the 10^6 number. For example:
+
+```
+1000 will be 0.1%
+500 will be 0.05%
+
+and so on.
+
+MAXIMUM fee is: 10000 (1%).
+```
+
+## Chose the UI you want to attract users to.
+
+There are few option for you.
+
+#### 1) Land user to Alcor Swap page directly
+
+Simply add your market(from 1 step) as query parameter to swap url and share this as your referal link.
+
+```
+&market=<marketName>
+
+// For example
+// The fee will be sent to fees.alcor account
+
+https://alcor.exchange/swap?market=fees.alcor
+```
+
+#### 2) User Swap Widget(Iframe) on your web site
+
+Add widget to your site
+
+[Swap Widget](/swap-widget)
+
+And add the market query parameter to your iframe URL
+
+```html
+<iframe src="http://alcor.exchange/swap-widget?market=<marketAccount>"></iframe>
+```
+
+**3) Create custom UI and add your market to swap memo, use following format:**
+
+```
+<swapexactin/swapexactout>#<Pool ID's>#<Recipient>#<Output Token>#<Deadline>#<marketAccount>
+
+// Example | fees.alcor is market account thar receives fee
+swapexactin#401,1212#alcordexfund#5.3645 USDT@usdt.alcor#0#fees.alcor
+```

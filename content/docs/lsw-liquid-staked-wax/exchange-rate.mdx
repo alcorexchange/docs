@@ -1,0 +1,34 @@
+---
+title: "Exchange rate"
+description: "The exchange rate of LSW:WAX ensures accuracy and fairness in liquid staking. It starts at 1:1, dynamically updating based on accrued staking rewards."
+---
+
+$$
+Exchange   Rate =Total LiquidStakedWAX/ TotalNativeWAX
+$$
+
+TotalNativeWAX = Staked WAX+ accrued staking reward from DeFi
+
+TotalLiquidStakedWAX = LSW minted
+
+**For example:**
+
+The pool will initially start at a 1:1 ratio and will be dynamically updated based on the accrued staking rewards. To understand how this works, let’s consider an example:
+
+Avral is LSWs first user and he stakes 100 WAX, he then receives 100 LSW in return.
+
+$$
+ExchangeRate: 100/100=1
+$$
+
+Let’s assume that time has passed and 10 rewards in WAX were accrued.
+
+Now, the new exchange rate would be:
+
+$$
+ExchangeRate: 100/100+10= 0.91
+$$
+
+If Avral decides to withdraw his WAX, he will receive 110 WAX for 100 LSW based on the new exchange rate.
+
+\ <br />

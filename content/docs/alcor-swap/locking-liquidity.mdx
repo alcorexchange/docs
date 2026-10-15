@@ -1,0 +1,13 @@
+---
+title: "Locking Liquidity"
+---
+
+Sometimes, users might need to lock their liquidity positions permanently. For example, this might be part of the mechanics of a meme token. By doing this, everyone can be assured that the creator of the token will not remove liquidity from the pool and scam users.
+
+#### How to Lock Liquidity:
+
+Open your position and click on the "Transfer Position" button.
+
+![](/images/QNzcA4a6PO8EChywnr95-IMAGE-2024-06-09-17-06-17.jpg)
+
+Enter `eosio.null` as the receiver of the position. The `eosio.null` account functions as a "burn" account, meaning nobody has access to it. By transferring ownership to `eosio.null`, the position will be permanently locked, preventing any future transfers, fee claims, or removal of liquidity.

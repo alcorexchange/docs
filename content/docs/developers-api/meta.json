@@ -1,0 +1,12 @@
+{
+  "title": "Developers API",
+  "pages": [
+    "index",
+    "amm-swap-contract-api",
+    "market-creation",
+    "contract-actions",
+    "contract-tables",
+    "api",
+    "public-alcor-data-access"
+  ]
+}

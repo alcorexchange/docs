@@ -1,0 +1,69 @@
+---
+title: "Global Data"
+---
+
+## Stats
+Returns global data on TVL, volumes, number of trading pairs, and so on
+
+<Callout type="info">
+
+All volume values are displayed in USD
+
+</Callout>
+
+```shell
+curl "https://alcor.exchange/api/v2/analytics/global"
+```
+
+> The above command returns JSON structured like this:
+
+```json
+{
+  "_id": "wax",
+  "totalValueLocked": 2240718.758763486,
+  "swapValueLocked": 943995.9929317994,
+  "spotValueLocked": 1296722.7658316866,
+  "swapTradingVolume": 344377.66920321307,
+  "spotTradingVolume": 26406.316737205285,
+  "swapFees": 1063.6217236406346,
+  "spotFees": 409.7303415365396,
+  "dailyActiveUsers": 4063,
+  "swapTransactions": 26347,
+  "spotTransactions": 3163,
+  "totalLiquidityPools": 1483,
+  "totalSpotPairs": 808,
+  "totalTradingVolume": 370783.9859404183
+}
+```
+
+### HTTP Request
+
+`GET https://alcor.exchange/api/v2/analytics/global`
+
+**Query params:**
+
+Name | Type | Description | Default
+--- | --- | --- | ---
+resolution | string | Accumulate results over a certain period of time | 1D
+
+**Supported resolutions:**
+
+`1D, 1W, 1M`
+
+### Responce
+
+Name | Type | Description
+---------- | --------------------------- | -----------
+totalValueLocked | number | Exchange TVL
+swapValueLocked | number | Total AMM Value locked in USD
+spotValueLocked | number | Total spot value locked in open orders
+swapTradingVolume | number | AMM trading volume
+spotTradingVolume | number | Spot trading volume
+swapFees | number | AMM fees
+spotFees | number | Spot fees
+dailyActiveUsers | number | avg Daily active users
+swapTransactions | number | Total AMM swaps for period(resolution)
+spotTransactions | number | Total spot trades for period(resolution)
+totalLiquidityPools | number | Count of AMM pairs
+totalSpotPairs | number | Count of spot pairs
+totalTradingVolume | number | Total trading volume for given period(resolution)

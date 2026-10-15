@@ -1,0 +1,17 @@
+{
+  "title": "API Reference",
+  "pages": [
+    "index",
+    "tokens",
+    "global-data",
+    "market-data",
+    "swap",
+    "market-api",
+    "account",
+    "onchain-data",
+    "websocket",
+    "trade-api",
+    "cpu-payer",
+    "bridge"
+  ]
+}

@@ -1,0 +1,49 @@
+---
+title: "Adding Token Information"
+description: "Introduction"
+---
+
+![](/images/XWN6dDc9kFEOGdkd4WGq-image.png)
+
+Each project can add information about its token, also via a Pull Request on GitHub, as well as the token icon. We use **JSON** format for that.
+
+Our github: \<https://github.com/avral/alcor-ui>
+
+The provided format is designed to store information about a cryptocurrency or token, including its name, website, and associated GitHub repository.
+
+The file in which you need to add information about your token is divided into different blockchains.
+
+The file for each blockchain is located in the folder: [**assets/fundamentals**](https://github.com/avral/alcor-ui/tree/master/assets/fundamentals) and is called **\<:chain>.json** according to its chain (wax.json, eos.json, telos.json, proton.json)
+
+#### Format:
+
+There is a one object(not an array) that stores each tokens as **key: value,** where is **key** is id of token in format \<**SYMBOL**@**contract**>.
+
+```json
+  "FWW@farmerstoken": {
+    "name": "Farmers World",
+    "website": {
+      "link": "https://farmersworld.io/",
+      "name": "farmersworld.io"
+    },
+    "tags": [
+      "Gaming",
+      "P2E",
+      "NFT"
+    ],
+    "socials": [
+      "https://t.me/farmersworldofficial",
+      "https://twitter.com/FarmersWorldNFT",
+      "https://discord.com/invite/V2pdyGdB9V"
+    ],
+    "github": "https://github.com/shivsriv/FarmersWorld",
+    "description": "FarmersWorld is the first farming game to function on the NFTs platform. Pick for yourself suitable tools, exploit various resources, buy land to build enormous farms, and enjoy the fascinating experiences of a farmer working in Farmersworld’s Ecosystem."
+  }
+
+```
+
+<Callout type="info">
+
+Make sure symbol is in upper case and you pushing requests with valid JSON.
+
+</Callout>

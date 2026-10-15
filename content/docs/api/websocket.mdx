@@ -1,0 +1,202 @@
+---
+title: "WebSocket"
+---
+
+```javascript
+import { io } from 'socket.io-client'
+
+const socket = io('https://alcor.exchange')
+```
+Alcor using [Socket.IO](https://socket.io/) for interact via WebSocket technology.
+
+**There are two commands for subscribing to and channel with specific information.**
+
+* **subscribe**: Subscribing for an specific room.
+* **unsubscribe**: Unsubscribe from sprcific room.
+
+**You can subscribe to rooms to receive specific event information.**
+
+* deals
+* ticker
+* account
+* orderbook
+
+## Deals
+```javascript
+// Subscribe to deals
+socket.emit('subscribe', {
+    room: 'deals',
+    params: {
+        chain: 'wax', // Chain
+        market: 26 // Market id
+    }
+})
+
+// Handle new deals
+socket.on('new_deals', deals => { ... })
+
+// Unsubscribe from deals (will unsubscribe from all markets)
+socket.emit('unsubscribe', { room: 'deals', params: { chain: 'wax' } })
+```
+
+> Responce:
+
+```json
+[
+    {
+      "time": 1674820074000,
+      "ask": 3.5771,
+      "bid": 0.99799129,
+      "type": "buymatch",
+      "unit_price": 0.27899985,
+      "trx_id": "d4acaa5ae75bccad12ca82dd2d1d3fa5822cece1307ced10ee0daefaeb6d5009"
+    }
+]
+```
+
+Subscribing to new deals for specific market.
+
+**Room name**: deals
+
+**Params**:
+
+Key | Value
+--- | ---
+chain | chain id
+market | market id
+
+## Orderbook
+```javascript
+// Subscribe to buy orderbook of 26 (TLM on wax) market.
+socket.emit('subscribe', {
+    room: 'deals',
+    params: {
+        chain: 'orderbook', // Chain
+        market: 26, // Market id,
+        side: 'buy'
+    }
+})
+
+// On orderbook bid side update
+socket.on('orderbook_buy', bids => { ... })
+
+// On orderbook ask side update
+socket.on('orderbook_sell', asks => { ... })
+
+// Unsubscribe from orderbook (all, buy and sell)
+socket.emit('unsubscribe', { room: 'orderbook', params: { chain: 'wax', market: 26 } })
+```
+
+> Responce:
+
+```json
+[
+    [
+      27899985,
+      3044158,
+      8493196253
+    ]
+]
+```
+
+Subscribe to orderbook updates. First update is full order book state.
+
+**Room name**: orderbook
+
+**Params**:
+
+Key | Value
+--- | ---
+chain | chain id
+market | market id
+side | **sell** or **buy**
+
+## Ticker
+```javascript
+// Subscribe
+socket.emit('subscribe', {
+  room: 'ticker',
+  params: {
+    chain: 'wax',
+    market: 26,
+    resolution: '30'
+  }
+})
+
+// Unsubscribe
+socket.emit('unsubscribe', {
+  room: 'ticker',
+  params: {
+    chain: 'wax',
+    market: 26,
+    resolution: '30'
+  }
+})
+
+```
+
+> Responce:
+
+```json
+[
+  "tick",
+  {
+    "close": 0.01175084,
+    "open": 0.01175084,
+    "high": 0.01175084,
+    "low": 0.01175084,
+    "volume": 0.11727339,
+    "time": 1674821301500
+  }
+]
+```
+
+Subscribe for chart updates.
+
+**Room name**: ticker
+
+**Params**:
+
+Key | Value
+--- | ---
+chain | chain id
+market | market id
+resolution | Resolution (see list below)
+
+Supported resolutions:
+
+`1, 5, 15, 30, 60, 240, 1D, 1W, 1M`
+
+## Account
+```javascript
+socket.emit('subscribe', {
+    room: 'account', params: {
+        chain: 'wax',
+        'name': 'randomuser' // Account for listen events
+    }
+})
+```
+
+> Responce
+
+```json
+[
+  "match",
+  {
+    "ask": 0.11727339,
+    "market_id": 156,
+    "price": 0.01175084
+  }
+]
+```
+
+Subscribe to account events/notifications. Only order matches for now.
+
+**Room name**: account
+
+**Params**:
+
+Key | Value
+--- | ---
+chain | chain id
+name | Account
