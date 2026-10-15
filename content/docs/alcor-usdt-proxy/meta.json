@@ -1,7 +1,6 @@
 {
   "title": "Alcor USDT Proxy",
   "pages": [
-    "index",
     "depositing-usdt-to-wax",
     "withdrawing-usdt-from-wax"
   ]

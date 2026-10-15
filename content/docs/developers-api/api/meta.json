@@ -1,7 +1,6 @@
 {
   "title": "Legacy API (v1)",
   "pages": [
-    "index",
     "markets-api",
     "account",
     "websocket",

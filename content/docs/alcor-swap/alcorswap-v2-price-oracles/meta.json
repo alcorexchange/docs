@@ -1,7 +1,6 @@
 {
   "title": "AlcorSwap v2 Price Oracles",
   "pages": [
-    "index",
     "alcor-price-oracle-vs-delphioracle",
     "expanding-price-availability-with-ram-purchase",
     "how-to-use-alcor-price-oracle"

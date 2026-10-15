@@ -1,7 +1,6 @@
 {
   "title": "Home Page Overview",
   "pages": [
-    "index",
     "swap",
     "markets",
     "otc",

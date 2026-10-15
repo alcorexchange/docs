@@ -1,7 +1,6 @@
 {
   "title": "Smart Contracts",
   "pages": [
-    "index",
     "amm-swap-contract-api",
     "market-creation",
     "contract-actions",
