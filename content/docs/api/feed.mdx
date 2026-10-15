@@ -1,0 +1,143 @@
+---
+title: "Market Feed"
+description: "Every Alcor market on every chain in one feed, in the CoinGecko / CoinMarketCap shape."
+---
+
+One feed for aggregators (CoinGecko, CoinMarketCap and the like): every market Alcor runs on WAX, XPR,
+Vaulta (EOS) and Telos, AMM pools and order books alike, in the shape of the CoinGecko integration spec,
+which CoinMarketCap accepts too.
+
+Base URL: `https://api.alcor.exchange/v3/feed`. It answers the same on any Alcor host
+(`https://wax.alcor.exchange/api/v3/feed/...` too). No key is needed; responses are refreshed every minute.
+
+**What is in it**
+
+- AMM pools and order book markets holding at least $1,000: a pool's TVL, or for an order book the orders
+  resting within 10% of the mid price, valued in its quote token.
+- No markets of tokens flagged as scam.
+
+**Identifiers**
+
+| Field | Format | Example |
+| --- | --- | --- |
+| currency | `<chain>:<symbol>-<contract>` | `wax:tlm-alien.worlds` |
+| ticker_id | `<base currency>_<target currency>` | `wax:tlm-alien.worlds_wax:wax-eosio.token` |
+| pool_id | `<chain>:<amm or orderbook>:<id>` | `wax:orderbook:26` |
+
+The chain is part of every id because one contract name can exist on several chains
+(`usdt-wrap.alcor` is on WAX, XPR and Telos). Chains: `wax`, `xpr`, `eos`, `telos`.
+Several pools can share a ticker_id (one pair, different fee tiers); `pool_id` tells them apart.
+
+## Pairs
+
+`GET https://api.alcor.exchange/v3/feed/pairs`
+
+```json
+[
+  {
+    "ticker_id": "wax:tlm-alien.worlds_wax:wax-eosio.token",
+    "base": "wax:tlm-alien.worlds",
+    "target": "wax:wax-eosio.token",
+    "pool_id": "wax:orderbook:26"
+  }
+]
+```
+
+## Tickers
+
+`GET https://api.alcor.exchange/v3/feed/tickers`
+
+```json
+[
+  {
+    "ticker_id": "wax:tlm-alien.worlds_wax:wax-eosio.token",
+    "base_currency": "wax:tlm-alien.worlds",
+    "target_currency": "wax:wax-eosio.token",
+    "pool_id": "wax:orderbook:26",
+    "type": "orderbook",
+    "chain": "wax",
+    "last_price": 0.25251933,
+    "base_volume": 456391.87,
+    "target_volume": 115877.58,
+    "liquidity_in_usd": 1603.12,
+    "bid": 0.24701200,
+    "ask": 0.25100000,
+    "high": 0.25653127,
+    "low": 0.25025,
+    "volume_usd_24h": 568.4,
+    "base_cmc_ucid": 9119,
+    "target_cmc_ucid": 2300,
+    "global_ticker_id": "TLM-WAX",
+    "trade_url": "https://alcor.exchange/v/wax/spot/tlm-alien.worlds_wax-eosio.token"
+  }
+]
+```
+
+| Name | Type | Description |
+| --- | --- | --- |
+| ticker_id, base_currency, target_currency, pool_id | string | See Identifiers |
+| type | string | `amm` or `orderbook` |
+| chain | string | `wax`, `xpr`, `eos` or `telos` |
+| last_price | number | Last price of the base in the target |
+| base_volume, target_volume | number | 24h volume in each token |
+| liquidity_in_usd | number | Pool TVL, or order book depth within 10% of mid |
+| bid, ask | number | Best bid and ask. Order books only |
+| high, low | number or null | 24h range, null without a trade in 24h |
+| volume_usd_24h | number | 24h volume in USD |
+| base_cmc_ucid, target_cmc_ucid | number or null | CoinMarketCap ids of the tokens, when known |
+| global_ticker_id | string or null | `BASE-TARGET` when both tokens have a CoinMarketCap id |
+| trade_url | string | The market on alcor.exchange |
+
+## Order book
+
+Order book markets only; an AMM pool has no book.
+
+`GET https://api.alcor.exchange/v3/feed/orderbook?ticker_id=wax:tlm-alien.worlds_wax:wax-eosio.token&depth=100`
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| ticker_id | string | yes | A ticker of type `orderbook` |
+| depth | number | no | Levels on both sides together: `100` is 50 bids and 50 asks. `0` (default) is the full book |
+
+```json
+{
+  "ticker_id": "wax:tlm-alien.worlds_wax:wax-eosio.token",
+  "pool_id": "wax:orderbook:26",
+  "timestamp": 1792069684465,
+  "bids": [["0.24701200", "14224.8352"]],
+  "asks": [["0.25100000", "154048.5865"]]
+}
+```
+
+Levels are `[price, base quantity]`, best first.
+
+## Historical trades
+
+Swaps in the pair's pools and fills on its order book, merged, oldest first.
+
+`GET https://api.alcor.exchange/v3/feed/historical_trades?ticker_id=wax:tlm-alien.worlds_wax:wax-eosio.token&limit=200`
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| ticker_id | string | yes | Any ticker of the feed |
+| type | string | no | `buy` or `sell` |
+| limit | number | no | The latest N trades. Default 200, at most 1000 |
+| start_time, end_time | number | no | Unix seconds |
+
+```json
+[
+  {
+    "trade_id": "wax:swap:110408849349",
+    "ticker_id": "wax:waxusdc-eth.token_wax:parausd-parareserves",
+    "pool_id": "wax:amm:10336",
+    "price": 1.0025,
+    "base_volume": 0.00198,
+    "target_volume": 0.001985,
+    "trade_timestamp": 1792045247,
+    "type": "buy",
+    "trx_id": "886cdd7c78f64f9febaf558bd076bb82ece83b4171986eb2b58f13922d8b4976"
+  }
+]
+```
+
+`type` is the side of the base token: `buy` took it out of the pool or the book, `sell` put it in.

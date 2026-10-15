@@ -5,6 +5,7 @@
     "market-data",
     "swap",
     "market-api",
+    "feed",
     "global-data",
     "analytics",
     "account",
