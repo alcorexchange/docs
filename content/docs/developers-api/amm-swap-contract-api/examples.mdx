@@ -1,12 +1,9 @@
 ---
 title: "Examples"
+description: "Reading swap.alcor pools and positions with the Alcor SDK."
 ---
 
-**1) return the current X/Y price of a lp pool ( eg 3.5 TLM/WAX )**
+Pools are in table `pools` of `swap.alcor`, scope `swap.alcor`. Positions are in table `positions`, scope: the pool ID; index position 3 filters by owner.
 
-\<https://gist.github.com/avral/239e31232eb9a173b77c56dc537ddb6d>
-
-\
-**2) Total amount of liquidity provided for a pool by a wallet  ( eg abcde.wam  3500 TLM 1000 wax )**
-
-\<https://gist.github.com/avral/43a6dacbad1f3db3fe3b0e56b53ba7e7>
+- [Current price of a pool](https://gist.github.com/avral/239e31232eb9a173b77c56dc537ddb6d), e.g. TLM/WAX.
+- [Token amounts in an account's positions](https://gist.github.com/avral/43a6dacbad1f3db3fe3b0e56b53ba7e7) in a pool.

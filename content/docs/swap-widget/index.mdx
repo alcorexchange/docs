@@ -1,45 +1,42 @@
 ---
 title: "Swap Widget"
-description: "Html widget for integration in your website."
+description: "Embed an Alcor swap form in your website with an iframe"
 ---
 
-![](https://1106702801-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F-MJILKtslrmNIVV9CYCR%2Fuploads%2FRYlP7waVzrrSGpWiMnnb%2Fimage.png?alt=media\&token=79b9de15-595a-4e42-8bf4-8f6957174d2c)
+The swap widget is a compact Alcor swap form you can embed in any web page. Use the link for your network:
 
-**Chose link for your chain:**
+| Network | Widget URL |
+|---|---|
+| WAX | `https://wax.alcor.exchange/swap-widget` |
+| XPR Network | `https://proton.alcor.exchange/swap-widget` |
+| Vaulta (EOS) | `https://eos.alcor.exchange/swap-widget` |
+| Telos | `https://telos.alcor.exchange/swap-widget` |
 
-* WAX: \<http://wax.alcor.exchange/swap-widget>
-* EOS: \<http://eos.alcor.exchange/swap-widget>
-* TELOS: \<http://telos.alcor.exchange/swap-widget>
-* XPR: \<http://proton.alcor.exchange/swap-widget>
-
-Now you can easily integrate Alcor Exchange into your app.
+Insert it into your page with an iframe:
 
 ```html
-<iframe src="http://alcor.exchange/swap-widget" width="445" height="600"></iframe>
+<iframe src="https://wax.alcor.exchange/swap-widget" width="445" height="600"></iframe>
 ```
 
-Just insert an iframe into your html page.
+## Query parameters
+
+Token ids use the `symbol-contract` format, for example `wax-eosio.token`.
+
+| Parameter | Meaning | Example |
+|---|---|---|
+| `input` | Token selected to pay with | `wax-eosio.token` |
+| `output` | Token selected to receive | `tlm-alien.worlds` |
+| `only` | Comma-separated list of tokens offered in the token selector | `wax-eosio.token,tlm-alien.worlds` |
+| `market` | Your registered market account, to earn a fee on swaps made through the widget — see [Referral / Custom Market Fee](/alcor-swap/referral-custom-market-fee) | `mymarket` |
 
 For example:
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-<title>Page Title</title>
-</head>
-<body>
-  <h1>Alcor Iframe<h1/>
-  <iframe src="http://alcor.exchange/swap-widget" width="445" height="600"></iframe>
-</body>
-</html>
+<iframe
+  src="https://wax.alcor.exchange/swap-widget?input=wax-eosio.token&output=tlm-alien.worlds"
+  width="445"
+  height="600"
+></iframe>
 ```
 
-**Query parameters:** (for the widget link)
-
-token id format is: **symbol-coontract** (e.g: **wax-eosio.token**)
-
-* input: default input token
-* output: default output token
-* only: set available tokens for dropdown: set, with "," as delimeter. (e.g: "wax-eosio.token, tlm-alien.worlds")
-* market: cursont market fee (check Referal / Custom market fee page)
+A price chart for a pair is available as a separate widget, see [Swap Chart Widget](/swap-widget/swap-chart-widget).

@@ -1,10 +1,9 @@
 {
-  "title": "Home Page Overview",
+  "title": "App Overview",
   "pages": [
     "swap",
-    "markets",
+    "spot",
     "otc",
-    "nft",
-    "wallet"
+    "portfolio"
   ]
 }

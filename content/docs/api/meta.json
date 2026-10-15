@@ -2,13 +2,14 @@
   "title": "API Reference",
   "pages": [
     "tokens",
-    "global-data",
     "market-data",
     "swap",
     "market-api",
+    "global-data",
+    "analytics",
     "account",
-    "onchain-data",
     "websocket",
+    "onchain-data",
     "trade-api",
     "cpu-payer",
     "bridge"

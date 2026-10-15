@@ -1,0 +1,306 @@
+---
+title: "Analytics (v3)"
+description: "Token, pool and spot market lists with TVL, volume and scores; exchange overview and charts."
+---
+
+The analytics API behind Alcor's token, pool and market pages. Lists are paged, sortable and computed over a time
+window. All values are in USD.
+
+Common parameters:
+
+| Name | Description |
+| --- | --- |
+| window | `24h`, `7d`, `30d`, `90d` or `all`. Default `30d` |
+| page | Page number, from `1`. Default `1` |
+| limit | Items per page. Default `50`, maximum `500` |
+| order | `asc` or `desc`. Default `desc` |
+| hide_scam | `true` leaves out items with a token on the scam lists |
+
+Every answer carries `meta`: `chain`, `ts` (server time), `window`, `baseToken` (the system token) and `usdToken`.
+Paged lists add `page`, `limit` and `total`.
+
+## Overview
+
+Exchange totals for the window, their charts, and the top 10 pools, tokens and spot markets.
+
+`GET https://wax.alcor.exchange/api/v3/analytics/overview`
+
+**Parameters**: `window`, and `include=incentives` to add farm rewards to the top pools.
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v3/analytics/overview?window=24h"
+```
+
+```json
+{
+  "meta": { "chain": "wax", "ts": "2026-10-15T12:46:52.967Z", "window": "24h", "baseToken": "wax-eosio.token", "usdToken": "usdt-usdt.alcor" },
+  "stats": {
+    "tvl": 2207753.66,
+    "volume": 22724.75,
+    "fees": 66.77,
+    "swapVolume": 21791.28,
+    "spotVolume": 933.46,
+    "swapFees": 49.78,
+    "spotFees": 16.99,
+    "swapTx": 152064,
+    "spotTx": 1157,
+    "dauAvg": 426.52,
+    "poolsTotal": 12783,
+    "spotPairsTotal": 978
+  },
+  "charts": { "tvl": [{ "t": "2026-10-14T12:00:00.000Z", "v": 2202926.18 }], "volume": [], "...": "" },
+  "topPools": [],
+  "topTokens": [],
+  "topSpotPairs": []
+}
+```
+
+`charts` holds `tvl`, `volume`, `fees`, `swapVolume`, `spotVolume`, `swapFees` and `spotFees` as `[{t, v}]` series, and
+`items` with all of them per point. The top lists hold items as in [Tokens](#tokens), [Pools](#pools) and
+[Spot pairs](#spot-pairs).
+
+## Tokens
+
+Tokens with price, liquidity, volume and score.
+
+`GET https://wax.alcor.exchange/api/v3/analytics/tokens`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| sort | string | no | `score` (default), `volume`, `tvl`, `locked`, `holders`, `age`, `tx` or `price` |
+| search | string | no | Match on symbol, contract or token id |
+| window, page, limit, order | | no | See above |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v3/analytics/tokens?sort=volume&limit=1"
+```
+
+```json
+{
+  "meta": { "chain": "wax", "window": "30d", "...": "" },
+  "items": [
+    {
+      "id": "tlm-alien.worlds",
+      "symbol": "TLM",
+      "contract": "alien.worlds",
+      "name": null,
+      "decimals": 4,
+      "logo": "https://wax.alcor.exchange/api/v2/tokens/tlm-alien.worlds/logo",
+      "price": { "usd": 0.00123483, "change24h": -0.16 },
+      "liquidity": {
+        "tvl": 15099.21,
+        "locked": { "amount": 24709.4665, "usd": 30.51, "positions": 6, "share": 0.2, "nextUnlockAt": 1792707511, "lastUnlockAt": 1820464659 }
+      },
+      "volume": { "swap": 57278.54, "spot": 12216.18, "total": 69494.73 },
+      "pairs": { "pools": 256, "spots": 12 },
+      "tx": { "swap": 226964, "spot": 4448, "total": 231412 },
+      "holders": { "count": 2550784, "change1h": -2, "change6h": -2, "change24h": 22, "truncated": false },
+      "createdAt": "2020-10-18T20:11:26.000Z",
+      "scores": { "total": 93 }
+    }
+  ],
+  "page": 1,
+  "limit": 1,
+  "total": 2103
+}
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| id, symbol, contract, decimals | | The token |
+| name, logo | string | Display name (or `null`) and logo URL |
+| price.usd, price.change24h | number | USD price and 24-hour change, percent |
+| liquidity.tvl | number | Value of the token held in AMM pools |
+| liquidity.locked | object | Liquidity in locked AMM positions: `amount`, `usd`, `positions`, `share` (percent of `tvl`), `nextUnlockAt` and `lastUnlockAt` (unix seconds) |
+| volume | object | Volume over the window: `swap`, `spot`, `total` |
+| pairs | object | Number of AMM pools (`pools`) and spot markets (`spots`) trading the token |
+| tx | object | Trades over the window: `swap`, `spot`, `total` |
+| holders | object | Holder count and its change |
+| createdAt | string | When the token was first seen |
+| scores.total | number | Token score, see [Token score](/api/tokens#token-score) |
+
+## Token
+
+One token, with its pools and spot markets.
+
+`GET https://wax.alcor.exchange/api/v3/analytics/tokens/<token_id>`
+
+**Parameters**: `window`, `hide_scam`.
+
+```shell
+curl https://wax.alcor.exchange/api/v3/analytics/tokens/tlm-alien.worlds
+```
+
+Answers `{ meta, token, pools, spotPairs }`. `token` has the fields of [Tokens](#tokens), plus `fundamental` (project
+name, website, description, tags and socials, or `null`) and `scores.details` (the full
+[Token score](/api/tokens#token-score)). `pools` and `spotPairs` are as in [Pools](#pools) and [Spot pairs](#spot-pairs).
+
+## Pools
+
+AMM pools with TVL, volume and APR.
+
+`GET https://wax.alcor.exchange/api/v3/analytics/pools`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| sort | string | no | `volume` (default), `tvl` or `apr` |
+| search | string | no | Token symbol, contract or id. `A/B` or two words match a pair |
+| account | string | no | Only pools where this account holds an open position |
+| include | string | no | `incentives` adds farm rewards to each pool and sorts `apr` by total APR |
+| window, page, limit, order, hide_scam | | no | See above |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v3/analytics/pools?sort=tvl&limit=1"
+```
+
+```json
+{
+  "meta": { "chain": "wax", "window": "30d", "...": "" },
+  "items": [
+    {
+      "id": 0,
+      "fee": 3000,
+      "tokenA": { "contract": "alien.worlds", "decimals": 4, "symbol": "TLM", "id": "tlm-alien.worlds", "quantity": 3922224.122 },
+      "tokenB": { "contract": "eosio.token", "decimals": 8, "symbol": "WAX", "id": "wax-eosio.token", "quantity": 897629.65344264 },
+      "price": { "aPerB": 0.250077, "bPerA": 3.99877, "change24h": -0.16 },
+      "liquidity": { "tvl": 9275.61 },
+      "volume": { "usd": 57526.8 },
+      "apr": { "periodDays": 7, "fee": 8.84, "farm": null, "total": 8.84 },
+      "tx": { "swaps": null }
+    }
+  ],
+  "page": 1,
+  "limit": 1,
+  "total": 12786
+}
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| id | number | Pool id |
+| fee | number | Swap fee in hundredths of a basis point: `3000` is 0.3% |
+| tokenA, tokenB | object | The tokens, with `quantity` held by the pool |
+| price.aPerB, price.bPerA | number | Price of token A in token B, and the reverse |
+| price.change24h | number | 24-hour price change, percent |
+| liquidity.tvl | number | Pool TVL |
+| volume.usd | number | Volume over the window |
+| apr | object | Annualized APR over the last `periodDays` days, percent: from swap fees (`fee`), farm rewards (`farm`) and both (`total`) |
+| tx.swaps | number | Swaps over the window. In the list, only with `include=tx` |
+
+## Pool
+
+One pool, with the fields of [Pools](#pools) and its swap count.
+
+`GET https://wax.alcor.exchange/api/v3/analytics/pools/<pool_id>`
+
+**Parameters**: `window`; `include=incentives` with `incentives=active|finished|all` (default `active`) to add farms.
+
+```shell
+curl https://wax.alcor.exchange/api/v3/analytics/pools/0
+```
+
+Answers `{ meta, pool }`.
+
+## Spot pairs
+
+Spot order book markets with price, spread, volume and depth.
+
+`GET https://wax.alcor.exchange/api/v3/analytics/spot-pairs`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| sort | string | no | `volume` (default) or `price` |
+| window, page, limit, order, hide_scam | | no | See above |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v3/analytics/spot-pairs?limit=1"
+```
+
+```json
+{
+  "meta": { "chain": "wax", "window": "30d", "...": "" },
+  "items": [
+    {
+      "id": 26,
+      "base": { "id": "tlm-alien.worlds", "contract": "alien.worlds", "symbol": { "name": "TLM", "precision": 4 }, "str": "TLM@alien.worlds" },
+      "quote": { "id": "wax-eosio.token", "contract": "eosio.token", "symbol": { "name": "WAX", "precision": 8 }, "str": "WAX@eosio.token" },
+      "price": { "last": 0.247012, "change24h": -1.69 },
+      "spread": 1.61,
+      "volume": { "usd": 12215.32 },
+      "orders": { "bidDepthUsd": 2016.76, "askDepthUsd": 1302.48 },
+      "tx": { "matches": 3933 }
+    }
+  ],
+  "page": 1,
+  "limit": 1,
+  "total": 978
+}
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| id | number | Spot market id |
+| base, quote | object | The tokens. Prices are in quote per base |
+| price.last, price.change24h | number | Last trade price and 24-hour change, percent |
+| spread | number | Best ask minus best bid, as a percent of the last price |
+| volume.usd | number | Volume over the window |
+| orders | object | USD value of the orders near the current price, per side |
+| tx.matches | number | Trades over the window |
+
+`GET https://wax.alcor.exchange/api/v3/analytics/spot-pairs/<market_id>` answers one market as `{ meta, market }`.
+
+## Global charts
+
+Exchange-wide TVL, volume and fees as time series.
+
+`GET https://wax.alcor.exchange/api/v3/analytics/global/charts`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| window | string | no | See above. Default `30d` |
+| resolution | string | no | Point spacing: `1h`, `4h`, `1d` or `1w`. Default `1d` |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v3/analytics/global/charts?window=24h&resolution=4h"
+```
+
+```json
+{
+  "meta": { "chain": "wax", "window": "24h", "...": "" },
+  "charts": {
+    "tvl": [{ "t": "2026-10-14T12:00:00.000Z", "v": 2202926.18 }],
+    "volume": [{ "t": "2026-10-14T12:00:00.000Z", "v": 2220.85 }],
+    "...": ""
+  },
+  "items": [
+    { "t": "2026-10-14T12:00:00.000Z", "tvl": 2202926.18, "volume": 2220.85, "fees": 3.67, "swapVolume": 2192.22, "spotVolume": 28.62, "swapFees": 3.5, "spotFees": 0.17 }
+  ]
+}
+```
+
+`charts` holds `tvl`, `volume`, `fees`, `swapVolume`, `spotVolume`, `swapFees` and `spotFees` as `[{t, v}]` series;
+`items` holds the same values per point. `t` is the point's start time.

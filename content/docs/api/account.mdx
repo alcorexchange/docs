@@ -1,243 +1,193 @@
 ---
 title: "Account"
+description: "Trades, liquidity positions and swap history of an account."
 ---
 
-Account data api
+History and positions of one account on the chain of the host you call.
 
-## Account Spot Deals
+## Spot trades
+
+Spot trades the account took part in, as buyer or seller, newest first.
+
+`GET https://wax.alcor.exchange/api/v2/account/<account>/deals`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| account | string | yes | Account name, in the path |
+| market | number | no | Only trades of this spot market id |
+| from | number | no | Range start, unix seconds. Used only together with `to` |
+| to | number | no | Range end, unix seconds |
+| limit | number | no | Number of trades. Default `500` |
+| skip | number | no | Trades to skip, for paging |
+
+**Example**
+
 ```shell
-curl https://alcor.exchange/api/v2/account/<account>/deals
+curl "https://wax.alcor.exchange/api/v2/account/alcordexfund/deals?limit=1"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 [
   {
-    "_id": "6675d517cbc8490fd50823ab",
-    "market": 763,
+    "_id": "6ac07c9e48ec8ec3f10389bc",
+    "market": 26,
     "type": "buymatch",
-    "trx_id": "14169e8d274786b984917c79f14cefa4e13d2dc823604d47f88a11c116d9e901",
-    "unit_price": 0.0410099,
-    "ask": 2.75797508,
-    "asker": "foreverstone",
-    "bid": 0.1131,
+    "trx_id": "4cbcefed8b0608063fb2001bfc3527e7eee19bfa8c612a3df882524f42177e81",
+    "unit_price": 0.2699,
+    "ask": 1148.4228,
+    "bid": 309.95930066,
+    "asker": "jjrbg.wam",
     "bidder": "alcordexfund",
-    "time": "2024-06-21T19:31:33.000Z"
-  },
-  ...
+    "time": "2026-10-03T03:55:10.500Z"
+  }
 ]
 ```
 
-API for getting the spot deals history of a specific account.
+**Response fields**
 
-### HTTP Request
-`GET https://alcor.exchange/api/v2/account/<account>/deals`
-
-**Query params:**
-
-| Name | Type | Description | Required |
-| --- | --- | --- | --- |
-| account | string | Account ID | true |
-| from | number | Start time in seconds | false |
-| to | number | End time in seconds | false |
-| limit | number | Limit of records to return | false |
-| skip | number | Number of records to skip | false |
-| market | number | Market ID | false |
-
-### Response
 | Name | Type | Description |
 | --- | --- | --- |
-| _id | string | Deal ID |
-| market | number | Market ID |
-| type | string | Type of the deal |
-| trx_id | string | Transaction ID |
-| unit_price | number | Unit price |
-| ask | number | Ask amount |
-| asker | string | Asker account |
-| bid | number | Bid amount |
-| bidder | string | Bidder account |
-| time | string | Time of the deal |
+| _id | string | Trade id |
+| market | number | Spot market id |
+| type | string | `buymatch`: a buy order took the trade. `sellmatch`: a sell order took it |
+| trx_id | string | Transaction id |
+| unit_price | number | Trade price |
+| bidder | string | Account of the order that took the trade |
+| asker | string | Account of the resting order it matched |
+| bid | number | Amount the bidder paid |
+| ask | number | Amount the bidder received |
+| time | string | Trade time, ISO 8601 |
 
+## Positions
 
-## Account Positions
+Open AMM liquidity positions of the account, with their value and fees.
+
+`GET https://wax.alcor.exchange/api/v2/account/<account>/positions`
+
+**Example**
+
 ```shell
-curl https://alcor.exchange/api/v2/account/<account>/positions
+curl https://wax.alcor.exchange/api/v2/account/alcordexfund/positions
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 [
- {
-    "id": 13095,
+  {
+    "id": 152287,
     "owner": "alcordexfund",
-    "tickLower": 40140,
-    "tickUpper": 65520,
-    "liquidity": "1009363631498",
-    "feeGrowthInsideALastX64": "0",
-    "feeGrowthInsideBLastX64": "0",
-    "feesA": "41789.8580 BRWL",
-    "feesB": "1873.58385095 WAX",
-    "pool": 667,
-    "depositedUSDTotal": 9782.8141,
+    "pool": 12397,
+    "tickLower": -100,
+    "tickUpper": 100,
+    "liquidity": "800386663698",
+    "inRange": true,
+    "amountA": "3763.075641 USDC",
+    "amountB": "4220.481815 USDT",
+    "feesA": "0.220932 USDC",
+    "feesB": "0.369956 USDT",
+    "totalValue": 7984.15,
+    "totalFeesUSD": 0.59,
+    "depositedUSDTotal": 7983.4609,
+    "collectedFees": { "tokenA": 0, "tokenB": 0, "inUSD": 0, "lastCollectTime": null },
+    "pNl": 0.59,
     "closed": false,
-    "collectedFees": {
-      "tokenA": 0,
-      "tokenB": 0,
-      "inUSD": 0
-    },
-    "inRange": false,
-    "amountA": "0.0000 BRWL",
-    "amountB": "192032.76838783 WAX",
-    "totalValue": 7755.19,
-    "pNl": -2027.6241
-  },
-  ...
+    "lockedUntil": null,
+    "isLocked": false
+  }
 ]
 ```
 
-API for getting all positions belong to specific account
+The fields are those of [Pool positions](/api/swap#pool-positions).
 
-### HTTP Request
-`GET https://alcor.exchange/api/v2/swap/pools/<:pool_id>/positions`
+## Position history
 
+Liquidity events of the account's positions (deposits, withdrawals and fee collections), newest first.
 
-**Query params:**
+`GET https://wax.alcor.exchange/api/v2/account/<account>/positions-history`
 
-Pool id should be provided inside the URL structure
+**Parameters**
 
-| Name | Type | Description | required |
+| Name | Type | Required | Description |
 | --- | --- | --- | --- |
-| pool_id | number | Pool ID | true |
+| account | string | yes | Account name, in the path |
+| limit | number | no | Number of events. Default `200` |
+| skip | number | no | Events to skip, for paging |
 
-### Response
-| Name | Type | Description |
-| --- | --- | --- |
-| id | number | position id |
-| owner | string | position owner account |
-| tickLower | number | lower tick of position |
-| tickUpper | number | upper tick of position |
-| liquidity | number | position liquidity amount |
-| feeGrowthInsideALastX64 | number | token A fees grow value |
-| feeGrowthInsideBLastX64 | number | token B fees grow value |
-| feesA | number | token A accumulated fees |
-| feesB | number | token B accumulated fees |
-| pool | number | pool ID |
-| amountA | asset | Positoin token A amount |
-| amountB | asset | Positoin token B amount |
+**Example**
 
-depositedUSDTotal | number | total USD value deposited to position
-closed | number | is position closed
-collectedFees | object | Fees collected by position
-inRange | Boolean | is position in range
-totalValue | number | Total position value in USD
-pNl | number | Profit & Loss (totalValue - depositedUSDTotal)
-
-
-## Account Positions History
 ```shell
-curl https://alcor.exchange/api/v2/account/<account>/positions-history
+curl "https://wax.alcor.exchange/api/v2/account/alcordexfund/positions-history?limit=1"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 [
   {
-    "_id": "666fe1a9248953a275e29568",
-    "tokenAUSDPrice": 0.04254746,
-    "tokenBUSDPrice": 0.622996928304,
+    "_id": "6acdedec428d9e14968e17b8",
+    "id": 152287,
+    "pool": 12397,
     "owner": "alcordexfund",
-    "type": "collect",
-    "id": 43827,
-    "pool": 1259,
-    "tokenA": 740.63011288,
-    "tokenB": 39.0449,
-    "totalUSDValue": 55.8368,
-    "trx_id": "cee97277979cee5ffcfa7df078050ecce9026e87b7b3eced7e517e6b10c9348c",
-    "time": "2024-06-17T07:11:35.000Z"
-  },
-  ...
+    "type": "burn",
+    "tokenA": 918.880068,
+    "tokenB": 1077.024205,
+    "tokenAUSDPrice": 1,
+    "tokenBUSDPrice": 1,
+    "totalUSDValue": 1995.9043,
+    "trx_id": "6fb2c3280f4cbdc1f5d799ca67916c89ab1ebde126af808d96f766addde1c75a",
+    "time": "2026-10-13T08:38:04.000Z"
+  }
 ]
 ```
 
-API for getting the position history of a specific account.
+**Response fields**
 
-### HTTP Request
-`GET https://alcor.exchange/api/v2/account/<account>/positions-history`
-
-**Query params:**
-
-| Name | Type | Description | Required |
-| --- | --- | --- | --- |
-| account | string | Account ID | true |
-| limit | number | Limit of records to return | false |
-| skip | number | Number of records to skip | false |
-
-### Response
 | Name | Type | Description |
 | --- | --- | --- |
-| _id | string | Position history ID |
-| tokenAUSDPrice | number | Token A USD price |
-| tokenBUSDPrice | number | Token B USD price |
-| owner | string | Position owner account |
-| type | string | Type of the position history |
-| id | number | Position history ID |
-| pool | number | Pool ID |
-| tokenA | number | Token A amount |
-| tokenB | number | Token B amount |
-| totalUSDValue | number | Total USD value |
-| trx_id | string | Transaction ID |
-| time | string | Time of the position history |
+| _id | string | Record id |
+| id | number | Position id |
+| pool | number | Pool id |
+| owner | string | Position owner |
+| type | string | `mint` (liquidity added), `burn` (liquidity removed) or `collect` (fees collected) |
+| tokenA, tokenB | number | Token amounts of the event |
+| tokenAUSDPrice, tokenBUSDPrice | number | USD prices of the tokens at the time |
+| totalUSDValue | number | Event value, USD |
+| trx_id | string | Transaction id |
+| time | string | Event time, ISO 8601 |
 
+## Swap history
 
-## Account Swap History
+AMM swaps the account sent or received, newest first.
+
+`GET https://wax.alcor.exchange/api/v2/account/<account>/swap-history`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| account | string | yes | Account name, in the path |
+| limit | number | no | Number of swaps. Default `200` |
+| skip | number | no | Swaps to skip, for paging |
+
+**Example**
+
 ```shell
-curl https://alcor.exchange/api/v2/account/<account>/swap-history
+curl "https://wax.alcor.exchange/api/v2/account/alcordexfund/swap-history?limit=1"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 [
   {
-    "_id": "6670108cebb327bcc470ffc3",
-    "pool": 1166,
-    "trx_id": "e9815f8ca7af5d56d08a0163ec98f1142db097ee0d356b49cb3fb2182d596006",
+    "_id": "6acd57da428d9e14961928bf",
+    "pool": 12501,
+    "trx_id": "71d2fced1fe31e5b4219e4abe79a2cc4a4161a0ae8ea87dc9b73901b39a85195",
     "sender": "alcordexfund",
-    "sqrtPriceX64": "335692961505657228690",
-    "totalUSDVolume": 20.3636278111581,
-    "tokenA": 14027.5692,
-    "tokenB": -480.37435682,
-    "time": "2024-06-17T10:31:37.500Z"
-  },
-  ...
+    "sqrtPriceX64": "138046174607188499",
+    "totalUSDVolume": 5.5362025,
+    "tokenA": 1000,
+    "tokenB": -5.600885,
+    "time": "2026-10-12T21:57:41.000Z"
+  }
 ]
 ```
 
-API for getting the swap history of a specific account.
-
-### HTTP Request
-`GET https://alcor.exchange/api/v2/account/<account>/swap-history`
-
-**Query params:**
-
-| Name | Type | Description | Required |
-| --- | --- | --- | --- |
-| account | string | Account ID | true |
-| limit | number | Limit of records to return | false |
-| skip | number | Number of records to skip | false |
-
-### Response
-| Name | Type | Description |
-| --- | --- | --- |
-| _id | string | Swap history ID |
-| pool | number | Pool ID |
-| trx_id | string | Transaction ID |
-| sender | string | Swap sender account |
-| sqrtPriceX64 | string | Square root price X64 |
-| totalUSDVolume | number | Total USD volume |
-| tokenA | number | Token A amount |
-| tokenB | number | Token B amount |
-| time | string | Time of the swap history |
+The fields are those of [Pool swaps](/api/swap#pool-swaps).

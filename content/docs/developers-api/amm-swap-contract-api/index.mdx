@@ -1,35 +1,45 @@
 ---
-title: "Amm Swap Contract API"
-description: "Swap contract API explanation"
+title: "Swap contract"
+description: "Swapping through the swap.alcor concentrated liquidity contract."
 ---
 
-All chains have Alcor Swap contract by same account name: **swap.alcor**
+The Alcor swap contract runs under the same account on every chain: `swap.alcor`. For application development use the [Alcor SDK](https://github.com/alcorexchange/alcor-v2-sdk). To find a route and the expected output, use the [route API](/api/swap).
 
-**Swap**
+## Swap
 
-There is two types of swap:
-
-**swapexactin:** To swap all input amount to maximum amount of out token.
-
-**swapexactout:** Swap input tokens to exact out token amount and return change from input token.
-
-To swap one token to another, transfer input token to swap contract with specifit memo:
+Transfer the input token to `swap.alcor` with a memo:
 
 ```
-<swapexactin/swapexactout>#<Pool ID's>#<Recipient>#<Output Token>#<Deadline>#market
+<type>#<pool_ids>#<recipient>#<output_token>#<deadline>#<market>
+```
 
-// Example
+| Field | Description |
+| --- | --- |
+| `type` | `swapexactin` or `swapexactout` |
+| `pool_ids` | Pool ID, or comma-separated pool IDs of a multi-hop route in swap order, e.g. `0,12` |
+| `recipient` | Account that receives the output. Cannot be `swap.alcor` |
+| `output_token` | Extended asset `<amount> <SYMBOL>@<contract>`, see below |
+| `deadline` | Optional. Unix time in seconds after which the swap fails. `0` means no deadline |
+| `market` | Optional. Account registered with `regmarket` that takes an extra fee |
+
+- **swapexactin** swaps the whole input. `output_token` is the minimum output; the transaction fails if the output is lower. An amount of zero sets no minimum.
+- **swapexactout** delivers exactly `output_token`. The transferred amount is the maximum input; the unused part is returned to the sender.
+
+```
 swapexactin#0#alcordexfund#3.9167 TLM@alien.worlds#0
 
-// OR // where market.contract your market contract to receive market fee
-swapexactin#0#alcordexfund#3.9167 TLM@alien.worlds#0#market.contract
+swapexactin#0#alcordexfund#3.9167 TLM@alien.worlds#0#mymarket
 ```
 
-**Params:**
+The swap fee is the pool fee plus the market fee. Both are in millionths: `3000` = 0.3%.
 
-* **swapexactin/swapexactout** - Swap type
-* **Pool ID's**: Sequence of the pools id's that swap will use
-* **Recipient:** Account to receive swap output token
-* **Output token:** Desired output token amount as extended asset string.
-* **Deadline:** limit time in seconds when swap transaction is valid.
-* **Market:** account to receive additional swap fee (use **regmarket** action to set your market).
+## Market fee
+
+An application can take its own fee on swaps it routes. Register once with `regmarket`, signed by the market account:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `marketName` | `name` | Account that receives the fee |
+| `marketFee` | `uint32` | Fee in millionths, at most `10000` (1%) |
+
+Then pass the account as the last memo field. The market fee is paid in the input token to that account.

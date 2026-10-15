@@ -1,49 +1,43 @@
 ---
 title: "Adding Token Information"
-description: "Introduction"
+description: "Add your token's description, links and tags through a GitHub pull request"
 ---
 
-![](/images/XWN6dDc9kFEOGdkd4WGq-image.png)
+Any project can add information about its token — name, website, socials, tags and description — with a pull request to the [alcor-ui repository](https://github.com/alcorexchange/alcor-ui). Alcor shows it on the token's analytics page (`/v/<network>/analytics/tokens/<token id>`). To add a logo, see [Token logo](/adding-token-information/token-logo).
 
-Each project can add information about its token, also via a Pull Request on GitHub, as well as the token icon. We use **JSON** format for that.
+## Where to add it
 
-Our github: \<https://github.com/avral/alcor-ui>
+Token information lives in [`assets/fundamentals`](https://github.com/alcorexchange/alcor-ui/tree/master/assets/fundamentals), one file per network:
 
-The provided format is designed to store information about a cryptocurrency or token, including its name, website, and associated GitHub repository.
+| Network | File |
+|---|---|
+| WAX | `wax.json` |
+| XPR Network | `proton.json` |
+| Vaulta (EOS) | `eos.json` |
+| Telos | `telos.json` |
 
-The file in which you need to add information about your token is divided into different blockchains.
+## Format
 
-The file for each blockchain is located in the folder: [**assets/fundamentals**](https://github.com/avral/alcor-ui/tree/master/assets/fundamentals) and is called **\<:chain>.json** according to its chain (wax.json, eos.json, telos.json, proton.json)
-
-#### Format:
-
-There is a one object(not an array) that stores each tokens as **key: value,** where is **key** is id of token in format \<**SYMBOL**@**contract**>.
+Each file is one JSON object (not an array). Each key is a token id in the form `SYMBOL@contract`, and its value describes the token:
 
 ```json
-  "FWW@farmerstoken": {
-    "name": "Farmers World",
-    "website": {
-      "link": "https://farmersworld.io/",
-      "name": "farmersworld.io"
-    },
-    "tags": [
-      "Gaming",
-      "P2E",
-      "NFT"
-    ],
-    "socials": [
-      "https://t.me/farmersworldofficial",
-      "https://twitter.com/FarmersWorldNFT",
-      "https://discord.com/invite/V2pdyGdB9V"
-    ],
-    "github": "https://github.com/shivsriv/FarmersWorld",
-    "description": "FarmersWorld is the first farming game to function on the NFTs platform. Pick for yourself suitable tools, exploit various resources, buy land to build enormous farms, and enjoy the fascinating experiences of a farmer working in Farmersworld’s Ecosystem."
-  }
-
+"FWW@farmerstoken": {
+  "name": "Farmers World",
+  "website": {
+    "link": "https://farmersworld.io/",
+    "name": "farmersworld.io"
+  },
+  "tags": ["Gaming", "P2E", "NFT"],
+  "socials": [
+    "https://t.me/farmersworldofficial",
+    "https://twitter.com/FarmersWorldNFT",
+    "https://discord.com/invite/V2pdyGdB9V"
+  ],
+  "github": "https://github.com/shivsriv/FarmersWorld",
+  "description": "FarmersWorld is the first farming game to function on the NFTs platform."
+}
 ```
 
 <Callout type="info">
-
-Make sure symbol is in upper case and you pushing requests with valid JSON.
-
+The symbol must be upper case, and the file must stay valid JSON after your change.
 </Callout>

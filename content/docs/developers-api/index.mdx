@@ -1,20 +1,27 @@
 ---
 title: "Smart Contracts"
-description: "Technical description of exchange interfaces."
+description: "Alcor order book and swap contracts: accounts, actions, memos and tables."
 ---
 
-As a orderbook store onchain, user can view, trade and cancel any of orders using public explorer for example bloks.io or **cleos** for interaction with contract.
+Markets, orders and pools live on chain. You can trade, cancel orders and read tables with a block explorer, `cleos` or a JavaScript client such as eosjs. For HTTP and WebSocket data, see the [API Reference](/api).
 
-**Contracts account in eosio chains:**
+## Contract accounts
 
-1. EOS - **eostokensdex**
-2. TELOS - **eostokensdex**
-3. WAX **- alcordexmain**
-4. BOS - **alcordexmain**
-5. PROTON - **alcor**
+| Chain | Order book DEX | Swap (AMM) |
+| --- | --- | --- |
+| WAX | `alcordexmain` | `swap.alcor` |
+| EOS | `eostokensdex` | `swap.alcor` |
+| Telos | `eostokensdex` | `swap.alcor` |
+| XPR Network (Proton) | `alcor` | `swap.alcor` |
 
-**Contract tables:**
+The first-generation AMM contract `alcorammswap` still holds old liquidity on WAX and Telos. See [Legacy AMM pairs](/developers-api/contract-tables#legacy-amm-pairs).
 
-* [Markets table](https://bloks.io/account/eostokensdex?loadContract=true\&tab=Tables\&table=markets\&account=eostokensdex\&scope=eostokensdex\&limit=100)
-* [sell orders table](https://bloks.io/account/eostokensdex?loadContract=true\&tab=Tables\&table=sellorder\&account=eostokensdex\&scope=eostokensdex\&limit=100)
-* [buy orders table](https://bloks.io/account/eostokensdex?loadContract=true\&tab=Tables\&table=buyorder\&account=eostokensdex\&scope=eostokensdex\&limit=100)
+## Pages
+
+<Cards>
+  <Card title="Swap contract" href="/developers-api/amm-swap-contract-api" />
+  <Card title="Order book actions" href="/developers-api/contract-actions" />
+  <Card title="Order book tables" href="/developers-api/contract-tables" />
+  <Card title="Market creation" href="/developers-api/market-creation" />
+  <Card title="Public data access" href="/developers-api/public-alcor-data-access" />
+</Cards>

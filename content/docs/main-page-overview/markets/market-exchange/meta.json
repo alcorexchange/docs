@@ -1,9 +1,0 @@
-{
-  "title": "Market Exchange",
-  "pages": [
-    "order-books",
-    "graph",
-    "order-history",
-    "placing-trades"
-  ]
-}

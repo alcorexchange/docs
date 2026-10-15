@@ -1,7 +1,8 @@
 ---
-title: "Public Alcor Data Access"
+title: "Public data access"
+description: "Download the Alcor history database."
 ---
 
-We using MongoDB for collecting history of alcor trades/charts/analytics
+Alcor stores trade, chart and analytics history in MongoDB. A dump of the database is public at [wax.alcor.exchange/backups](https://wax.alcor.exchange/backups/) as `alcor_prod.dump.zst` (compressed with zstd, about 32 GB). It covers all chains; records carry a `chain` field.
 
-You can access every day database back up here: \<https://alcor.exchange/backups>
+The dump is not refreshed on a fixed schedule. Check the file date in the listing. For current data, use the [API Reference](/api).

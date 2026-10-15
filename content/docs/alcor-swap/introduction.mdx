@@ -1,14 +1,43 @@
 ---
 title: "Introduction"
+description: "How Alcor Swap's concentrated liquidity, fee tiers and positions work."
 ---
 
-Alcor Swap AMM is a new decentralized exchange protocol that utilizes concentrated liquidity, a revolutionary approach to liquidity provision. Unlike the traditional constant product AMM model, concentrated liquidity enables liquidity providers to concentrate their funds within a specific price range. This brings numerous benefits, including:
+Alcor Swap is a concentrated-liquidity AMM, modelled on Uniswap v3. It is deployed as the `swap.alcor` contract on WAX, XPR Network, EOS and Telos.
 
-1. Improved capital efficiency: With concentrated liquidity, liquidity providers can allocate their funds more efficiently within a specific price range. This enables them to provide more liquidity with the same amount of capital, resulting in improved capital efficiency.
-2. Better price execution: Concentrated liquidity allows trades to be executed at more precise prices than constant product AMMs. This is because liquidity providers can concentrate their funds within a specific price range, resulting in tighter spreads and better price execution.
-3. Reduced impermanent loss: Impermanent loss is a common issue faced by liquidity providers in constant product AMMs. However, concentrated liquidity can reduce the impact of impermanent loss by enabling liquidity providers to concentrate their funds within a specific price range.
-4. Greater flexibility: With concentrated liquidity, liquidity providers have greater flexibility in managing their liquidity. They can adjust their liquidity provision based on market conditions and their risk appetite, enabling them to optimize their returns.
-5. Increased fees income: Alcor Swap AMM offers the ability to set different fee tiers based on the liquidity concentration, which enables liquidity providers to earn more fees as their concentration increases. This incentivizes liquidity providers to concentrate their liquidity and leads to a more efficient market.
-6. Range orders: Alcor Swap AMM also provides the opportunity for traders to place range orders, which allow them to execute trades within a specific price range. This is made possible by the liquidity concentration of the protocol, which enables the price of the asset to stay within a specific range, resulting in a more predictable market.
+## Concentrated liquidity
 
-Overall, Alcor Swap AMM provides numerous benefits and opportunities over traditional constant product AMMs. We believe that this new approach to liquidity provision will be a game changer for decentralized exchanges, and we are excited to be at the forefront of this revolution.
+In a classic constant-product AMM, liquidity is spread over every price from zero to infinity. In Alcor Swap, a liquidity provider (LP) chooses a price range, and their liquidity is used only while the pool price is inside it:
+
+- Inside the range, the position holds both tokens and earns a share of the swap fees in proportion to its liquidity.
+- Below or above the range, the position holds only one of the two tokens and earns no fees until the price returns to the range.
+
+A narrower range puts the same capital to work more intensively, so it earns more fees per dollar while the price stays inside it. It also leaves the range sooner and sits fully in one token when it does. A full-range position (**Infinity** in the app) behaves like a classic AMM position.
+
+Because a position converts from one token to the other as the price crosses its range, a narrow range also works as a limit-style order. See [Ranges](/alcor-swap/ranges-everything-you-need-to-know).
+
+## Fee tiers
+
+Each pool is a pair of tokens plus a fee tier, so the same pair can have several pools. The fee is charged on every swap through the pool.
+
+| Fee tier | Suggested for |
+| --- | --- |
+| 0.01% | Stable pairs |
+| 0.05% | High-volume pairs |
+| 0.3% | Most pairs |
+| 1% | Exotic pairs |
+
+By default the whole swap fee goes to the pool's liquidity providers. The contract can direct a share of a pool's fee (1/3, 1/4 or 1/10) to the protocol.
+
+## Positions
+
+Every liquidity position belongs to one pool and has its own price range. Fees build up in the position until you collect them. You can add liquidity or remove it (unless the position is locked) at any time, but you cannot change a position's range: to move it, close the position and open a new one.
+
+Positions can also be:
+
+- staked in [farms](/alcor-farms-unlocking-defi-opportunities) to earn extra rewards;
+- [locked](/alcor-swap/locking-liquidity) until a date or permanently.
+
+## Who can create pools
+
+Anyone can create a pool for any two tokens at any fee tier, as long as a pool for that pair and fee tier does not exist yet. The creator sets the starting price. Anyone can also create tokens, so check a token before you trade it or provide liquidity for it.

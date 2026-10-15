@@ -1,79 +1,88 @@
 ---
 title: "Trade API"
+description: "Placing and cancelling spot orders with contract actions."
 ---
 
-To trade assets you sould use Blockchain API directly. More information on Interaction/NodeAPI.
+The HTTP API only reads data. Orders are placed and cancelled by sending transactions to the DEX contract through any
+node API, signed by the order owner. The examples use [eosjs](https://github.com/EOSIO/eosjs) and the WAX contract
+`alcordexmain`; the contract of each chain is listed in [On-chain Data](/api/onchain-data).
+
+```javascript
+import { Api, JsonRpc } from 'eosjs'
+import { JsSignatureProvider } from 'eosjs/dist/eosjs-jssig'
+
+const rpc = new JsonRpc('https://wax.greymass.com', { fetch })
+const signatureProvider = new JsSignatureProvider(['<private key of the order owner>'])
+const api = new Api({ rpc, signatureProvider })
+```
 
 ## Place order
+
+Transfer the amount you sell (the bid) to the DEX contract, with the amount you want in return (the ask) in the memo.
+The contract finds the market and the price from the two tokens and amounts, fills what it can against the opposite
+side, and leaves the rest as an open order.
+
+Memo format: `<amount> <SYMBOL>@<contract>`, e.g. `0.0010 EOS@eosio.token`.
+
 ```shell
+# bob sells 0.5 TKT for 0.001 EOS
 cleos push action tktoken transfer \
-    '[bob, alcordexmain, "0.5000 TKT", "0.0010 EOS@eosio.token"]' -p bob
+  '["bob", "alcordexmain", "0.5000 TKT", "0.0010 EOS@eosio.token"]' -p bob@active
 ```
+
 ```javascript
-const actions = [{
-  account: 'tktoken', // token contract
-  name: 'transfer',
-  authorization: [{
-    actor: 'useraaaaaaaa', // account placing order (owner)
-    permission: 'active',
-  }],
-  data: {
-    from: 'useraaaaaaaa',
-    to: 'alcordexmain',
-    quantity: '0.5000 TKT', // Bid
-    memo: '0.0001 EOS@eosio.token' // Ask
-  }
-}]
-
-// Result of transaction
-const r = await api.transact(actions)
+await api.transact({
+  actions: [{
+    account: 'tktoken',            // contract of the token you sell
+    name: 'transfer',
+    authorization: [{ actor: 'bob', permission: 'active' }],
+    data: {
+      from: 'bob',
+      to: 'alcordexmain',
+      quantity: '0.5000 TKT',      // bid
+      memo: '0.0010 EOS@eosio.token' // ask
+    }
+  }]
+}, { blocksBehind: 3, expireSeconds: 30 })
 ```
 
-> Bob are selling 0.5 TKT and buying 0.001 EOS.
-
-
-Send the amount(bid) you want to sell to dex contract account, and specify the amount you ask in the memo, the price and market will be automatically determined in the contract.
-
-Memo format(ask token):
-`<token_amount> <token_symbol>@<token_contract>`
+Several orders can be placed in one transaction, one transfer action each.
 
 <Callout type="info">
 
-Orders can not be updated. To update order simply cancel current and place new one.
+Orders cannot be changed. To move an order, cancel it and place a new one.
 
 </Callout>
 
-### Place multiple orders
-Same way as described but transaction may contain multiple actions(array).
-
 ## Cancel order
+
+Call `cancelbuy` for a buy order or `cancelsell` for a sell order on the DEX contract.
+
+| Parameter | Description |
+| --- | --- |
+| executor | Order owner |
+| market_id | Market id of the order |
+| order_id | Order id |
+
 ```shell
-cleos push action alcordexmain cancelsell \
-    '[bob, 262, 1284277]' -p bob
+# bob cancels sell order 1284277 on market 262
+cleos push action alcordexmain cancelsell '["bob", 262, 1284277]' -p bob@active
 ```
+
 ```javascript
-const result = await api.transact([
-    {
-        account: 'tktoken',
-        name: 'transfer',
-        authorization: [{
-          actor: 'useraccountname',
-          permission: 'active',
-        }],
-        data: {
-          from: 'useraccountname',
-          to: 'alcordexmain',
-          quantity: '0.5000 TKT',
-          memo: '0.0010 EOS@eosio.token'
-        }
+await api.transact({
+  actions: [{
+    account: 'alcordexmain',
+    name: 'cancelsell',            // or 'cancelbuy'
+    authorization: [{ actor: 'bob', permission: 'active' }],
+    data: {
+      executor: 'bob',
+      market_id: 262,
+      order_id: 1284277
     }
-]);
+  }]
+}, { blocksBehind: 3, expireSeconds: 30 })
 ```
 
-> Bob are canceling sell order on 262 market.
-
-Call action **cancelsell** or **cancelbuy** with parameters:
-
-* **executor** - order owner account name
-* **market_id** - id of the order related market
-* **order_id** - order id.
+Find order ids in the `buyorder` and `sellorder` tables
+([On-chain Data](/api/onchain-data#orders)).

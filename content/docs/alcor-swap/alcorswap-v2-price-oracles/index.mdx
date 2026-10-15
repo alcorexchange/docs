@@ -1,22 +1,28 @@
 ---
-title: "AlcorSwap v2 Price Oracles"
-description: "Time-weighted average price (TWAP) overview"
+title: "Price Oracle (TWAP)"
+description: "On-chain time-weighted average prices from Alcor Swap pools."
 ---
 
-![](/images/s2M3INZV0HwWhcBtO1qy-image.png)
+![Alcor TWAP price oracle](/images/s2M3INZV0HwWhcBtO1qy-image.png)
 
-By drawing inspiration from [**Uniswap V3 Price Oracle**](https://blog.uniswap.org/uniswap-v3-oracles), Alcor introduces a decentralized solution to provide accurate asset prices on the blockchain.
+Every Alcor Swap pool works as an on-chain price oracle, following the design of the [Uniswap v3 oracle](https://blog.uniswap.org/uniswap-v3-oracles). Other contracts can read a pool's time-weighted average price (TWAP) directly from the `swap.alcor` tables, for any pair that trades on Alcor Swap.
 
-Alcor Price Oracle is a mechanism that provides asset prices on the blockchain. Since blockchains are isolated ecosystems, there is no direct way of querying external data, and there are difficulties in ensuring data validity and authenticity. 
+## How it works
 
-DelphiOracle is presented as one of the first working solutions to these problems on EOSIO(Antelope). It runs a decentralized network of oracles that fetch asset prices from centralized exchanges via APIs, average them, and provide them on-chain. 
+Each pool stores a list of observations in the `observations` table (scoped by pool ID). An observation records a timestamp and cumulative values of the price tick and of seconds per liquidity. A new observation is written, at most once per second, when a swap moves the price to a new tick or liquidity changes at the current price.
 
-DelphiOracle is essentially a smart contract with one state variable, asset price, that can be read by anyone but can only be written to by oracles (top block producers). However, DelphiOracle only provides the last price while the Defi Dapp needs the price by timestamp for various purposes. Furthermore, DelphiOracle exclusively supports a limited number of well-known tokens: BTC/USD, ETH/USD, WAX/USD, EOS/USD, whereas there is a multitude of tokens available on WAX/EOS that require price data for integration with the Defi Dapp.
+The average price between two moments is calculated from the difference between their cumulative values. A contract usually asks for the average over the last N seconds, for example 30 minutes.
 
-**AlcorSwap v2 facilitated the creation of on-chain price oracles known as time-weighted average price (**[**TWAP**](https://en.wikipedia.org/wiki/Time-weighted_average_price)**) oracles**. These oracles are highly decentralized and provide a solution for many of the challenges involved in creating robust blockchain protocols. 
+## Observation history
 
-Manipulation on most AlcorSwap v2 TWAP oracles isn’t currently feasible, bad actors both need to source incredibly high levels of capital and then need to make enough money back to make up for money lost to fees. Make sure that your Dapps use a rolling time window for TWAP to calculate the price because spot prices are easy and relatively cheap to manipulate.
+A new pool keeps one observation, overwritten as new ones arrive, so on its own it gives little history. Anyone can raise the number of observations a pool keeps by paying for the RAM: see [Expanding Price Availability](/alcor-swap/alcorswap-v2-price-oracles/expanding-price-availability-with-ram-purchase). There is no upper limit.
 
-In Alcor, historical price data is stored as an array of observations. Initially, each pool tracks only one observation, overwriting it as new blocks are added. As a result, the data can only be accessed for a limited period. However, **any party can expand the period of data availability by paying RAM to increase the number of tracked observations and the maximum of observations is unlimited.**
+## Manipulation risk
 
-<br />
+A spot price can be moved cheaply within one transaction. A TWAP can only be moved by holding the pool price away from the market for the whole averaging window, paying swap fees and losing to arbitrage the entire time. The cost grows with the pool's liquidity and the length of the window. Use a rolling TWAP rather than the spot price, and prefer pools with deep liquidity.
+
+<Cards>
+  <Card title="How to Use the Oracle" href="/alcor-swap/alcorswap-v2-price-oracles/how-to-use-alcor-price-oracle" />
+  <Card title="Expanding Price Availability" href="/alcor-swap/alcorswap-v2-price-oracles/expanding-price-availability-with-ram-purchase" />
+  <Card title="Alcor Oracle vs DelphiOracle" href="/alcor-swap/alcorswap-v2-price-oracles/alcor-price-oracle-vs-delphioracle" />
+</Cards>

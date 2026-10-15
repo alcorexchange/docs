@@ -1,48 +1,28 @@
 ---
 title: "Tokens"
+description: "Token prices, scores and logos."
 ---
 
-## Token price
+A token is identified by `<symbol>-<contract>` in lower case, e.g. `tlm-alien.worlds`. Prices are refreshed by the
+indexer and served from cache.
+
+## All tokens
+
+Every token the exchange knows, with its price and score, sorted by score (highest first).
+
+`GET https://wax.alcor.exchange/api/v2/tokens`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| hide_scam | boolean | no | `true` leaves out tokens on the scam lists |
+
+**Example**
+
 ```shell
-curl https://alcor.exchange/api/v2/tokens/tlm-alien.worlds
-
+curl "https://wax.alcor.exchange/api/v2/tokens?hide_scam=true"
 ```
-
-> The above command returns JSON structured like this:
-
-```json
-{
-  "contract": "alien.worlds",
-  "decimals": 4,
-  "symbol": "TLM",
-  "id": "tlm-alien.worlds",
-  "system_price": 0.252009,
-  "usd_price": 0.010197
-}
-```
-
-Get single token price by id
-
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/tokens/:<token_id>`
-
-### Response
-| Name | Type | Description |
-| --- | --- | --- |
-| contract | string | token contract |
-| decimals | number | token precision |
-| symbol | string | token symbol |
-| id | string | token-id |
-| system_price | number | token price in chain system token |
-| usd_price | number | token price in USD |
-
-## All tokens prices
-```shell
-curl https://alcor.exchange/api/v2/tokens
-```
-
-> The above command returns JSON structured like this:
 
 ```json
 [
@@ -51,50 +31,142 @@ curl https://alcor.exchange/api/v2/tokens
     "decimals": 4,
     "symbol": "TLM",
     "id": "tlm-alien.worlds",
-    "system_price": 0.252009,
-    "usd_price": 0.010197
-  },
-  ...
+    "usd_price": 0.00123668,
+    "system_price": 0.250077,
+    "score": 93,
+    "is_scam": false,
+    "is_trusted": true,
+    "safe_usd_price": 0.00123668,
+    "safe_system_price": 0.250077,
+    "cmc_id": 9119
+  }
 ]
 ```
 
-Get all tokens with it's prices
+**Response fields**
 
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/tokens`
-
-### Response
 | Name | Type | Description |
 | --- | --- | --- |
-| contract | string | token contract |
-| decimals | number | token precision |
-| symbol | string | token symbol |
-| id | string | token-id |
-| system_price | number | token price in chain system token |
-| usd_price | number | token price in USD |
+| id | string | Token id, `<symbol>-<contract>` |
+| contract | string | Token contract |
+| symbol | string | Token symbol |
+| decimals | number | Token precision |
+| system_price | number | Price in the chain's system token (WAX, EOS, TLOS, XPR) |
+| usd_price | number | Price in USD |
+| score | number | Token score, 0 to 100 (see [Token score](#token-score)) |
+| is_scam | boolean | The token is on the scam lists. Its prices are `0` |
+| is_trusted | boolean | The token is the system token, a stablecoin, listed as trusted, or scores high enough |
+| safe_system_price | number | `system_price` for a trusted token, otherwise `0` |
+| safe_usd_price | number | `usd_price` for a trusted token, otherwise `0`. Use it to value balances |
+| cmc_id | number | CoinMarketCap id. Present only for tokens CoinMarketCap lists |
 
-## Token Logo
+## Token
+
+One token by id, with the same fields as [All tokens](#all-tokens).
+
+`GET https://wax.alcor.exchange/api/v2/tokens/<token_id>`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| token_id | string | yes | Token id, in the path |
+
+**Example**
+
 ```shell
-curl https://wax.alcor.exchange/api/v2/tokens/wax-eosio.token/logo
+curl https://wax.alcor.exchange/api/v2/tokens/tlm-alien.worlds
 ```
 
-Get token logo image (PNG) by token id.
+```json
+{
+  "contract": "alien.worlds",
+  "decimals": 4,
+  "symbol": "TLM",
+  "id": "tlm-alien.worlds",
+  "usd_price": 0.00123668,
+  "system_price": 0.250077,
+  "score": 93,
+  "is_scam": false,
+  "is_trusted": true,
+  "safe_usd_price": 0.00123668,
+  "safe_system_price": 0.250077,
+  "cmc_id": 9119
+}
+```
 
-### HTTP Request
+An unknown id answers HTTP 403 with `Token with this ID is not found`.
 
-`GET https://alcor.exchange/api/v2/tokens/<token_id>/logo`
+## Token score
 
-### URL Parameters
+How the token's score is built: its components, the caps applied and the metrics behind them, over a 30-day window.
+A token without a score answers `{"score": 0}`.
+
+`GET https://wax.alcor.exchange/api/v2/tokens/<token_id>/score`
+
+**Example**
+
+```shell
+curl https://wax.alcor.exchange/api/v2/tokens/tlm-alien.worlds/score
+```
+
+```json
+{
+  "score": 93,
+  "version": "v1",
+  "window": "30d",
+  "components": {
+    "traders": 25,
+    "volume": 20,
+    "liquidity": 14.78,
+    "holders": 10,
+    "activity": 10,
+    "stability": 2.82,
+    "age": 10
+  },
+  "capsApplied": [],
+  "metrics": {
+    "uniqueTraders": 809,
+    "volumeUsd": 78906.79,
+    "tvlUsd": 15216.25,
+    "turnover": 5.1857,
+    "holdersCount": 2550784,
+    "tradesCount": 231377,
+    "avgDailyTrades": 7712.5667,
+    "currentPrice": 0.00123848,
+    "rollingHigh30d": 0.00249163,
+    "drawdown30d": 0.497056,
+    "stabilityPoolId": 1256,
+    "ageDays": 2187
+  },
+  "updatedAt": "2026-10-15T12:31:16.265Z"
+}
+```
+
+**Response fields**
+
 | Name | Type | Description |
 | --- | --- | --- |
-| token_id | string | Token identifier (symbol-contract) |
+| score | number | Total score, 0 to 100 |
+| version, window | string | Scoring model version and the window it looks at |
+| components | object | Points per component: traders, volume, liquidity, holders, activity, stability, age |
+| capsApplied | array | Caps that limited the total, if any |
+| metrics | object | Raw figures behind the components: USD values, counts, price drawdown, age in days |
+| updatedAt | string | When the score was computed |
 
-### Response
-Returns PNG image file if logo exists, or 404 error if not found.
+The answer also carries a few trend fields, such as `volumeUsd7d`, `trades7d`, `uniqueTraders24h` and
+`priceChange7dPct`.
 
-<Callout type="info">
+## Token logo
 
-Logo URL can be constructed from token id: /api/v2/tokens/\{token_id\}/logo
+The token's logo image.
 
-</Callout>
+`GET https://wax.alcor.exchange/api/v2/tokens/<token_id>/logo`
+
+```shell
+curl -L -o tlm.png https://wax.alcor.exchange/api/v2/tokens/tlm-alien.worlds/logo
+```
+
+Answers with the image itself or with a redirect to it, so follow redirects (`curl -L`). The logo comes from the on-chain
+token registry first, then from Alcor's own logo set, then from public token lists. A token without a logo answers
+HTTP 404.

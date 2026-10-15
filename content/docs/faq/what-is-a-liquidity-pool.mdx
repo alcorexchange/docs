@@ -1,7 +1,9 @@
 ---
-title: "What is a liquidity Pool?"
+title: "What is a liquidity pool?"
 ---
 
-Liquidity pools provide liquidity in decentralized exchanges rather than relying on order books. 
+A liquidity pool holds two tokens that traders swap against, instead of waiting for a matching buyer or seller in an order book. Liquidity providers deposit both tokens into the pool and earn the pool's fee on every swap that goes through it.
 
-The advantage of using liquidity pools is that it does not require a buyer and a seller to decide to exchange two assets for a given price, and instead leverages a pre-funded liquidity pool. This allows for trades to happen with limited slippage even for the most illiquid trading pairs, as long as there is a big enough liquidity pool.
+Because the pool is always there, a trade can execute at any time. Its price depends on how much liquidity the pool holds: the more liquidity, the less a trade moves the price.
+
+Alcor Swap uses **concentrated liquidity**: each provider chooses a price range, and their liquidity is used only while the price stays inside that range. This lets liquidity sit where trading actually happens. See [Alcor Swap](/alcor-swap) for details.

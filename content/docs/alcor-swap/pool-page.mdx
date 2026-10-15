@@ -1,5 +1,29 @@
 ---
 title: "Pool Page"
+description: "Your liquidity positions, fees, farms and activity."
 ---
 
-The Pool page contains a list of the user's current open positions. With position ranges, yield (P\&L) and position amount. There is also a section of the history of interaction with Alcor Swap AMM and a button for creating a new position.
+The **Pool** tab of the swap card opens your positions at `alcor.exchange/v/<chain>/swap/positions`. The page has three tabs.
+
+## Positions
+
+- **Summary**: total value, PnL, APR (fees and farming), how much of your liquidity is in range, fees earned in the last 24 hours, and unclaimed fees.
+- **Position list** (cards or table): pair and fee tier, price range, token amounts, value, farm rewards, fees and pool share. Sort by value, fees or newest, or search by token.
+- **Claim All** collects the fees and farm rewards of all your positions in one transaction.
+- **New** opens the [new position form](/alcor-swap/providing-liquidity).
+
+## Position page
+
+Click a position to open `alcor.exchange/v/<chain>/swap/positions/<id>`. From there you can:
+
+- add liquidity to the position, at the same range;
+- remove liquidity (25%, 50%, 75%, 100% or any share), which also collects its fees;
+- collect fees;
+- stake the position in the pool's farms, claim rewards and unstake;
+- [lock the position](/alcor-swap/locking-liquidity) until a date or permanently;
+- see the position's history of adds, removals and fee collections.
+
+## Farms and Activity
+
+- **Farms** opens the [farms](/alcor-farms-unlocking-defi-opportunities) page.
+- **Activity** lists your liquidity history across all pools: adds, removals and fee collections, each linked to its transaction.

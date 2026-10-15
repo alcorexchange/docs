@@ -1,0 +1,39 @@
+---
+title: "Swap"
+description: "Swapping tokens and managing liquidity on one network"
+---
+
+The Swap page (`/v/<network>/swap`) exchanges one token for another on the selected network. Alcor finds the best route through its liquidity pools and, by default, also through the order book, so a swap acts like a [market order](/definitions-1): you get the current price, not a price you set. To trade at a price you choose, use [Spot](/main-page-overview/spot).
+
+To swap tokens on different networks, use the cross-chain swap on the [home page](https://alcor.exchange).
+
+## Making a swap
+
+1. Choose the token you pay and the token you receive. The arrow between them reverses the pair.
+2. Enter an amount in either field; the other is quoted from the current route and refreshes as prices change.
+3. Check the details under the form:
+   * **Expected Output** — what you should receive.
+   * **Price Impact** — how much your trade moves the price. It is larger in pairs with little liquidity.
+   * **Min. Received** — the least you accept after slippage. If the price moves beyond it, the swap fails instead of filling worse.
+   * **Multiroute** — the pools and order book markets the swap is split across.
+4. Confirm the transaction in your wallet.
+
+A pair has its own link, for example `/v/wax/swap/wax-eosio.token_tlm-alien.worlds`. A chart of the selected pair is shown next to the form.
+
+## Transaction settings
+
+The gear icon opens:
+
+* **Slippage %** — Auto, 0.5%, 1% or a custom value.
+* **Max Hops** — the most pools a route may pass through (1–3).
+* **Recalculate On Price Change** — refresh the quote when a pool price changes.
+* **Split Into Order Book** — let the route use order book markets as well as pools.
+
+## Pool
+
+The **Pool** tab (`/v/<network>/swap/positions`) lists your liquidity positions with their range, value, unclaimed fees and P&L, and has **Farms** and **Activity** tabs.
+
+* **Create a position** — select the pair, a fee tier (0.01%, 0.05%, 0.3% or 1%) and a price range, then deposit both tokens. If the pool does not exist yet, you set its starting price.
+* **Manage a position** — open it to add liquidity, remove part or all of it, claim fees, claim farm rewards, or lock the liquidity (until a date or forever).
+
+A position's price range cannot be changed: to move it, remove the position and create a new one. For details see [Alcor Swap](/alcor-swap) and [Providing liquidity](/alcor-swap/providing-liquidity).

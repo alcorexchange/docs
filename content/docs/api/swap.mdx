@@ -1,402 +1,466 @@
 ---
 title: "Swap"
+description: "AMM pools, positions, swaps, candles and swap routes."
 ---
 
-Alcor is a protocol based on the AMM concept using concentrated liquidity. Allowing you to change one eosio.token to another.
+Alcor Swap is a concentrated-liquidity AMM on the `swap.alcor` contract. These endpoints read its pools and positions
+and find swap routes.
+
 <Callout type="info">
 
-A detailed description of the principle of operation can be found in the documentation: [Alcor Swap
-Docs](https://docs.alcor.exchange/alcor-swap/introduction) and [Amm Swap Contract API](https://docs.alcor.exchange/developers-api/amm-swap-contract-api)
-
-And special [Alcor Swap SDK](https://github.com/alcorexchange/alcor-v2-sdk) for calculating everything locally, without
-API.
+How the AMM works: [Alcor Swap](/alcor-swap/introduction) and the [AMM swap contract API](/developers-api/amm-swap-contract-api).
+To compute prices, positions and routes locally, without the API, use the
+[Alcor Swap SDK](https://github.com/alcorexchange/alcor-v2-sdk).
 
 </Callout>
 
-## Pool
+## Pools
+
+All AMM pools, including inactive ones.
+
+`GET https://wax.alcor.exchange/api/v2/swap/pools`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| tokenA | string | no | Only pools with this token as token A. With `tokenB`, the pools of that pair in either order |
+| tokenB | string | no | Only pools with this token as token B |
+| hide_scam | boolean | no | `true` leaves out pools with a token on the scam lists |
+
+**Example**
+
 ```shell
-curl https://alcor.exchange/api/v2/swap/pools/0
+curl "https://wax.alcor.exchange/api/v2/swap/pools?tokenA=wax-eosio.token&tokenB=usdt-usdt.alcor"
 ```
 
-Get pool by ID
+Answers an array of pools, as in [Pool](#pool).
 
-> The above command returns JSON structured like this:
+## Pool
+
+One pool by id. An unknown id answers `null`.
+
+`GET https://wax.alcor.exchange/api/v2/swap/pools/<pool_id>`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| pool_id | number | yes | Pool id, in the path |
+
+**Example**
+
+```shell
+curl https://wax.alcor.exchange/api/v2/swap/pools/1095
+```
 
 ```json
 {
-  "chain": "wax",
   "id": 1095,
+  "chain": "wax",
   "active": true,
   "fee": 3000,
-  "feeGrowthGlobalAX64": "212803631582389957186",
-  "feeGrowthGlobalBX64": "1171129874747599",
-  "feeProtocol": 3,
-  "liquidity": "951789470700",
-  "maxLiquidityPerTick": "1247497401346422",
-  "protocolFeeA": 10681.09414088,
-  "protocolFeeB": 703.6308,
-  "sqrtPriceX64": "45802571509710763",
-  "tick": -119973,
+  "feeProtocol": 0,
   "tickSpacing": 60,
   "tokenA": {
     "contract": "eosio.token",
     "decimals": 8,
     "symbol": "WAX",
     "id": "wax-eosio.token",
-    "quantity": 1413257.13064633
+    "quantity": 222783.8554093
   },
   "tokenB": {
     "contract": "usdt.alcor",
     "decimals": 4,
     "symbol": "USDT",
     "id": "usdt-usdt.alcor",
-    "quantity": 81673.5964
+    "quantity": 790.0321
   },
-  "volumeA24": 60225.61186526,
-  "volumeAMonth": 12102207.71289808,
-  "volumeAWeek": 2865840.95504714,
-  "volumeB24": 3703.4195999999997,
-  "volumeBMonth": 823163.2468,
-  "volumeBWeek": 175806.8865,
-  "volumeUSD24": 7440.385309538387,
-  "volumeUSDMonth": 1649849.915091903,
-  "volumeUSDWeek": 353479.23752087017,
-  "tvlUSD": 168895.21809226653,
-  "change24": 0.3,
-  "changeWeek": -0.49,
-  "high24": 0,
-  "low24": 0,
-  "priceA": 0.0623307,
-  "priceB": 16.0435
+  "sqrtPriceX64": "12931342024590619",
+  "tick": -145268,
+  "liquidity": "9024147348",
+  "maxLiquidityPerTick": "1247497401346422",
+  "feeGrowthGlobalAX64": "2905065159736797300513",
+  "feeGrowthGlobalBX64": "6373171825477389",
+  "protocolFeeA": 0,
+  "protocolFeeB": 0,
+  "priceA": 0.00491414,
+  "priceB": 203.494,
+  "tvlUSD": 1891.74,
+  "volumeA24": 17221.18436066,
+  "volumeB24": 86.1053,
+  "volumeUSD24": 85.59,
+  "volumeAWeek": 67484.19683699,
+  "volumeBWeek": 359.4608,
+  "volumeUSDWeek": 361.04,
+  "volumeAMonth": 519984.02878347,
+  "volumeBMonth": 2951.5294,
+  "volumeUSDMonth": 2981.59,
+  "volumeA90": 2443181.00916112,
+  "volumeB90": 11536.0987,
+  "volumeUSD90": 11562.55,
+  "change24": -3.47,
+  "changeWeek": -6.76,
+  "firstSeenAt": "2023-05-06T08:05:51.500Z"
 }
 ```
 
-**Query params:**
+**Response fields**
 
-Pool id should be provided inside the URL structure
-
-| Name | Type | Description | required |
-| --- | --- | --- | --- |
-| pool_id | number | Pool ID | true |
-
-### HTTP Request
-`GET https://alcor.exchange/api/v2/swap/pools/:<pool_id>`
-
-### Response
 | Name | Type | Description |
 | --- | --- | --- |
-| id | number | pool ID |
-| active | number | is pool active |
-| fee | number | fee percent as part of (fee / 10000) |
-| feeGrowthGlobalAX64 | number | Global accumulated fee for token A |
-| feeGrowthGlobalBX64 | number | Global accumulated fee for token B |
-| feeProtocol | number | Protocol fee percent |
-| liquidity | number | Pool liquidity amount |
-| maxLiquidityPerTick | number | Pool max liquidity ber one tick |
-| protocolFeeA | asset | Protocol earned fees |
-| protocolFeeB | asset | Protocol earned fees |
-| sqrtPriceX64 | number | Pool price as sqrtPriceX64 |
-| tick | number | Pool current tick |
-| tickSpacing | number | Pool tick spacing |
-| tokenA | object | Token A |
-| tokenB | object | Token B |
-| volumeUSD24 | number | USD Volume for 24H |
-| volumeUSDWeek | number | USD Volume for 7D |
-| volumeUSDMonth | number | USD Volume for 30D |
-| volumeA24 | number | 24H volume of token A |
-| volumeAWeek | number | 7D volume of token A |
-| volumeAMonth | number | 30D volume of token A |
-| volumeB24 | number | 24H volume of token B |
-| volumeBWeek | number | 7D volume of token B |
-| volumeBMonth | number | 30D volume of token B |
-| volumeUSD24 | number | USD Volume for 24H |
-| volumeUSDWeek | number | USD Volume for 7D |
-| volumeUSDMonth | number | USD Volume for 30D |
-| tvlUSD | number | Total Value Locked in USD |
-| change24 | number | 24H price change |
-| changeWeek | number | 7D price change |
-| high24 | number | 24H price high |
-| low24 | number | 24H price low |
-| priceA | number | token A price in terms of token B |
-| priceB | number | token B price in terms of token A |
+| id | number | Pool id |
+| active | boolean | Whether the pool is active |
+| fee | number | Swap fee in hundredths of a basis point: `3000` is 0.3% |
+| feeProtocol | number | Protocol fee setting of the pool |
+| tickSpacing | number | Tick spacing |
+| tokenA, tokenB | object | The tokens: `id`, `contract`, `symbol`, `decimals`, and `quantity` held by the pool |
+| sqrtPriceX64 | string | Current price as a Q64.64 square root |
+| tick | number | Current tick |
+| liquidity | string | In-range liquidity |
+| maxLiquidityPerTick | string | Most liquidity a tick can hold |
+| feeGrowthGlobalAX64, feeGrowthGlobalBX64 | string | Accumulated fees per unit of liquidity, Q64.64 |
+| protocolFeeA, protocolFeeB | number | Protocol fees accrued and not yet collected |
+| priceA | number | Price of token A in token B |
+| priceB | number | Price of token B in token A |
+| tvlUSD | number | Total value locked, USD |
+| volumeA24, volumeB24, volumeUSD24 | number | 24-hour volume in token A, token B and USD |
+| volumeAWeek, volumeBWeek, volumeUSDWeek | number | 7-day volume |
+| volumeAMonth, volumeBMonth, volumeUSDMonth | number | 30-day volume |
+| volumeA90, volumeB90, volumeUSD90 | number | 90-day volume |
+| change24, changeWeek | number | Price change over 24 hours and 7 days, percent |
+| firstSeenAt | string | When the pool was created |
 
+## Pool positions
 
-## Pools
+Open liquidity positions of a pool, with their value and fees.
+
+`GET https://wax.alcor.exchange/api/v2/swap/pools/<pool_id>/positions`
+
+**Example**
+
 ```shell
-curl https://alcor.exchange/api/v2/swap/pools
+curl https://wax.alcor.exchange/api/v2/swap/pools/12397/positions
 ```
-
-Get all swap pools
-
-> The above command returns JSON structured like this:
 
 ```json
 [
   {
-    "chain": "wax",
-    "id": 1095,
-    "active": true,
-    "fee": 3000,
-    "feeGrowthGlobalAX64": "212803631582389957186",
-    "feeGrowthGlobalBX64": "1171129874747599",
-    "feeProtocol": 3,
-    "liquidity": "951789470700",
-    "maxLiquidityPerTick": "1247497401346422",
-    "protocolFeeA": 10681.09414088,
-    "protocolFeeB": 703.6308,
-    "sqrtPriceX64": "45802571509710763",
-    "tick": -119973,
-    "tickSpacing": 60,
-    "tokenA": {
-      "contract": "eosio.token",
-      "decimals": 8,
-      "symbol": "WAX",
-      "id": "wax-eosio.token",
-      "quantity": 1413257.13064633
-    },
-    "tokenB": {
-      "contract": "usdt.alcor",
-      "decimals": 4,
-      "symbol": "USDT",
-      "id": "usdt-usdt.alcor",
-      "quantity": 81673.5964
-    },
-    "volumeA24": 60225.61186526,
-    "volumeAMonth": 12102207.71289808,
-    "volumeAWeek": 2865840.95504714,
-    "volumeB24": 3703.4195999999997,
-    "volumeBMonth": 823163.2468,
-    "volumeBWeek": 175806.8865,
-    "volumeUSD24": 7440.385309538387,
-    "volumeUSDMonth": 1649849.915091903,
-    "volumeUSDWeek": 353479.23752087017,
-    "tvlUSD": 168895.21809226653,
-    "change24": 0.3,
-    "changeWeek": -0.49,
-    "high24": 0,
-    "low24": 0,
-    "priceA": 0.0623307,
-    "priceB": 16.0435
+    "id": 152287,
+    "owner": "alcordexfund",
+    "pool": 12397,
+    "tickLower": -100,
+    "tickUpper": 100,
+    "liquidity": "800386663698",
+    "feeGrowthInsideALastX64": "160181032180210",
+    "feeGrowthInsideBLastX64": "125798765051241",
+    "inRange": true,
+    "amountA": "3763.075641 USDC",
+    "amountB": "4220.481815 USDT",
+    "feesA": "0.220932 USDC",
+    "feesB": "0.369956 USDT",
+    "totalValue": 7984.15,
+    "totalFeesUSD": 0.59,
+    "depositedUSDTotal": 7983.4609,
+    "collectedFees": { "tokenA": 0, "tokenB": 0, "inUSD": 0, "lastCollectTime": null },
+    "pNl": 0.59,
+    "closed": false,
+    "lockedUntil": null,
+    "isLocked": false
   }
-  ...
 ]
 ```
 
-### HTTP Request
-`GET https://alcor.exchange/api/v2/swap/pools`
+**Response fields**
 
-### Response
 | Name | Type | Description |
 | --- | --- | --- |
-| id | number | pool ID |
-| active | number | is pool active |
-| fee | number | fee percent as part of (fee / 10000) |
-| feeGrowthGlobalAX64 | number | Global accumulated fee for token A |
-| feeGrowthGlobalBX64 | number | Global accumulated fee for token B |
-| feeProtocol | number | Protocol fee percent |
-| liquidity | number | Pool liquidity amount |
-| maxLiquidityPerTick | number | Pool max liquidity ber one tick |
-| protocolFeeA | asset | Protocol earned fees |
-| protocolFeeB | asset | Protocol earned fees |
-| sqrtPriceX64 | number | Pool price as sqrtPriceX64 |
-| tick | number | Pool current tick |
-| tickSpacing | number | Pool tick spacing |
-| tokenA | object | Token A |
-| tokenB | object | Token B |
-| volumeA24 | number | 24H volume of token A |
-| volumeAWeek | number | 7D volume of token A |
-| volumeAMonth | number | 30D volume of token A |
-| volumeB24 | number | 24H volume of token B |
-| volumeBWeek | number | 7D volume of token B |
-| volumeBMonth | number | 30D volume of token B |
-| volumeUSD24 | number | USD Volume for 24H |
-| volumeUSDWeek | number | USD Volume for 7D |
-| volumeUSDMonth | number | USD Volume for 30D |
-| tvlUSD | number | Total Value Locked in USD |
-| change24 | number | 24H price change |
-| changeWeek | number | 7D price change |
-| high24 | number | 24H price high |
-| low24 | number | 24H price low |
-| priceA | number | token A price in terms of token B |
-| priceB | number | token B price in terms of token A |
+| id | number | Position id |
+| owner | string | Owner account |
+| pool | number | Pool id |
+| tickLower, tickUpper | number | Price range of the position, in ticks |
+| liquidity | string | Position liquidity |
+| feeGrowthInsideALastX64, feeGrowthInsideBLastX64 | string | Fee growth inside the range at the last update, Q64.64 |
+| inRange | boolean | Whether the current price is inside the range |
+| amountA, amountB | string | Tokens in the position now, as assets |
+| feesA, feesB | string | Fees earned and not yet collected, as assets |
+| totalValue | number | Tokens plus uncollected fees, USD |
+| totalFeesUSD | number | Uncollected fees, USD |
+| depositedUSDTotal | number | USD value of deposits minus withdrawals, valued at the time of each |
+| collectedFees | object | Fees already collected: `tokenA`, `tokenB`, `inUSD`, `lastCollectTime` |
+| pNl | number | Earned fees in USD, collected plus uncollected. Price movement of the deposit is not included |
+| closed | boolean | Whether all liquidity has been withdrawn |
+| lockedUntil | number | Unix seconds the position is locked until, or `null` |
+| isLocked | boolean | Whether the position is locked now. A locked position cannot be withdrawn |
 
+## Pool swaps
 
-## Pool Swaps
+Swaps of a pool, newest first.
 
-Retrieve swap transactions for a specific pool.
+`GET https://wax.alcor.exchange/api/v2/swap/pools/<pool_id>/swaps`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| pool_id | number | yes | Pool id, in the path |
+| from | number | no | Only swaps at or after this time, unix milliseconds |
+| to | number | no | Only swaps at or before this time, unix milliseconds |
+| sender | string | no | Only swaps sent by this account |
+| recipient | string | no | Only swaps received by this account |
+| limit | number | no | Number of swaps. Default `200` |
+| skip | number | no | Swaps to skip, for paging |
+
+**Example**
 
 ```shell
-curl "https://alcor.exchange/api/v2/swap/pools/1095/swaps"
+curl "https://wax.alcor.exchange/api/v2/swap/pools/1095/swaps?limit=1"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 [
   {
-    "_id": "6528d7e4eef91d4d098a39ef",
+    "_id": "6ad0bded29945be352deacb2",
     "pool": 1095,
-    "recipient": "jollewaxacc1",
-    "trx_id": "35b62eb272381b6482272f0022d5778e6154a29b334a87a1bda37251c6acbb2e",
-    "sender": "jollewaxacc1",
-    "sqrtPriceX64": "44952921109377512",
-    "totalUSDVolume": 0.9253599213188954,
-    "tokenA": 17.60908915,
-    "tokenB": -1.0907,
-    "time": "2023-05-06T08:59:51.000Z"
-  },
+    "trx_id": "096bbefb42fe7e43580c68d05c02b95682b5c722b1fd01fb90fadf29e0abb90e",
+    "sender": "eldrinvale12",
+    "recipient": "eldrinvale12",
+    "sqrtPriceX64": "12931342024590619",
+    "totalUSDVolume": 0.4345,
+    "tokenA": -87.80659353,
+    "tokenB": 0.4325,
+    "time": "2026-10-15T11:50:05.000Z"
+  }
 ]
 ```
 
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/swap/pools/:id/swaps`
-
-### Query Parameters
-
-| Name | Type | Description | Required |
-| --- | --- | --- | --- |
-| from | timestamp | Start time from which to query swaps (milliseconds) | false |
-| to | timestamp | End time till which to query swaps (milliseconds) | false |
-| recipient | string | Account that received the swap | false |
-| sender | string | Account that sent the swap | false |
-| limit | integer | Number of swaps to retrieve | false |
-| skip | integer | Number of swaps to skip | false |
-
-### Response
+**Response fields**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| pool | number | Pool ID |
-| recipient | string | Account that received the swap |
-| trx_id | string | Transaction ID |
+| _id | string | Record id |
+| pool | number | Pool id |
+| trx_id | string | Transaction id |
 | sender | string | Account that sent the swap |
-| sqrtPriceX64 | string | Sqrt price X64 |
-| totalUSDVolume | number | Total USD volume |
-| tokenA | object | Token A amount |
-| tokenB | object | Token B amount |
-| time | timestamp | Time of the swap (milliseconds) |
+| recipient | string | Account that received the output |
+| sqrtPriceX64 | string | Pool price after the swap, Q64.64 square root |
+| totalUSDVolume | number | Swap value, USD |
+| tokenA, tokenB | number | Token amounts, signed from the pool's side: positive went into the pool, negative came out |
+| time | string | Swap time, ISO 8601 |
 
+## Pool candles
 
+OHLCV candles of a pool, oldest first. Periods without swaps are filled with flat candles at the last price.
 
-## Pool Positions
+`GET https://wax.alcor.exchange/api/v2/swap/pools/<pool_id>/candles`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| pool_id | number | yes | Pool id, in the path |
+| resolution | string | yes | Candle size: `1`, `5`, `15`, `30`, `60`, `240` (minutes), `1D`, `1W`, `1M` |
+| from | number | no | Start time, unix milliseconds. Used together with `to` |
+| to | number | no | End time, unix milliseconds |
+| limit | number | no | Most candles to return |
+| reverse | boolean | no | `true` gives prices of token B in token A. Default: token A in token B |
+| volumeField | string | no | `volumeUSD` (default), `volumeA` or `volumeB` |
+
+**Example**
+
 ```shell
-curl https://alcor.exchange/api/v2/swap/pools/0/positions
+curl "https://wax.alcor.exchange/api/v2/swap/pools/1095/candles?resolution=60&from=1792057410000&to=1792068210000"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 [
-  {
-    "id": 0,
-    "owner": ".11dm.wam",
-    "tickLower": -443580,
-    "tickUpper": 443580,
-    "liquidity": 843101,
-    "feeGrowthInsideALastX64": "0",
-    "feeGrowthInsideBLastX64": "0",
-    "feesA": 0,
-    "feesB": 0,
-    "pool": 0,
-    "amountA": "1.6781 TLM",
-    "amountB": "0.42356913 WAX"
-  },
-  ...
+  { "time": 1792058400000, "open": "0.00489139", "high": "0.00493338", "low": "0.00488846", "close": "0.00489139", "volume": 3.6053 },
+  { "time": 1792062000000, "open": "0.00489139", "high": "0.00491414", "low": "0.00489288", "close": "0.00491414", "volume": 1.4758 }
 ]
 ```
 
-API for getting all positions of pool
+**Response fields**
 
-### HTTP Request
-`GET https://alcor.exchange/api/v2/swap/pools/<:pool_id>/positions`
-
-
-**Query params:**
-
-Pool id should be provided inside the URL structure
-
-| Name | Type | Description | required |
-| --- | --- | --- | --- |
-| pool_id | number | Pool ID | true |
-
-### Response
 | Name | Type | Description |
 | --- | --- | --- |
-| id | number | position id |
-| owner | string | position owner account |
-| tickLower | number | lower tick of position |
-| tickUpper | number | upper tick of position |
-| liquidity | number | position liquidity amount |
-| feeGrowthInsideALastX64 | number | token A fees grow value |
-| feeGrowthInsideBLastX64 | number | token B fees grow value |
-| feesA | number | token A accumulated fees |
-| feesB | number | token B accumulated fees |
-| pool | number | pool ID |
-| amountA | asset | Positoin token A amount |
-| amountB | asset | Positoin token B amount |
+| time | number | Candle start, unix milliseconds |
+| open, high, low, close | string | Prices |
+| volume | number | Volume in the unit chosen by `volumeField` |
 
-## Output & Route calculation
+To get candles by token pair rather than by pool, use
+`GET https://wax.alcor.exchange/api/v2/swap/candles?tokenA=<token_id>&tokenB=<token_id>` with the same parameters. It
+picks the pair's main pool (the active pool with the highest TVL), prices token A in token B as asked, and answers
+`{ "candles": [...], "poolId": 1095, "isReversed": false }`, where `isReversed` tells that the pool holds the tokens in
+the other order.
+
+## Swap route
+
+The best way to swap one token for another through the AMM pools, ready to be sent as transfers to `swap.alcor`.
+
+`GET https://wax.alcor.exchange/api/v2/swapRouter/getRoute`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| trade_type | string | yes | `EXACT_INPUT`: `amount` is what you send. `EXACT_OUTPUT`: `amount` is what you receive |
+| input | string | yes | Token id you send |
+| output | string | yes | Token id you receive |
+| amount | string | yes | Amount in token units, e.g. `1.5`. No more decimals than the token has |
+| slippage | number | no | Tolerance in percent. Default `0.3` |
+| receiver | string | no | Account written into the memos. Default is the literal `<receiver>`, to replace before signing |
+| maxHops | number | no | Most pools per route. Default and maximum `3` |
+| v2 | any | no | Any non-empty value splits the trade across up to 5 routes. Without it, one route |
+| includePoolDetails | boolean | no | `true` adds `pools`: fee and tokens of every pool used |
+
+**Example**
+
 ```shell
-curl "https://alcor.exchange/api/v2/swapRouter/getRoute?trade_type=EXACT_INPUT&input=wax-eosio.token&output=tlm-alien.worlds&amount=1.00000000&slippage=0.30&receiver=alcordexfund&maxHops=2"
+curl "https://wax.alcor.exchange/api/v2/swapRouter/getRoute?trade_type=EXACT_INPUT&input=wax-eosio.token&output=tlm-alien.worlds&amount=10&slippage=0.3&receiver=alcordexfund&maxHops=2"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 {
-    "executionPrice": {
-        "denominator": "100000000",
-        "numerator": "39285"
-    },
-    "input": "1.00000000",
-    "maxSent": "1.00000000",
-    "memo": "swapexactin#0#alcordexfund#3.9167 TLM@alien.worlds#0",
-    "minReceived": "3.9167",
-    "output": "3.9285",
-    "priceImpact": "0.3",
-    "route": [
-        0
-    ]
+  "route": [12501, 12406],
+  "memo": "swapexactin#12501,12406#alcordexfund#39.7961 TLM@alien.worlds#0",
+  "swaps": [
+    {
+      "input": "10.00000000 WAX",
+      "route": [12501, 12406],
+      "output": "39.9155 TLM",
+      "percent": 100,
+      "memo": "swapexactin#12501,12406#alcordexfund#39.7961 TLM@alien.worlds#0",
+      "maxSent": "10.00000000",
+      "minReceived": "39.7961"
+    }
+  ],
+  "input": "10.00000000",
+  "output": "39.9155",
+  "minReceived": "39.7961",
+  "maxSent": "10.00000000",
+  "priceImpact": "0.31",
+  "executionPrice": { "numerator": "399155", "denominator": "1000000000" }
 }
 ```
 
-Finding the best route for given input/output
+**Response fields**
 
-To calculate output amount based on input amount use trade_type <b>EXACT_INPUT</b>
-To calculate input amount based on output amount use trade_type <b>EXACT_OUTPUT</b>
-
-<Callout type="info">
-
-EXACT_OUTPUT Will charge + 0.3% more imput amount for slippage, and will refund it within swap transaction.
-
-</Callout>
-
-
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/swapRouter/getRoute`
-
-**Query params:**
-
-| Name | Type | Description | required |
-| --- | --- | --- | --- |
-| trade_type | string | EXACT_OUTPUT or EXACT_INPUT | true |
-| input | string | Input token ID | true |
-| output | string | Output token ID | true |
-| amount | number | Amount of input/output(depends on trade_type) | true |
-| slippage | number | permissible slippage | false |
-| receiver | string | Account to receive output | false |
-| maxHops | number | Maximum number of intermediate pools for exchange route | false |
-
-### Response
 | Name | Type | Description |
 | --- | --- | --- |
-| executionPrice | object | Execution price in format for Price object from Swap-SDK. |
-| input | number | Input Amount |
-| output | number | Output Amount |
-| maxSent | number | Amount(with slippage included) to get exact output |
-| memo | string | Memo for the transfer action |
-| minReceived | number | Amount to receive with max slippage |
-| priceImpact | number | Swap price impact percent |
-| route | array[number] | Sequence of the pools id's that swap will use |
+| swaps | array | One transfer per split, see below |
+| input | string | Total amount sent |
+| output | string | Total amount expected |
+| minReceived | string | Exact input: the least the trade may return, after slippage |
+| maxSent | string | Exact output: the most the trade may take, after slippage |
+| priceImpact | string | Percent below the pools' spot prices |
+| executionPrice | object | Raw output per raw input, as a fraction |
+| route, memo | array, string | Pools and memo of the first swap only. Kept for old clients; use `swaps` |
+| pools | object | Only with `includePoolDetails=true`: pool id to `fee`, `tokenA`, `tokenB` |
+
+**Each swap**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| input | string | Asset to transfer |
+| output | string | Asset this swap is expected to return |
+| percent | number | Share of the trade |
+| route | array | Pool ids the swap goes through |
+| memo | string | Memo for the transfer |
+| minReceived, maxSent | string | This swap's bounds |
+
+To swap, put one `transfer` of the input token per element of `swaps` into a single transaction: `to: "swap.alcor"`,
+`quantity: swap.input`, `memo: swap.memo` with `<receiver>` replaced by the user's account.
+
+Errors are plain text: HTTP 403 with `Invalid request`, `Invalid amount`, `Invalid slippage` or `Invalid input/output`,
+and HTTP 404 with `No trading route available. Try again in a few moments.`
+
+## Swap route v3
+
+Routes through the AMM pools and the spot order books together. Answers with the transfers to send and, given the
+user's account, the actions ready to sign. Use it for new integrations.
+
+`GET https://wax.alcor.exchange/api/v3/swapRouter/getRoute`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| tradeType | string | yes | `exactIn`: `amount` is what you send. `exactOut`: `amount` is what you receive (AMM only) |
+| input | string | yes | Token id you send |
+| output | string | yes | Token id you receive |
+| amount | string | yes | Amount in token units, e.g. `1.5` |
+| slippage | number | no | Tolerance in percent. Default `0.3` |
+| account | string | no | The user's account: receiver of every swap and signer of `actions`. Without it the memos carry `<account>` and there are no `actions` |
+| permission | string | no | Permission for `actions`. Default `active` |
+| maxHops | number | no | Pools per AMM route, `1` to `3`. Default `3` |
+| orderbook | boolean | no | `false` keeps the trade on the AMM. Default `true` |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v3/swapRouter/getRoute?tradeType=exactIn&input=wax-eosio.token&output=tlm-alien.worlds&amount=10&slippage=0.3&account=alcordexfund"
+```
+
+```json
+{
+  "tradeType": "exactIn",
+  "input": { "id": "wax-eosio.token", "symbol": "WAX", "contract": "eosio.token", "decimals": 8, "amount": "10.00000000" },
+  "output": { "id": "tlm-alien.worlds", "symbol": "TLM", "contract": "alien.worlds", "decimals": 4, "amount": "39.9242" },
+  "minReceived": "39.8047",
+  "maxSent": "10.00000000",
+  "priceImpact": "0.3",
+  "routes": [
+    {
+      "percent": 61,
+      "input": "6.10000000",
+      "output": "24.3483",
+      "hops": [
+        { "venue": "amm", "pool": 12501, "input": "wax-eosio.token", "output": "usdt-wrap.alcor", "fee": "0.01" },
+        { "venue": "amm", "pool": 12406, "input": "usdt-wrap.alcor", "output": "tlm-alien.worlds", "fee": "0.3" }
+      ]
+    }
+  ],
+  "transfers": [
+    {
+      "tokenContract": "eosio.token",
+      "to": "swap.alcor",
+      "quantity": "6.10000000 WAX",
+      "memo": "swapexactin#12501,12406#alcordexfund#24.2754 TLM@alien.worlds#0"
+    }
+  ],
+  "actions": [
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "authorization": [{ "actor": "alcordexfund", "permission": "active" }],
+      "data": {
+        "from": "alcordexfund",
+        "to": "swap.alcor",
+        "quantity": "6.10000000 WAX",
+        "memo": "swapexactin#12501,12406#alcordexfund#24.2754 TLM@alien.worlds#0"
+      }
+    }
+  ]
+}
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| tradeType | string | As requested |
+| input, output | object | Token metadata and the total `amount` sent or expected |
+| minReceived | string | Exact input: the least the trade may return |
+| maxSent | string | Exact output: the most the trade may take |
+| priceImpact | string | Percent below the venues' spot prices |
+| routes | array | Paths the input takes: `percent`, `input`, `output` and `hops`. Each hop has `venue` (`amm` or `orderbook`), `pool` or `market`, `input` and `output` token ids, `fee` in percent |
+| transfers | array | What to send, in order: `tokenContract`, `to`, `quantity`, `memo` |
+| actions | array | Only with `account`: the transfers as actions, ready to sign |
+
+Sign `actions` as they are, in order, in one transaction. An AMM leg is a transfer to `swap.alcor`. An order book leg is
+a transfer to the DEX contract with the memo `<minimum> SYM@contract|min`: a market order that reverts the whole
+transaction if it pays less than the minimum.
+
+Errors are JSON, `{"error": "<message>"}`: HTTP 400 for a bad parameter (`Invalid tradeType`, `Unknown token`,
+`Invalid amount`, `Invalid slippage`, `Invalid maxHops`, `Invalid orderbook`, `Input and output are the same token`),
+HTTP 404 for `No route`.

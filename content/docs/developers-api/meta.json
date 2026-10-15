@@ -2,10 +2,9 @@
   "title": "Smart Contracts",
   "pages": [
     "amm-swap-contract-api",
-    "market-creation",
     "contract-actions",
     "contract-tables",
-    "api",
+    "market-creation",
     "public-alcor-data-access"
   ]
 }

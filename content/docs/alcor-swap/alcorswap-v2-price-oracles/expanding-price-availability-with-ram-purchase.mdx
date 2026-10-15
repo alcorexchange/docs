@@ -1,20 +1,33 @@
 ---
 title: "Expanding Price Availability with RAM Purchase"
+description: "Pay for RAM to make a pool keep more oracle observations."
 ---
 
-To extend the availability of historical price data within the Alcor Price Oracle, users can purchase additional RAM. The cost of purchasing RAM is determined by the current market price on the EOSIO blockchain, which can vary based on supply and demand. To calculate the RAM required for the desired data availability period, users can use the following formula: 
+A pool keeps only as many observations as its `maxObservationNum` (in the pool's row of the `pools` table, under `currSlot`). A new pool keeps one. Anyone can raise this number by paying for the RAM the extra observations need.
 
-| RAM Required (in bytes) = Number of Observations \* Size of Each Observation |
-| --- |
+## How many observations you need
 
-For instance, if a user wishes to have the price data available for 3 hours and each observation requires 160 bytes of RAM, they would need to calculate: 
+Each observation takes 160 bytes of RAM. At most one observation is written per second, and only when the price tick or the in-range liquidity changes. So `N` observations always cover at least the last `N` seconds of trading, and usually much more in quiet pools.
 
-| \<p>RAM Required = 160 bytes \* 3 hours \* 60 minutes \* 60 seconds = 1.728 MB.<br /><br />WAX Token = 0.4073 \* 1728 = 703.81440000 WAX (with RAM price is 0.4073 WAX per KB)\</p> |
-| --- |
+To be sure of a full window regardless of activity, buy one observation per second of the window:
 
-Once users have determined the required RAM size, they can proceed with the RAM purchase process by following:
+```
+RAM (bytes) = window in seconds × 160
 
-| Transfer WAX to the swap.alcor account with the memo: "addoraclerow#poolId". |
-| --- |
+30 minutes: 1,800 × 160 = 288,000 bytes ≈ 288 KB
+3 hours:   10,800 × 160 = 1,728,000 bytes ≈ 1.7 MB
+```
 
-Additionally, users can easily track the number of observations they have purchased by reviewing their [**transaction history**](https://wax.bloks.io/transaction/8430511460ddd7232cd35461fe0088966e3d71346cf5f860dee168561dca0dba)
+Multiply by the current RAM price of the chain to get the cost. RAM prices change, so check them before you send.
+
+## Buying observations
+
+Transfer the chain's core token (for example WAX on WAX) to `swap.alcor` with the memo:
+
+```
+addoraclerow#<poolId>
+```
+
+The pool must be active. The contract buys RAM with the whole amount, divides the bytes it received by 160, adds that many observations to the pool's `maxObservationNum` and logs the result with a `logaddoracle` action (`poolId`, `payer`, `rows`). The RAM purchase includes the chain's RAM fee.
+
+Check the pool's `maxObservationNum`, or the `logaddoracle` action in your transaction, to see how many observations you added. New slots fill up as trading continues. Until they do, the history covers only the time since you bought them.

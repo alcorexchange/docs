@@ -1,8 +1,14 @@
 ---
-title: "Alcor USDT"
-description: "USDT on WAX provided by Alcor"
+title: "USDT on WAX"
+description: "USDT@wrap.alcor from the Alcor bridge, and the legacy USDT@usdt.alcor"
 ---
 
-Try it on [Alcor Bridge UI](https://alcor.exchange/bridge)!
+## USDT@wrap.alcor
 
-WAX Network support USDT token, using [IBC technology](https://ibc-docs.uxnetwork.io/). Original USDT are bridged to WAX using **ibc.alcor** bridge contract. and **usdt.alcor** contract for WAX wrapped USDT token. IBC is a secure, decentralized, audited cryptographic protocol that allows you to transfer tokens without having to trust any party.
+The standard USDT on WAX is `USDT@wrap.alcor`, brought to WAX by the Alcor bridge. USDT deposited from Ethereum or BNB Smart Chain arrives as the same token whichever chain it came from, and can be withdrawn to any chain the bridge supports.
+
+To deposit or withdraw, use the [Alcor Bridge](https://alcor.exchange/v/wax/bridge) at `/v/wax/bridge`. A deposit from an EVM chain takes one transaction in your EVM wallet; the tokens are delivered to your WAX account with nothing to claim. For integration details see the [Bridge API](/api/bridge).
+
+## USDT@usdt.alcor (legacy)
+
+`USDT@usdt.alcor` is the earlier USDT on WAX, bridged from EOS through IBC (`ibc.alcor`). It is now legacy: switch to `USDT@wrap.alcor`. The two swap 1:1 on Alcor in one transaction (order book market 999), and the Swap page offers the replacement when you select the legacy token.

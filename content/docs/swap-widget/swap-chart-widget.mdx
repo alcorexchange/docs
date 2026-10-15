@@ -1,13 +1,21 @@
 ---
 title: "Swap Chart Widget"
+description: "Embed the price chart of a swap pair"
 ---
 
-Widget are available by url: /chart-widget\
-\
-it receives required parameters:\
-\
-`input: token id of input`\
-`output: token id of output`
+The chart widget shows the price chart of a token pair. It lives at `/chart-widget` on the same hosts as the [Swap Widget](/swap-widget), for example `https://wax.alcor.exchange/chart-widget`.
 
-\
-example: /chart-widget?output=TLM-alien.worlds\&input=WAX-eosio.token
+Required query parameters, as token ids in `symbol-contract` format:
+
+* `input` — the input token
+* `output` — the output token
+
+Example:
+
+```html
+<iframe
+  src="https://wax.alcor.exchange/chart-widget?input=wax-eosio.token&output=tlm-alien.worlds"
+  width="600"
+  height="400"
+></iframe>
+```

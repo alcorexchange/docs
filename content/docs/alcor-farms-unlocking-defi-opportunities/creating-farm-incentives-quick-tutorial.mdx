@@ -1,13 +1,41 @@
 ---
-title: "Creating Farm Incentives - Quick Tutorial"
+title: "Creating a Farm"
+description: "How to create a farm (incentive) for an Alcor Swap pool."
 ---
 
-Ready to boost liquidity and earn rewards on Alcor Farms? Here's a quick guide on how to create farm incentives:
+A farm pays a reward token to the staked positions of one pool over a fixed duration. The pool must already exist.
 
-**Step 1: Access the Farm** Visit \<https://wax.alcor.exchange/farm/create> to access the Farm Incentive Creation interface.
+## Who can create a farm
 
-**Step 2: Ensure Token Availability** Make sure you have access to one of the tokens contract in the swap pair you intend to use for the farm. This is crucial for creating a seamless experience.
+- The **issuer of either token of the pool** (the account that issued the token in its token contract) creates farms for free.
+- **Anyone else** must first pay a farm creation fee. The fee is set per chain in the `incentivefee` table of `swap.alcor` and can change, so check it before you pay.
 
-**Step 3: Token Whitelisting** Currently, only whitelisted tokens are eligible to be added as rewards in the farm. If your desired token is not whitelisted, don't worry! You can apply for its inclusion by reaching out to us in the Telegram chat at [@alcorexchange](https://t.me/alcorexchange).
+Any token can be used as a reward.
 
-**Note:** For any assistance or queries during the process, our Telegram and Discord chat are here to help. Happy farming! 🌾💰
+## Using the farm creation page
+
+The farm creation page is on the classic interface of each chain: `wax.alcor.exchange/farm/create` (or `proton.`, `eos.`, `telos.alcor.exchange`). It is meant for token issuers.
+
+1. Connect the issuer account.
+2. Select the base and quote token of the pool, then its fee tier.
+3. Add one or more rewards: the reward token and the total amount to distribute.
+4. Select the duration: 1, 7, 30, 60, 90, 180, 240 or 360 days. The page shows the resulting daily reward.
+5. Click **Create Farm** and sign the transaction.
+
+## Creating a farm directly with the contract
+
+All actions go to `swap.alcor` and can be sent in one transaction:
+
+1. **Creation fee** (not needed for token issuers): transfer exactly the amount in the `incentivefee` table to `swap.alcor` with the memo `activeincent`. The prepaid fee is used by your next farm.
+2. **Create the farm**: call `newincentive` with:
+   - `creator`: your account;
+   - `poolId`: the pool to reward;
+   - `rewardToken`: the reward token as an extended asset with a zero amount, for example `{"quantity": "0.0000 TLM", "contract": "alien.worlds"}`;
+   - `duration`: in seconds, one of `86400`, `604800`, `2592000`, `5184000`, `7776000`, `15552000`, `20736000`, `31104000` (1 to 360 days).
+3. **Fund the farm**: transfer the reward tokens to `swap.alcor` with the memo `incentreward#<incentiveId>`. The farm starts distributing when it receives rewards.
+
+## Adding rewards later
+
+Only the farm's creator can add rewards, with another `incentreward#<incentiveId>` transfer. The new amount and whatever was still undistributed are spread over a fresh full duration starting from that moment.
+
+Questions: [Alcor Telegram](https://t.me/alcorexchange).

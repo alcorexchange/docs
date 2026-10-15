@@ -1,9 +1,0 @@
-{
-  "title": "Legacy API (v1)",
-  "pages": [
-    "markets-api",
-    "account",
-    "websocket",
-    "node-api"
-  ]
-}

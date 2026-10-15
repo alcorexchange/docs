@@ -1,13 +1,25 @@
 ---
 title: "Locking Liquidity"
+description: "Lock a liquidity position until a date or permanently, so its liquidity cannot be withdrawn."
 ---
 
-Sometimes, users might need to lock their liquidity positions permanently. For example, this might be part of the mechanics of a meme token. By doing this, everyone can be assured that the creator of the token will not remove liquidity from the pool and scam users.
+A locked position shows everyone that its liquidity cannot be pulled from the pool. Token teams use this, for example, to prove that the launch liquidity of a new token stays in place.
 
-#### How to Lock Liquidity:
+There are two kinds of lock. Both are on the position's page (`alcor.exchange/v/<chain>/swap/positions/<id>`), below the price range, and only the owner sees them.
 
-Open your position and click on the "Transfer Position" button.
+## Lock until a date
 
-![](/images/QNzcA4a6PO8EChywnr95-IMAGE-2024-06-09-17-06-17.jpg)
+Click **Lock until a date** and pick 1W, 1M, 3M, 6M, 1Y or a custom date, then sign the transaction. This calls the contract's `lockpos` action.
 
-Enter `eosio.null` as the receiver of the position. The `eosio.null` account functions as a "burn" account, meaning nobody has access to it. By transferring ownership to `eosio.null`, the position will be permanently locked, preventing any future transfers, fee claims, or removal of liquidity.
+While the lock is active:
+
+- liquidity cannot be removed and the position cannot be transferred;
+- fees can still be collected, and the position can still be staked in farms and claim farm rewards.
+
+A lock can be extended (**Extend lock**) but never shortened. Once the date passes, the position works normally again.
+
+## Lock permanently
+
+Click **Lock liquidity permanently** and confirm. The position is transferred to `eosio.null`, an account nobody controls. This cannot be undone: from then on nobody can remove the liquidity, collect its fees or claim farm rewards for it.
+
+Unstake the position from all farms before you lock it permanently. The option is not available while the position is staked or time-locked.

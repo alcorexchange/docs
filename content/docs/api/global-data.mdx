@@ -1,69 +1,147 @@
 ---
 title: "Global Data"
+description: "Exchange-wide TVL, volume, fees and activity."
 ---
 
+Exchange-wide figures for one chain, built from hourly snapshots. All values are in USD.
+
 ## Stats
-Returns global data on TVL, volumes, number of trading pairs, and so on
 
-<Callout type="info">
+TVL at the latest snapshot, and volumes, fees and activity summed over the last day, week or month.
 
-All volume values are displayed in USD
+`GET https://wax.alcor.exchange/api/v2/analytics/global`
 
-</Callout>
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| resolution | string | no | Period to sum over: `1D`, `1W` or `1M`. Default `1D` |
+
+**Example**
 
 ```shell
-curl "https://alcor.exchange/api/v2/analytics/global"
+curl "https://wax.alcor.exchange/api/v2/analytics/global?resolution=1W"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 {
   "_id": "wax",
-  "totalValueLocked": 2240718.758763486,
-  "swapValueLocked": 943995.9929317994,
-  "spotValueLocked": 1296722.7658316866,
-  "swapTradingVolume": 344377.66920321307,
-  "spotTradingVolume": 26406.316737205285,
-  "swapFees": 1063.6217236406346,
-  "spotFees": 409.7303415365396,
-  "dailyActiveUsers": 4063,
-  "swapTransactions": 26347,
-  "spotTransactions": 3163,
-  "totalLiquidityPools": 1483,
-  "totalSpotPairs": 808,
-  "totalTradingVolume": 370783.9859404183
+  "totalValueLocked": 2207753.66,
+  "swapValueLocked": 2146988.54,
+  "spotValueLocked": 60289.68,
+  "swapTradingVolume": 21791.28,
+  "spotTradingVolume": 933.46,
+  "swapFees": 49.78,
+  "spotFees": 16.99,
+  "dailyActiveUsers": 426.52,
+  "swapTransactions": 152064,
+  "spotTransactions": 1157,
+  "totalLiquidityPools": 12783,
+  "totalSpotPairs": 978,
+  "totalTradingVolume": 22724.75
 }
 ```
 
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/analytics/global`
-
-**Query params:**
-
-| Name | Type | Description | Default |
-| --- | --- | --- | --- |
-| resolution | string | Accumulate results over a certain period of time | 1D |
-
-**Supported resolutions:**
-
-`1D, 1W, 1M`
-
-### Response
+**Response fields**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| totalValueLocked | number | Exchange TVL |
-| swapValueLocked | number | Total AMM Value locked in USD |
-| spotValueLocked | number | Total spot value locked in open orders |
-| swapTradingVolume | number | AMM trading volume |
-| spotTradingVolume | number | Spot trading volume |
-| swapFees | number | AMM fees |
-| spotFees | number | Spot fees |
-| dailyActiveUsers | number | avg Daily active users |
-| swapTransactions | number | Total AMM swaps for period(resolution) |
-| spotTransactions | number | Total spot trades for period(resolution) |
-| totalLiquidityPools | number | Count of AMM pairs |
-| totalSpotPairs | number | Count of spot pairs |
-| totalTradingVolume | number | Total trading volume for given period(resolution) |
+| _id | string | Chain |
+| totalValueLocked | number | Total value locked: AMM pools plus open spot orders |
+| swapValueLocked | number | Value locked in AMM pools |
+| spotValueLocked | number | Value locked in open spot orders |
+| swapTradingVolume | number | AMM volume over the period |
+| spotTradingVolume | number | Spot volume over the period |
+| totalTradingVolume | number | AMM plus spot volume |
+| swapFees | number | AMM fees over the period |
+| spotFees | number | Spot fees over the period |
+| dailyActiveUsers | number | Average daily active users over the period |
+| swapTransactions | number | AMM swaps over the period |
+| spotTransactions | number | Spot trades over the period |
+| totalLiquidityPools | number | Number of AMM pools |
+| totalSpotPairs | number | Number of spot markets |
+
+## Volume
+
+Volume and fees over an exact time range. Made for daily volume reports: ask for one UTC day at a time.
+
+`GET https://wax.alcor.exchange/api/v2/analytics/volume`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| start_time | number | yes | Range start, unix seconds |
+| end_time | number | yes | Range end, unix seconds. Must be greater than `start_time` |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v2/analytics/volume?start_time=1791936000&end_time=1792022400"
+```
+
+```json
+{
+  "start_time": 1791936000,
+  "end_time": 1792022400,
+  "volume": 11183.93,
+  "fees": 23.49,
+  "swapVolume": 11031.92,
+  "spotVolume": 152.0,
+  "swapFees": 20.72,
+  "spotFees": 2.76,
+  "buckets": 24
+}
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| start_time, end_time | number | The range asked for |
+| volume | number | AMM plus spot volume |
+| fees | number | AMM plus spot fees |
+| swapVolume, spotVolume | number | Volume per venue |
+| swapFees, spotFees | number | Fees per venue |
+| buckets | number | Hourly snapshots in the range. 24 for a full day; fewer means the range is not fully covered |
+
+## Charts
+
+The snapshots behind [Stats](#stats), as a time series, oldest first.
+
+`GET https://wax.alcor.exchange/api/v2/analytics/charts`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| resolution | string | yes | Range: `1D`, `1W`, `1M` (one point per hourly snapshot) or `ALL` (one point per day) |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v2/analytics/charts?resolution=1D"
+```
+
+```json
+[
+  {
+    "_id": "2026-10-14T12:59:02.400Z",
+    "totalValueLocked": 2218094.70,
+    "swapValueLocked": 2156358.47,
+    "spotValueLocked": 61249.61,
+    "swapTradingVolume": 710.27,
+    "spotTradingVolume": 1.05,
+    "swapFees": 0.81,
+    "spotFees": 0.02,
+    "dailyActiveUsers": 399,
+    "swapTransactions": 3860,
+    "spotTransactions": 25,
+    "totalLiquidityPools": 12780,
+    "totalSpotPairs": 978
+  }
+]
+```
+
+Each point has the fields of [Stats](#stats), with `_id` holding the point's time. Volumes, fees and transaction counts
+are per point.

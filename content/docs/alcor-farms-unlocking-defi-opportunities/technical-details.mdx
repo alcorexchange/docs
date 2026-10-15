@@ -1,20 +1,35 @@
 ---
-title: "Technical details"
+title: "Technical Details"
+description: "How farms work inside the swap.alcor contract."
 ---
 
-**Onchain Farming:** Alcor Farming operates entirely on-chain, leveraging a reward calculation algorithm without relying on any backend services. This ensures transparency and security throughout the farming process.
+Farms are part of the `swap.alcor` contract. Rewards are calculated on-chain, without a backend.
 
-**Claiming Rewards:** Users have the flexibility to claim accumulated rewards at any time. Additionally, they can easily finish or resume their participation in farming as per their preferences.
+## Tables
 
-**Farm Parameters:** Each farm is characterized by two main parameters:
+- `incentives`: one row per farm: creator, pool, reward token and amount, duration, end time, reward rate, total staking weight and number of stakes.
+- `stakingpos`: for each staked position, the list of farms it is staked in.
+- `stakes`: scoped by farm ID; one row per staked position, with its staking weight and rewards earned.
+- `incentivefee`: the farm creation fee for accounts that are not token issuers.
 
-1. **Reward Amount:** Calculated proportionally to the liquidity value in the position, offering fair compensation for your contribution.
-2. **Duration:** Specifies the timeframe during which users can participate in farming and earn rewards.
+## Actions
 
-**Key Tables in swap.alcor Contract:** Understanding the backend, there are three essential tables within the swap.alcor contract related to farming:
+| Action | What it does |
+| --- | --- |
+| `newincentive` | Creates a farm for a pool. |
+| `stake(incentiveId, posId)` | Stakes a position in a farm. |
+| `stakelastpos(incentiveId)` | Stakes the newest position of the farm's pool; used to open and stake a position in one transaction. |
+| `getreward(incentiveId, posId)` | Pays out the rewards earned so far. |
+| `unstake(incentiveId, posId)` | Unstakes the position and pays out its rewards. |
 
-1. **Incentives:** Contains details about reward incentives.
-2. **Stakingpos:** Maps positions to corresponding arrays of incentives, illustrating the staked positions.
-3. **Stakes:** Scoped by incentive ID, this table holds the state of farming positions.
+Rewards are paid from the `reward.alcor` account, which holds the farms' reward tokens.
 
-**Whitelisting Tokens:** To enhance the farming experience, Alcor maintains a whitelist containing available tokens that users can earn as rewards.
+## Reward calculation
+
+The calculation follows the Synthetix staking-rewards model:
+
+- **Reward rate** = reward amount / duration, paid per second until the end time.
+- **Staking weight** of a position = √(amount A × amount B), from the token amounts the position holds when it is staked. It is recalculated when liquidity is added to or removed from the position. An out-of-range position holds one token only, has zero weight and cannot be staked.
+- Each staked position earns the reward rate × its weight / the total weight of the farm, for every second it is staked.
+- When the creator adds rewards, the new amount plus the undistributed remainder is spread over a new full duration from that moment.
+- A position can be staked in at most 15 farms at once.

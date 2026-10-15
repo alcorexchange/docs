@@ -1,11 +1,22 @@
 ---
 title: "Withdrawal process"
+description: "Getting WAX back for LSW: delayed unstake or instant swap."
 ---
 
-![](/images/Wxg0cnWI4bG2FPpKuJbL-image.png)
+On the **Unstake** tab of `alcor.exchange/v/wax/staking` you choose one of two methods.
 
-Users can choose to withdraw their WAX on Alcor which involves the 3-day unbonding time mandated by WAX, or swap their LSW for WAX on Alcor or other listed DEXes for instant withdrawal.
+## Delayed
 
-There are currently no fees involved for Liquid Staked WAX. 
+You get WAX at the [exchange rate](/lsw-liquid-staked-wax/exchange-rate), with no fee.
 
-<br />
+1. Your LSW is sent to `liquid.alcor` with the memo `withdraw`. The contract burns it and records a withdrawal request for the WAX amount at the current rate.
+2. The contract unstakes WAX from CPU in batches. WAX's unstaking period is 3 days, and a new batch starts only after the previous one finishes, so a withdrawal can take up to about 6 days.
+3. Once the contract has the WAX, the withdrawal is paid out to your account automatically. Pending requests are listed on the staking page until then. If the payment cannot be sent to your account automatically, it is moved to the contract's `claims` table, and you collect it by calling the `claim` action of `liquid.alcor` with your account name.
+
+The WAX amount is fixed when you request the withdrawal and does not earn rewards while it waits.
+
+## Instant
+
+Your LSW is swapped for WAX on Alcor Swap in one transaction. You get WAX immediately, at the market price of the pools on the route, which can be below the exchange rate. The page shows the expected amount and the price impact before you sign.
+
+You can also sell LSW on any other market that lists it.

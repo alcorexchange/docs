@@ -1,0 +1,24 @@
+---
+title: "Providing Liquidity"
+description: "How to open a liquidity position on Alcor Swap."
+---
+
+New positions are opened at `alcor.exchange/v/<chain>/swap/positions/new` (the **Pool** tab, then the button for a new position). `<chain>` is `wax`, `xpr`, `vaulta` (EOS) or `telos`.
+
+## Steps
+
+1. **Select Pool**: pick the two tokens.
+2. **Fee Tier**: pick 0.01%, 0.05%, 0.3% or 1%. Each tier shows its share of the pair's TVL, or **No pool** if that pool does not exist yet. See [fee tiers](/alcor-swap/introduction#fee-tiers).
+3. **Set Starting Price** (new pools only): if you are the first to create this pool, enter its starting price. The app suggests a **Recommended price** you can click to use.
+4. **Price range**: choose a preset or enter **Min Price** and **Max Price**, or drag the range on the chart. See [Ranges](/alcor-swap/ranges-everything-you-need-to-know).
+5. **Deposit**: enter the amount of one token; the app calculates the other from the range and the current price. If the range is entirely above or below the current price, the position takes only one token.
+6. **Stake into farm**: shown only when the pool has running [farms](/alcor-farms-unlocking-defi-opportunities). When it is ticked, the new position is staked in those farms in the same transaction. If you untick it, the position earns only swap fees, and you can stake it later from the position page.
+7. Click **Add Liquidity** and sign the transaction.
+
+The new position appears on the [Pool page](/alcor-swap/pool-page).
+
+<Callout type="warn">
+
+Anyone can create a token and a pool for it, and a token's issuer may control its contract. Withdrawals can fail because of the token contract, and a token can be used for a rug pull. Check a token before you provide liquidity for it.
+
+</Callout>

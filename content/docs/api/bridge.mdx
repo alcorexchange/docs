@@ -23,7 +23,7 @@ Supported assets are USDC, USDT, ETH, BNB, POL, WAX, XPR and A (Vaulta). The aut
 
 ## Deposit link
 
-```shell
+```text
 https://alcor.exchange/v/wax/bridge?from=ethereum&to=wax&recipient=alice.wam&token=USDC&amount=50&partner=mygame&return_url=https://mygame.io/play
 ```
 
@@ -65,8 +65,8 @@ document.getElementById('deposit').onclick = function () {
 }
 ```
 
-```shell
-# Without the script: embed the widget yourself
+```html
+<!-- Without the script: embed the widget yourself -->
 <iframe src="https://alcor.exchange/embed/bridge?to=wax&recipient=alice.wam&token=USDC&partner=mygame&mode=inline"
         style="width:100%;max-width:480px;height:640px;border:0"></iframe>
 ```
@@ -102,7 +102,7 @@ In the popup the user's existing Alcor session and wallet connection carry over.
 
 ### Events
 
-> `onSent` receives:
+`onSent` receives:
 
 ```json
 {
@@ -121,7 +121,7 @@ In the popup the user's existing Alcor session and wallet connection carry over.
 }
 ```
 
-> `onFinished` receives:
+`onFinished` receives:
 
 ```json
 {
@@ -191,8 +191,6 @@ rest: `cp .env.example .env`, `docker compose up -d`.
 curl https://telos.alcor.exchange/api/bridge/v1/routes
 ```
 
-> The above command returns JSON structured like this:
-
 ```json
 {
   "routes": [
@@ -241,7 +239,7 @@ Every way each asset can travel right now, with its limits.
 curl https://telos.alcor.exchange/api/bridge/v1/chains
 ```
 
-> Relevant part of the response:
+Relevant part of the response:
 
 ```json
 {
@@ -287,8 +285,6 @@ currently takes. Timing is measured on recent transfers, not configured.
 curl https://telos.alcor.exchange/api/bridge/v1/hops/d:1:12
 curl "https://telos.alcor.exchange/api/bridge/v1/hops?party=alice.wam"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 {

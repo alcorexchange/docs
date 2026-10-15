@@ -1,5 +1,28 @@
 ---
 title: "USD Price"
+description: "How Alcor prices tokens in USD"
 ---
 
-To have token price showing on Alcor UI and tokens API. Token should have Pool to WAX or USDT with TVL not less then 1$.
+Alcor prices tokens on each network from its own pools and order books. A token gets a USD price when it has a pool on Alcor Swap against the network's system token or one of its stablecoins:
+
+| Network | System token | Stablecoins (priced at $1) |
+|---|---|---|
+| WAX | `WAX@eosio.token` | `USDT@wrap.alcor`, `USDC@wrap.alcor`, `USDT@usdt.alcor` |
+| XPR Network | `XPR@eosio.token` | `USDT@wrap.alcor`, `USDC@wrap.alcor`, `XUSDT@xtokens`, `XUSDC@xtokens` |
+| Vaulta (EOS) | `EOS@eosio.token` | `USDT@tethertether` |
+| Telos | `TLOS@eosio.token` | `USDT@wrap.alcor`, `USDC@wrap.alcor` |
+
+## How the price is calculated
+
+* When a token has several such pools, its price is the median of their prices, weighted by the liquidity on the system-token or stablecoin side.
+* A token that has no pool at all takes its price from the last trade in its order book market against the system token, if that trade is at most 7 days old and worth at least $10.
+
+## Price used for values
+
+The price used to value balances, positions and pools is stricter:
+
+* only pools whose system-token or stablecoin side holds at least $150 count;
+* the token must be trusted — the system token, a stablecoin, a token on Alcor's trusted list, or one with a high enough Alcor token score;
+* tokens marked as scam are always priced at $0.
+
+So the most reliable way to get a USD price shown for your token is a pool against the system token or a stablecoin with real liquidity on the paired side.

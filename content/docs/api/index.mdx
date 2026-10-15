@@ -1,73 +1,65 @@
 ---
 title: "API Reference"
+description: "Public read-only HTTP and WebSocket API of Alcor Exchange."
 ---
 
-Alcor Exchange has HTTP and WebSocket api. Which can get information on various markets, orderboos, prices, events, and charts.
-WebSocket allows streaming for orderbook updates, new deals, and account events.
+The Alcor API serves market data for the spot order book DEX and the AMM: tokens, prices, tickers, order books,
+trades, candles, pools, positions and account history, over HTTP and WebSocket. It is read-only and needs no key.
+Placing orders and swapping are blockchain transactions, signed by the user and sent to a node (see
+[Trade API](/api/trade-api) and [Swap route](/api/swap#swap-route)).
 
-Interaction with Alcor is divided into 2 types:
+## Chains and base URLs
 
-* **Interaction with the contract.**
-    * Place/Cancel order.
-    * Add/Remove LP position.
-* **Obtaining information about the markets using the Alcor API services.**
-    * Market Data
-    * Liquidity pools Data
-    * WebSocket Stream
-    * [Market API](/api/market-api): prices, depth, pools and order books for bots, with a block-by-block stream
-* **Bringing users' funds in from other chains.**
-    * [Bridge](/api/bridge): deposit link, embeddable widget and transfer status
+Each chain has its own host. The chain of a request is taken from the host name.
 
-Basic documentation can be found here: [docs.alcor.exchange](https://docs.alcor.exchange/)
-
-#### URL Structure
-HTTP API URL are separated by chains using following structute.
-The UI are following same structute as api, they are splitted by subdomains named by chain.
-
-| Chain | URL |
+| Chain | Base URL |
 | --- | --- |
-| WAX | <b>https://wax.alcor.exchange/api/v2/</b> |
-| EOS | <b>https://eos.alcor.exchange/api/v2/</b> |
-| Proton | <b>https://proton.alcor.exchange/api/v2/</b> |
-| Telos | <b>https://telos.alcor.exchange/api/v2/</b> |
+| WAX | `https://wax.alcor.exchange/api/` |
+| EOS | `https://eos.alcor.exchange/api/` |
+| Telos | `https://telos.alcor.exchange/api/` |
+| XPR Network | `https://proton.alcor.exchange/api/` |
 
+All examples use WAX; change the host for another chain. `https://alcor.exchange/api/...` redirects to WAX, so call
+the chain's host directly. An unknown chain name answers HTTP 404.
 
-<Callout type="info">
+## Conventions
 
-All timestamp's are expected to be in milliseconds
+* **Token id**: `<symbol>-<contract>` in lower case, e.g. `tlm-alien.worlds`. Any contract can issue any symbol, so the
+  contract is part of the id.
+* **Ticker id**: two token ids, base first, `<base>_<target>`, e.g. `tlm-alien.worlds_wax-eosio.token`.
+* **Time**: units differ between endpoints (unix seconds, unix milliseconds or ISO 8601 strings). Each endpoint states
+  its own.
+* **Errors**: most v2 endpoints answer errors as plain text with an HTTP status; v3 endpoints answer
+  `{"error": "<message>"}`.
+* **Rate limits**: requests are rate-limited per IP address. Over the limit, the API answers HTTP 429.
 
-</Callout>
+## Sections
 
+<Cards>
+  <Card title="Tokens" href="/api/tokens" description="Token prices, scores and logos." />
+  <Card title="Market Data" href="/api/market-data" description="Spot tickers, order books, trades and candles; the AMM ticker feed." />
+  <Card title="Swap" href="/api/swap" description="AMM pools, positions, swaps, candles and swap routes." />
+  <Card title="Market API" href="/api/market-api" description="Per-block prices, depth, pools and order books for bots, with a WebSocket stream." />
+  <Card title="Global Data" href="/api/global-data" description="Exchange-wide TVL, volume and fees." />
+  <Card title="Analytics (v3)" href="/api/analytics" description="Paged token, pool and spot market lists with TVL, volume and scores." />
+  <Card title="Account" href="/api/account" description="An account's trades, positions and swap history." />
+  <Card title="WebSocket" href="/api/websocket" description="Live trades, order books, candles and account events over Socket.IO." />
+  <Card title="On-chain Data" href="/api/onchain-data" description="Reading markets and orders from the DEX contract tables." />
+  <Card title="Trade API" href="/api/trade-api" description="Placing and cancelling spot orders with contract actions." />
+  <Card title="CPU Payer" href="/api/cpu-payer" description="Free CPU for transactions with Alcor contracts on WAX." />
+  <Card title="Bridge" href="/api/bridge" description="Deposit link, widget, status API and contracts of the Alcor bridge." />
+</Cards>
 
-<Callout type="info">
+## Contracts
 
-Alcor API can be used only for retrieve data. For interacting with blockchain(place/cancel order) use NODE API.
+Writing to Alcor means calling its contracts through any node API, with a library such as
+[Wharf](https://wharfkit.com) or [eosjs](https://github.com/EOSIO/eosjs).
 
-</Callout>
+| Chain | Spot DEX | AMM |
+| --- | --- | --- |
+| WAX | `alcordexmain` | `swap.alcor` |
+| EOS | `eostokensdex` | `swap.alcor` |
+| Telos | `eostokensdex` | `swap.alcor` |
+| XPR Network | `alcor` | `swap.alcor` |
 
-## Node API
-```javascript
-import fetch from 'node-fetch'
-import { Api, JsonRpc, RpcError, JsSignatureProvider } from 'eosjs'
-
-const rpc = new JsonRpc('https://eos.greymass.com', { fetch })
-const signatureProvider = new JsSignatureProvider(['private key of order owner'])
-const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
-```
-Alcor is DEX, so, intereations with exchange, such as placing new order or order cancel, requires work with <b>blockchain node api directly</b>.
-Examples can be found in **Trading API** section.
-
-
-Alcor support multiple EOSIO blockchains. Here is dex contract accounts across supported cahins:
-
-- WAX - alcordexmain
-- EOS - eostokensdex
-- TELOS - eostokensdex
-- Proton - alcor
-
-You can easly interacting with alcor contracts using **[EOSJS library](https://github.com/EOSIO/eosjs)**. 
-
-Alternatives:
-
-* [greymass/eosio-core](https://github.com/greymass/eosio-core)
-* [eosnetworkfoundation/mandel-eosjs](https://github.com/eosnetworkfoundation/mandel-eosjs)
+Contract actions and tables are described in [Developers](/developers-api).

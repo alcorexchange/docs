@@ -1,13 +1,24 @@
 ---
 title: "Swap Page"
+description: "Swapping tokens on Alcor and what the swap settings do."
 ---
 
-![](/images/J45qyS5vafCE4piY2YKV-image.png)
+The swap page is at `alcor.exchange/v/<chain>/swap`, where `<chain>` is `wax`, `xpr`, `vaulta` (EOS) or `telos`.
 
-The Alcor Swap swap page is where users can easily trade one EOSIO-based token for another. The page consists of two main sections: the token selection section and the swap execution section.
+## Making a swap
 
-In the token selection section, users can choose the EOSIO-based tokens they want to trade and receive from a dropdown menu. Users can also see the current price of each token and the estimated amount of the receiving token they will get based on the current exchange rate.
+1. Connect your wallet.
+2. Pick the token to sell in **Sell** and the token to get in **Buy**, then enter an amount in either field. If you type in **Buy**, the swap is calculated for that exact output.
+3. Check the quote: **Expected Output**, **Price Impact** and **Min. Received** (the least you will get at your slippage setting).
+4. Confirm and sign the transaction in your wallet. The swap executes in that transaction.
 
-In the swap execution section, users input the amount of the token they want to trade, and the amount of the token they want to receive is automatically calculated based on the current exchange rate.
+Alcor finds the route for you. A swap can pass through several Alcor Swap pools, and part of it can be filled on Alcor's order book markets.
 
-Once the user is satisfied with the inputted information, they approve the transaction on the EOSIO blockchain using their wallet, and the swap is executed right away. The user can see history of his swap in history section of pool page.
+## Swap settings
+
+The settings menu on the swap card holds:
+
+- **Slippage %**: how far the result may fall below the quote before the transaction fails. Choose Auto, 0.5%, 1% or type your own value.
+- **Max Hops**: the most pools a route may pass through (1, 2 or 3).
+- **Recalculate On Price Change**: refresh the quote when the pools on the route change.
+- **Split Into Order Book**: allow part of the swap to be filled on order book markets.

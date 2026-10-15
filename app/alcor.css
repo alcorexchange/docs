@@ -58,8 +58,48 @@
   font-size: 0.8125rem;
 }
 
+/* The robot on the home page: a breathing beacon, a slow wheel, an occasional blink. */
+@keyframes robot-beacon {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes robot-wheel {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes robot-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+.robot-beacon {
+  animation: robot-beacon 2.4s ease-in-out infinite;
+}
+
+.robot-wheel {
+  transform-box: view-box;
+  transform-origin: 120px 292px;
+  animation: robot-wheel 12s linear infinite;
+}
+
+.robot-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: robot-blink 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .robot-beacon,
+  .robot-wheel,
+  .robot-eyes {
+    animation: none;
+  }
+}
+
 /* Links in prose carry the accent, as in the app. */
-.prose a:not([data-card]) {
+/* Not inside .not-prose blocks (the home hero's buttons color themselves). */
+.prose a:not([data-card]):not(.not-prose *) {
   color: var(--color-fd-primary);
   text-decoration-color: color-mix(in srgb, var(--color-fd-primary) 40%, transparent);
 }

@@ -1,0 +1,35 @@
+---
+title: "Market creation"
+description: "Open an order book market for a token pair that has none."
+---
+
+Anyone can open an order book market for two tokens that do not have one yet. This is not a listing request or a verification: the contract creates the market at once, and it is ready for orders.
+
+## In the app
+
+Open `https://<chain>.alcor.exchange/new_market` (for example [wax.alcor.exchange/new_market](https://wax.alcor.exchange/new_market)), or click **Open new market** on the Markets page on desktop.
+
+1. **Quote token (target token)**: the token prices are quoted in. Pick it from your balances. The system token or USDT is recommended.
+2. **Base token (listing token)**: the token you list. **Auto select** shows tokens in your wallet. **Manually** takes a token contract and symbol.
+3. Check the fee and click **Create market**.
+
+The new market shows up on the site within a couple of minutes.
+
+## Fee
+
+The app charges the fee in the chain's system token:
+
+| Chain | Fee |
+| --- | --- |
+| WAX | 500.00000000 WAX |
+| EOS | 10.0000 EOS |
+| Telos | 100.0000 TLOS |
+| XPR Network | 2000.0000 XPR |
+
+The fee doubles if the target token is not the system token. On WAX, EOS and Telos the transaction also buys 530 bytes of RAM for the DEX contract to store the market.
+
+## With a transaction
+
+The app sends a transfer to the DEX contract with a `new_market|...` memo. See [Open a new market](/developers-api/contract-actions#open-a-new-market) for the format.
+
+The app's labels are the reverse of the contract's: the target token becomes `base_token` and the listing token `quote_token` in the [markets table](/developers-api/contract-tables#markets).

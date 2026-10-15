@@ -1,0 +1,36 @@
+# Pages removed or merged when the docs moved off GitBook (2026-10). Cloudflare serves these as 301s.
+
+# Old UI walkthroughs, replaced by the current app overview
+/main-page-overview/markets /main-page-overview/spot 301
+/main-page-overview/markets/market-exchange /main-page-overview/spot 301
+/main-page-overview/markets/market-exchange/graph /main-page-overview/spot 301
+/main-page-overview/markets/market-exchange/order-books /main-page-overview/spot 301
+/main-page-overview/markets/market-exchange/order-history /main-page-overview/spot 301
+/main-page-overview/markets/market-exchange/placing-trades /main-page-overview/spot 301
+/main-page-overview/swap/charts /main-page-overview/swap 301
+/main-page-overview/swap/+-liquidity /alcor-swap/providing-liquidity 301
+/main-page-overview/swap/liquidity /main-page-overview/swap 301
+/main-page-overview/nft /main-page-overview 301
+/main-page-overview/wallet /main-page-overview/portfolio 301
+
+# The IBC USDT proxy only produced USDT@usdt.alcor, now legacy
+/alcor-usdt-proxy /networks-features/wax/alcor-usdt 301
+/alcor-usdt-proxy/depositing-usdt-to-wax /networks-features/wax/alcor-usdt 301
+/alcor-usdt-proxy/withdrawing-usdt-from-wax /networks-features/wax/alcor-usdt 301
+
+# Legacy API (v1) pages, covered by the API reference
+/developers-api/api /api 301
+/developers-api/api/markets-api /api/market-data 301
+/developers-api/api/account /api/account 301
+/developers-api/api/websocket /api/websocket 301
+/developers-api/api/node-api /api/trade-api 301
+/developers-api/amm-swap-contract-api/contracts /developers-api/amm-swap-contract-api 301
+/developers-api/market-creation/open-new-market /developers-api/market-creation 301
+
+# Alcor Swap pages merged into their parent
+/alcor-swap/providing-liquidity/how-to-add-liquidity-on-alcor-exchange /alcor-swap/providing-liquidity 301
+/alcor-swap/ranges-everything-you-need-to-know/how-to-set-a-range-for-your-liquidity-position /alcor-swap/ranges-everything-you-need-to-know 301
+/alcor-swap/concentrated-liquidity-faq /alcor-swap/liquidity-provider-faq 301
+
+# Linked from the app's position page (perps_ui), never existed under this name
+/alcor-swap/liquidity-price-range /alcor-swap/ranges-everything-you-need-to-know 301

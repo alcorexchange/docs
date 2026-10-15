@@ -1,24 +1,40 @@
 ---
-title: "Home Page Overview"
-description: "How to navigate through and understand each area of Alcor Exchange on desktop version"
+title: "App Overview"
+description: "Where each part of Alcor lives on alcor.exchange"
 ---
 
-## \*Documentation is in progress and incomplete. Please be patient if there are incomplete areas you are trying to view\*
+Alcor runs at [alcor.exchange](https://alcor.exchange). Everything can be browsed without a wallet; connecting one enables trading.
 
-**\*These examples are taken from the WAX mainnet which is currently the most pupular. Other Mainnets may show slightly different information\***
+## Networks
 
-![Top of Alcor Exchange main page](https://1106702801-files.gitbook.io/~/files/v0/b/gitbook-legacy-files/o/assets%2F-MJILKtslrmNIVV9CYCR%2F-Mg3mUVIiZ0IB7vmRMda%2F-Mg3vLfwamSM7-raqtq5%2Fimage.png?alt=media\&token=f1db2959-88ce-4ba1-9efd-77e2d4e4594a)
+Pick a network with the network switcher in the header. Each network has its own set of pages under `/v/<network>/`:
 
-[**Swap**](/main-page-overview/swap) **(Red Box)** - The Swap page serves as a convenient and simplified way to exchange one currency to another. (Swapping is the equivalent of placing a [market order](/definitions-1) in any exchange. If you wish to place a limited order, that will be done under "Markets")  In addition to exchanging, it also provides the capability of adding to and subtracting from the liquidity pool. Finally, it shows simple chart data on the history of the exchange rate of your selected pair, liquidity pool amounts, and volume. 
+| Network | URL prefix |
+|---|---|
+| WAX | `/v/wax/` |
+| XPR Network | `/v/xpr/` |
+| Vaulta (formerly EOS) | `/v/vaulta/` |
+| Telos | `/v/telos/` |
 
-[**Markets**](/main-page-overview/markets) **(Yellow Box)** - The Markets tab will bring you to a master list of all of the coin pairs available under your selected Mainnet. 
+## Home page
 
-[**OTC**](/main-page-overview/otc) **(Green Box)** - OTC or "Over-The-Counter" is a market where any user can offer one currency for another at a price they choose to list it at. 
+The home page (`/`) is a cross-chain swap: pick any token on any network and any token on another, and Alcor plans the route — a swap on one network, a bridge crossing, or a swap, a crossing and a swap at the far end — signed once on the network where it starts. It also lists trending tokens and top markets on every network.
 
-[**NFT**](/main-page-overview/nft) **(Blue box)** - Alcor Exchange is not just limited to trading regular cryptocurrency.  NFT or "Non Fungible Token" is a market place where users can list their NFT's for sale as well. 
+## Pages on each network
 
-[**Wallet**](/main-page-overview/wallet) **(Pink Box)** - This will open your currently connected wallet to show the currencies and FT's (Fungible Tokens) you currently own. (**Note, any tokens you have listed in a buy or sell order will not show up in your wallet until you cancel the order or it is fulfilled**.)
+| Page | URL | What it is |
+|---|---|---|
+| [Swap](/main-page-overview/swap) | `/v/<network>/swap` | Swap two tokens on one network at the best price across pools and order books |
+| Pool | `/v/<network>/swap/positions` | Your concentrated-liquidity positions; create, add to, remove and claim fees |
+| [Farms](/alcor-farms-unlocking-defi-opportunities) | `/v/<network>/swap/farms` | Stake liquidity positions for extra rewards |
+| [Spot](/main-page-overview/spot) | `/v/<network>/spot` | On-chain order book with limit and market orders |
+| Terminal | `/v/<network>/terminal` | Token screener: trending, new tokens, holders, live trades |
+| Bridge | `/v/<network>/bridge` | Move assets between Ethereum, BNB Smart Chain, Polygon and the Antelope networks |
+| Analytics | `/v/<network>/analytics` | TVL, volume and fees, with a page for every pool and token |
+| [Portfolio](/main-page-overview/portfolio) | `/v/<network>/portfolio` | Your balances, orders, positions and resources |
+| [OTC](/main-page-overview/otc) | `/v/<network>/otc` | Peer-to-peer trades at a fixed price |
+| [Stake](/lsw-liquid-staked-wax) | `/v/wax/staking` | WAX liquid staking (WAX only) |
 
-**Docs (Purple Box)** - Docs brings you here, to the Alcor Documentation.
+## Connecting a wallet
 
-**Mainnet (Orange Box)** - Select the [mainnet](/definitions-1) you wish to trade in.
+Use **Connect Wallet** (or **Log in**) in the header and choose a wallet supported on the selected network. On networks where Alcor can create accounts, the same dialog offers to create one if you do not have an account yet.

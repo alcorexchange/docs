@@ -1,15 +1,16 @@
 ---
 title: "Alcor Price Oracle vs DelphiOracle"
-description: "Comparison between TWAP and DelphiOracle"
+description: "How the Alcor TWAP oracle differs from DelphiOracle."
 ---
 
-| **Aspect** | **Alcor Price Oracle** | **DelphiOracle** |
+DelphiOracle is an oracle contract on Antelope chains. Block producers fetch prices from centralized exchanges and write them on-chain, and the contract publishes the latest values for a small set of pairs. The Alcor Price Oracle is computed from trading in Alcor Swap pools.
+
+| | Alcor Price Oracle | DelphiOracle |
 | --- | --- | --- |
-| Data Source | Extracts data directly from Alcor Swap decentralized exchange. | Aggregated from multiple centralized exchanges |
-| Price Calculation Method | Time-weighted average price | Average of prices fetched from exchanges |
-| Price Availability | Provides prices by timestamp and unlimited historical data availability. | Provides only the last price |
-| Freshness/Accuracy | May not reflect the current spot price during high volatility | Provides current spot price but may lag during high volatility |
-| Manipulation Susceptibility | There is currently not enough economic incentive to manipulate TWAP. refer [**here**](https://blog.uniswap.org/uniswap-v3-oracles)**.** | Very hard to manipulate |
-| Data Storage | Historical data is stored as an array of observations | Only stores recent historical data |
-| RAM Cost for Extended Data Availability | Requires RAM payment to extend data availability period | N/A |
-| Token Pairs | Provides for all token pairs available and trading on Alcor Swap | Provides only some pairs like WAX/USD, BTC/USD, ETH/USD |
+| Data source | Trades in Alcor Swap pools, on-chain | Prices from centralized exchanges, written by block producers |
+| Price type | Time-weighted average over any window, or spot | Latest reported price |
+| History | As many observations as the pool keeps; can be extended by paying for RAM | Recent values only |
+| Pairs | Every Alcor Swap pool | A few major pairs, such as WAX/USD |
+| Freshness | Lags the market during fast moves, by design of the averaging window | Follows external markets, updated as producers report |
+| Manipulation | Requires holding the pool price off-market for the whole window; safer with deep liquidity and a longer window | Requires compromising the reporting producers |
+| Cost to extend | RAM for extra observations | None for users |

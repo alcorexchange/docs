@@ -1,8 +1,8 @@
 {
-  "title": "AlcorSwap v2 Price Oracles",
+  "title": "Price Oracle (TWAP)",
   "pages": [
-    "alcor-price-oracle-vs-delphioracle",
+    "how-to-use-alcor-price-oracle",
     "expanding-price-availability-with-ram-purchase",
-    "how-to-use-alcor-price-oracle"
+    "alcor-price-oracle-vs-delphioracle"
   ]
 }

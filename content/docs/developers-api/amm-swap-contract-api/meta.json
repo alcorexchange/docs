@@ -1,8 +1,7 @@
 {
-  "title": "Amm Swap Contract API",
+  "title": "Swap contract",
   "pages": [
     "formulas",
-    "contracts",
     "examples"
   ]
 }

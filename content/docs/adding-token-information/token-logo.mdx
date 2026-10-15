@@ -1,21 +1,25 @@
 ---
 title: "Token logo"
+description: "How to get your token's logo shown on Alcor"
 ---
 
-How To Add Token Logo
+## Pull request to alcor-ui (recommended)
 
-At Alcor Exchange, we believe in flexibility, allowing projects to seamlessly integrate their tokens into our UI application for broader visibility. Here's a quick guide to get your token listed:
+Add the logo to the [alcor-ui repository](https://github.com/alcorexchange/alcor-ui) with a pull request:
 
-1. **Video Tutorial:**
-   * Watch this helpful video tutorial by MikeDCrypto: [Alcor Token Listing Tutorial](https://www.youtube.com/watch?v=pL68Llsr9pA).
-   * This video provides step-by-step guidance on adding your token to the eos-airdrops repository.
-2. **Fast Track – Direct Pull Request:**
-   * For a quicker approach, you can directly submit a pull request in the alcor-ui repository (\<https://github.com/alcorexchange/alcor-ui>).
-   * Navigate to `assets/tokens/<:chain>/` and add your token following this structure: "\<:symbol>\_\<:contract>.png" (both names in lowercase).
-   * Ensure your token image is 64x64 in size and in .png format.
-3. **Legacy Token Information Provider:**
-   * Alcor Exchange uses the eos-airdrops repository (\<https://github.com/eoscafe/eos-airdrops>) as the default token information provider.
-   * To have your project's token listed, simply add it to the eos-airdrops repository. Please note that PR approvals may take some time.
-4. **Non-Technical Option – Telegram Request:**
-   * If you're not tech-savvy, don't worry! Request token addition in the Alcor Telegram chat: [@alcorexchange](https://t.me/alcorexchange).
-   * Our community is here to assist you in the process.
+* Folder: `assets/tokens/<network>/`, where `<network>` is `wax`, `proton` (XPR Network), `eos` (Vaulta) or `telos`.
+* File name: `<symbol>_<contract>.png`, both in lower case, joined by an underscore — for example `assets/tokens/wax/tlm_alien.worlds.png`.
+* Format: a square PNG image.
+
+You can add the token's description and links in the same pull request, see [Adding Token Information](/adding-token-information).
+
+## Other sources
+
+If a token has no logo in alcor-ui, Alcor falls back to:
+
+* on XPR Network, the logo registered in the network's own token registry (`token.proton`);
+* the [eos-airdrops](https://github.com/eoscafe/eos-airdrops) repository. Adding a token there takes a pull request to that repository; this [video tutorial](https://www.youtube.com/watch?v=pL68Llsr9pA) walks through it.
+
+## No GitHub account?
+
+Ask in the Alcor Telegram chat: [@alcorexchange](https://t.me/alcorexchange).

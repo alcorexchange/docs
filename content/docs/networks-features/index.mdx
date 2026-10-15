@@ -1,6 +1,19 @@
 ---
 title: "Networks Features"
+description: "Networks Alcor runs on and what is specific to each"
 ---
 
-- [WAX](/networks-features/wax)
-- [Alcor USDT](/networks-features/wax/alcor-usdt): USDT on WAX provided by Alcor
+Alcor runs the same stack — swap pools, order book, OTC, farms and analytics — on four Antelope networks. The Alcor Bridge connects them with each other and with Ethereum, BNB Smart Chain and Polygon; Telos is the bridge hub.
+
+| Network | App | System token | Order book | Swap | OTC | API |
+|---|---|---|---|---|---|---|
+| WAX | `/v/wax` | WAX | `alcordexmain` | `swap.alcor` | `alcorotcswap` | `https://wax.alcor.exchange/api/v2` |
+| XPR Network | `/v/xpr` | XPR | `alcor` | `swap.alcor` | `alcorotc` | `https://proton.alcor.exchange/api/v2` |
+| Vaulta (formerly EOS) | `/v/vaulta` | A, EOS | `eostokensdex` | `swap.alcor` | `alcorotcswap` | `https://eos.alcor.exchange/api/v2` |
+| Telos | `/v/telos` | TLOS | `eostokensdex` | `swap.alcor` | `alcorotcswap` | `https://telos.alcor.exchange/api/v2` |
+
+On every network, tokens carried by the Alcor bridge (such as USDT and USDC) are issued by the `wrap.alcor` contract.
+
+## Network-specific pages
+
+* [WAX](/networks-features/wax) — USDT on WAX and liquid staking.

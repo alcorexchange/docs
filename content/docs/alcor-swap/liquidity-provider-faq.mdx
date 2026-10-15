@@ -1,21 +1,46 @@
 ---
 title: "Liquidity Provider FAQ"
+description: "Common questions about providing concentrated liquidity on Alcor Swap."
 ---
 
-**Q: How do I benefit from providing liquidity in a concentrated pool?** A: By concentrating your liquidity in specific ranges, you can potentially earn higher trading fees compared to traditional liquidity pools. This targeted approach allows you to capitalize on areas of the market where trading activity is expected to be higher or where you anticipate significant price movements.
+### What is a concentrated-liquidity AMM?
 
-**Q: Why do I need to choose specific ranges?** A: Choosing specific ranges enables you to strategically allocate your funds to areas where you believe there will be increased trading activity or where you want to optimize your exposure to potential price movements. This targeted approach can potentially lead to higher returns on your investment.
+An AMM in which each liquidity provider chooses the price range their liquidity covers, instead of spreading it over all prices. Within that range the same capital gives deeper liquidity, so traders get less slippage and LPs earn more fees per dollar. See [Introduction](/alcor-swap/introduction).
 
-**Q: How do fee tiers benefit me as a liquidity provider?** A: Fee tiers offer different fee rates charged to traders based on the range they trade within. By providing liquidity in ranges with higher fee tiers, you have the opportunity to earn greater rewards from trading activity within those ranges, enhancing your overall returns.\
-\
-**Q: What happens if the price moves beyond my chosen range, and my position becomes out of range?** The liquidity at that range would be depleted, meaning you would hold 100% of either tokenA or tokenB. And your position would no longer earn any fees until it goes back into your defined range.
+### How do I earn as a liquidity provider?
 
-**Q: How do I create a position in a concentrated liquidity pool?** A: To create a position, select the specific range you want to provide liquidity to and deposit your desired amount of assets into the pool. By strategically choosing ranges and managing your position, you can potentially maximize your earnings from trading fees.
+A position earns a share of the swap fees of its pool while the price is inside its range, in proportion to its liquidity. If the pool has [farms](/alcor-farms-unlocking-defi-opportunities), staking the position earns farm rewards on top.
 
-**Q: Can I withdraw my funds from the pool at any time?** A: Yes, you can withdraw your funds from the pool at any time.
+### Do I need to deposit equal values of both tokens?
 
-<Callout type="info">
+No. The ratio depends on where the current price is within your range. A range centred on the current price takes roughly equal values. A range above or below the current price takes only one token. The app calculates the second amount for you.
 
-Please be aware that the token provider may have complete control over the token contract, which could result in withdrawal failures (due to issues on the side of the token contract), rug pulls, or other fraudulent schemes. Additionally, anyone can create a token, establish a pool with that token, and manipulate its supply to defraud others. It is crucial to conduct thorough research before engaging with any tokens.
+### Which fee tier should I choose?
+
+The fee tier belongs to the pool, not to your position: every swap through a 0.3% pool pays 0.3%, wherever the price is. Use the tier where the pair's trading happens. The new position form shows each tier's share of the pair's TVL. As a rule of thumb, 0.01% suits stable pairs, 0.05% high-volume pairs, 0.3% most pairs and 1% exotic or volatile pairs.
+
+### Why choose a narrow range?
+
+A narrow range earns more fees per dollar while the price stays inside it. It also leaves the range more easily, and then earns nothing until the price returns. A wide range earns less per dollar but stays active longer.
+
+### What happens if the price leaves my range?
+
+The position ends up holding 100% of one token: the one that lost value relative to the other. It stops earning fees until the price comes back into the range. You can leave it, or remove the liquidity and open a new position around the current price.
+
+### Can I change the range of a position?
+
+No. Remove the liquidity and open a new position with the new range.
+
+### What is impermanent loss?
+
+As the price moves, a position sells the rising token and buys the falling one. Compared with simply holding the two tokens, this can leave you with less value. The loss becomes permanent when you withdraw. A narrower range concentrates this effect as well as the fees.
+
+### Can I withdraw at any time?
+
+Yes, unless you [locked](/alcor-swap/locking-liquidity) the position. Removing liquidity also collects the position's fees.
+
+<Callout type="warn">
+
+A token's issuer may have full control of the token contract. Withdrawals can fail because of the token contract, and a token can be used for a rug pull or other fraud. Anyone can create a token and a pool for it, so research a token before you provide liquidity for it.
 
 </Callout>

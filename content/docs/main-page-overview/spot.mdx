@@ -1,0 +1,27 @@
+---
+title: "Spot"
+description: "Trading on the on-chain order book"
+---
+
+Spot (`/v/<network>/spot`) is Alcor's on-chain order book. Every order is placed, matched and cancelled by the exchange contract on the selected network. A market has its own link, for example `/v/wax/spot/tlm-alien.worlds_wax-eosio.token`.
+
+## The trading page
+
+* **Market selector** — the pair name at the top opens a searchable list of markets on the network. Next to it: price, 24h change, volume and market cap.
+* **Chart** — a TradingView chart of the market. See [tradingview.com](https://www.tradingview.com) for how to use its tools and indicators.
+* **Order Book / Trades** — open buy (bid) and sell (ask) orders grouped by price with the spread between them, and a feed of recent trades.
+* **Order form** — choose **Buy** or **Sell**, then the order type.
+* **Account tables** — **Open Orders** (cancel them here), **Balances** and **Trade History** for the connected account.
+
+## Placing an order
+
+* **Limit** — set the price and amount. The order waits in the order book until it is filled or you cancel it.
+* **Market** — set only the amount; the order fills right away against the best orders in the book.
+
+The percentage slider fills the amount from your available balance.
+
+If the order book price differs from the Alcor Swap pool price by more than 10%, a market order asks for confirmation first and offers to use [Swap](/main-page-overview/swap) instead.
+
+<Callout type="info">
+Tokens locked in an open order are not available in your balance until the order is filled or cancelled.
+</Callout>

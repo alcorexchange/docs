@@ -1,418 +1,406 @@
 ---
 title: "Market Data"
+description: "Spot markets and AMM pairs: tickers, order books, trades and candles."
 ---
 
-Token symbol repesented as <b>SYMBOL_contract</b>
-following the eosio.token standard. As the one symbol can be deployed by multiple contracts.
+Alcor has two venues: **spot** order book markets and **AMM** pools. Both are described with the same ticker format.
 
-## Trading pairs
-Provides a list of all trading pairs on the Alcor DEX.
+A token id is `<symbol>-<contract>` in lower case, because any contract can issue a token with any symbol. A ticker id
+joins two token ids, base first: `<base>_<target>`, e.g. `tlm-alien.worlds_wax-eosio.token`. Prices are in target per
+one base.
+
+<Callout type="info">
+
+The spot endpoints and the AMM feed follow the CoinGecko and CoinMarketCap DEX integration format, so they can be read
+by the same code.
+
+</Callout>
+
+## Pairs
+
+All spot markets.
+
+`GET https://wax.alcor.exchange/api/v2/pairs`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| base | string | no | Only markets with this base token id |
+| target | string | no | Only markets with this target token id |
+
+**Example**
 
 ```shell
-curl "https://alcor.exchange/api/v2/pairs"
+curl "https://wax.alcor.exchange/api/v2/pairs?base=tlm-alien.worlds&target=wax-eosio.token"
 ```
-
-> The above command returns JSON structured like this:
 
 ```json
 [
   {
-    "base": {
-      "id": "pgl-prospectorsw",
-      "contract": "prospectorsw",
-      "symbol": "PGL",
-      "precision": 4
-    },
-    "target": {
-      "id": "wax-eosio.token",
-      "contract": "eosio.token",
-      "symbol": "WAX",
-      "precision": 8
-    },
-    "ticker_id": "pgl-prospectorsw_wax-eosio.token"
+    "base": { "id": "tlm-alien.worlds", "contract": "alien.worlds", "symbol": "TLM", "precision": 4 },
+    "target": { "id": "wax-eosio.token", "contract": "eosio.token", "symbol": "WAX", "precision": 8 },
+    "ticker_id": "tlm-alien.worlds_wax-eosio.token"
   }
 ]
 ```
 
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/pairs`
-
-**Query params:**
+**Response fields**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| base | string | Filter pair by base currency id |
-| target | string | Filter pair by target currency id |
-
-ie: `https://alcor.exchange/api/v2/pairs?base=tlm-alien.worlds`
-
-### Response
-| Name | Type | Description |
-| --- | --- | --- |
-| ticker_id | string | Identifier of a ticker with delimiter to separate base/target |
-| base | string | Symbol code of a the base cryptoasset |
-| target | string | Symbol code of the target cryptoasset |
-
-<Callout type="info">
-
-In EOSIO eny contract can be deployed as token and have any Symbol.
-    Therefore the unique identifier contains the name of the contract to avoid confusion.
-
-</Callout>
-
-
-
-## Ticker
-```shell
-curl "https://alcor.exchange/api/v2/tickers/tlm-alien.worlds_wax-eosio.token"
-```
-> The above command returns JSON structured like this:
-
-```json
-{
-    "ticker_id": "tlm-alien.worlds_wax-eosio.token",
-    "market_id": 26,
-    "target_currency": "wax-eosio.token",
-    "base_currency": "tlm-alien.worlds",
-    "global_ticker_id": "TLM_WAX",
-    "target_cmc_ucid": 825,
-    "base_cmc_ucid": 2300
-    "min_buy": "0.50000000 WAX",
-    "min_sell": "1.0000 TLM",
-    "last_price": 0.32448004,
-    "change24": 3.42,
-    "high24": 0.34088342,
-    "low24": 0.30488872,
-    "bid": 0.32448004,
-    "ask": 0.32580358,
-    "base_volume": 100178.36015088,
-    "target_volume": 314152.7801
-    "frozen": false,
-    "fee": 20,
-    "base_amm_liquidity": 3710.6035,
-    "target_amm_liquidity": 649.92427661
-}
-```
-
-Endpoint provides pricing and volume information on sprcific ticker.
-
-Ticker ID represented as base token (Symbol-contract) _ quote_token (Symbol-contract)
-example: <b>rda-deadcitytokn_wax-eosio.token</b>
-
-
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/tickers/:ticker_id`
-
-### Query Parameters
-
-Parameter | Mandatory | Type | Description
---------- | ------- | ----------- | --
-ticker_id | true | string | Ticker id
-
-### Response
-| Name | Type | Description |
-| --- | --- | --- |
-| ticker_id | string | Identifier of a ticker |
-| global_ticker_id | string | The ticker ID according to the standard of centralized exchanges (null for unpopular tokens) |
-| base_currency | string | Symbol code of a the base cryptoasset |
-| target_currency | string | Symbol code of the target cryptoasset |
-| target_cmc_ucid | number | CMC integration target token UCID |
-| base_cmc_ucid | number | CMC integration base token UCID |
-| min_buy | string | Minimum amount of target currency |
-| min_sell | string | Minimum amount of base currency |
-| last_price | number | Price of the latest deal |
-| change24 | number | Price change in 24 hours positive/negative |
-| high24 | number | Highest price in 24 hours |
-| low24 | number | Lowest price in 24 |
-| bid | number | Price of current highest buy order |
-| ask | number | Price of current cheapest sell order |
-| base_volume | number | 24H Volume of base currency |
-| target_volume | number | 24H Volume of target currency |
-| frozen | boolean | Trading are frozen |
-| fee | number | Market fees represented as % of 1000 (fee / 1000) |
-| base_amm_liquidity | number | Total base token liqiudity available on AMM contract |
-| target_amm_liquidity | number | Total target token liqiudity available on AMM contract |
-
+| ticker_id | string | Ticker id, `<base>_<target>` |
+| base, target | object | The tokens: `id`, `contract`, `symbol`, `precision` |
 
 ## Tickers
+
+Price and 24-hour volume of every spot market.
+
+`GET https://wax.alcor.exchange/api/v2/tickers`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| hide_scam | boolean | no | `true` leaves out markets with a token on the scam lists |
+
+**Example**
+
 ```shell
-curl "https://alcor.exchange/api/v2/tickers"
-```
-> The above command returns JSON structured like this:
-
-```json
-[
-    {
-        "ticker_id": "tlm-alien.worlds_wax-eosio.token",
-        "market_id": 26,
-        "target_currency": "wax-eosio.token",
-        "base_currency": "tlm-alien.worlds",
-        "min_buy": "0.50000000 WAX",
-        "min_sell": "1.0000 TLM",
-        "last_price": 0.32448004,
-        "change24": 3.42,
-        "high24": 0.34088342,
-        "low24": 0.30488872,
-        "bid": 0.32448004,
-        "ask": 0.32580358,
-        "base_volume": 100178.36015088,
-        "target_volume": 314152.7801
-        "frozen": false,
-        "fee": 20,
-        "global_ticker_id": "TLM_WAX",
-        "target_cmc_ucid": 2300,
-        "base_cmc_ucid": 9119
-        "base_amm_liquidity": 3710.6035,
-        "target_amm_liquidity": 649.92427661
-    }
-]
+curl "https://wax.alcor.exchange/api/v2/tickers?hide_scam=true"
 ```
 
-Endpoint provides pricing and volume information on each market pair available on an exchange.
+Answers an array of tickers, as in [Ticker](#ticker).
 
+## Ticker
 
-### HTTP Request
+Price and 24-hour volume of one spot market.
 
-`GET https://alcor.exchange/api/v2/tickers`
+`GET https://wax.alcor.exchange/api/v2/tickers/<ticker_id>`
 
-Without parameters returns all available tickers
+**Parameters**
 
-### Query Parameters
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| ticker_id | string | yes | Ticker id, in the path |
 
-Parameter | Mandatory | Type | Description
---------- | ------- | ----------- | --
-tickers | false | array | Array of ticker_id's, for getting only selected tickers
+**Example**
 
-### Response
-| Name | Type | Description |
-| --- | --- | --- |
-| ticker_id | string | Identifier of a ticker |
-| base_currency | string | Symbol code of a the base cryptoasset |
-| target_currency | string | Symbol code of the target cryptoasset |
-| min_buy | string | Minimum amount of target currency |
-| min_sell | string | Minimum amount of base currency |
-| last_price | number | Price of the latest deal |
-| change24 | number | Price change in 24 hours positive/negative |
-| high24 | number | Highest price in 24 hours |
-| low24 | number | Lowest price in 24 |
-| bid | number | Price of current highest buy order |
-| ask | number | Price of current cheapest sell order |
-| base_volume | number | 24H Volume of base currency |
-| target_volume | number | 24H Volume of target currency |
-| frozen | boolean | Trading are frozen |
-| fee | number | Market fees represented as 0.01% |
-| global_ticker_id | string | The ticker ID according to the standard of centralized exchanges (null for unpopular tokens) |
-| target_cmc_ucid | number | target Unified Cryptoasset ID if exist or null |
-| base_cmc_ucid | numer | base Unified Cryptoasset ID if exist or null |
-| base_amm_liquidity | number | Total base token liqiudity available on AMM contract |
-| target_amm_liquidity | number | Total target token liqiudity available on AMM contract |
-
-
-## Orderbook
 ```shell
-curl "https://alcor.exchange/api/v2/tickers/pgl-prospectorsw_wax-eosio.token/orderbook?depth=3"
+curl https://wax.alcor.exchange/api/v2/tickers/tlm-alien.worlds_wax-eosio.token
 ```
-> The above command returns JSON structured like this:
 
 ```json
 {
-    "ticker_id": "PGL-prospectorsw_WAX-eosio.token",
-    "asks": [
-        [
-            "0.66299999", // PRICE
-            "111.8101" // QTY
-        ],
-        [
-            "0.66300000",
-            "237.5000"
-        ],
-        [
-            "0.66400000",
-            "500.0000"
-        ],
-    ],
-    "bids": [
-        [
-            "0.64800031",
-            "74.51997085"
-        ],
-        [
-            "0.64800030",
-            "87.64158563"
-        ],
-        [
-            "0.64598927",
-            "150.00000000"
-        ],
-    ]
+  "ticker_id": "tlm-alien.worlds_wax-eosio.token",
+  "market_id": 26,
+  "pool_id": "26",
+  "base_currency": "tlm-alien.worlds",
+  "target_currency": "wax-eosio.token",
+  "base_cmc_ucid": 9119,
+  "target_cmc_ucid": 2300,
+  "global_ticker_id": "TLM-WAX",
+  "last_price": 0.247012,
+  "change24": -1.69,
+  "high24": 0.25251933,
+  "low24": 0.247012,
+  "high": 0.25251933,
+  "low": 0.247012,
+  "bid": 0.247012,
+  "ask": 0.251,
+  "base_volume": 1207270.74,
+  "target_volume": 301555.69152662,
+  "volumeUSD24": 2146.47,
+  "volume90d": 10404146.15519762,
+  "base_amm_liquidity": 3945319.8557,
+  "target_amm_liquidity": 902460.1896641699,
+  "min_buy": 0.5,
+  "min_sell": 1,
+  "frozen": false,
+  "fee": 20,
+  "trade_url": "https://alcor.exchange/v/wax/spot/tlm-alien.worlds_wax-eosio.token"
 }
 ```
 
-Endpoint using to provide order book information with at least depth = 3 returned for a given ticker. 
+An unknown ticker answers HTTP 404.
 
-### HTTP Request
+**Response fields**
 
-`GET https://alcor.exchange/api/v2/tickers/:ticker_id/orderbook`
-
-### Query Parameters
-
-Parameter | Mandatory | Default | Description
---------- | ------- | ----------- | --
-ticker_id | true | string | ticker id
-depth | false | 300 | The number of market depth to return on each side
-
-### Response
 | Name | Type | Description |
 | --- | --- | --- |
-| ticker_id | string | Identifier of a ticker with delimiter to separate base/target |
-| bids | array | Array of bids. bid structure: [price, quantity] |
-| asks | array | Array of asks. ask structure: [price, quantity] |
+| ticker_id | string | Ticker id |
+| market_id | number | Spot market id on the DEX contract |
+| pool_id | string | The same market id, as a string (CoinGecko field name) |
+| base_currency, target_currency | string | Token ids |
+| base_cmc_ucid, target_cmc_ucid | number | CoinMarketCap ids, or `null` |
+| global_ticker_id | string | `BASE-TARGET` when CoinMarketCap lists both tokens, otherwise `null` |
+| last_price | number | Price of the last trade |
+| change24 | number | 24-hour price change, percent |
+| high24, low24 | number | 24-hour price range |
+| high, low | number | The same range, `null` for a market that has not traded |
+| bid | number | Best buy order price |
+| ask | number | Best sell order price |
+| base_volume, target_volume | number | 24-hour volume in each token, spot trades plus the AMM pools of the same pair |
+| volumeUSD24 | number | 24-hour volume in USD, spot plus AMM |
+| volume90d | number | 90-day spot volume, in target |
+| base_amm_liquidity, target_amm_liquidity | number | Tokens held by the AMM pools of the same pair |
+| min_buy | number | Smallest buy order, in target |
+| min_sell | number | Smallest sell order, in base |
+| frozen | boolean | Trading is frozen |
+| fee | number | Market fee in hundredths of a percent: `20` is 0.2% |
+| trade_url | string | Market page on Alcor |
 
+## Order book
 
-## Latest Trades
-Retrieve the most recent deals of a ticker, sorted by time from latest to oldest.
+Price levels of a spot market, best first.
 
-```shell
-curl "https://alcor.exchange/api/v2/tickers/pgl-prospectorsw_wax-eosio.token/latest_trades?limit=2"
-```
-> The above command returns JSON structured like this:
+`GET https://wax.alcor.exchange/api/v2/tickers/<ticker_id>/orderbook`
 
-```json
-[
-    {
-        "trade_id": "61a0fd5b5f0f4674848b26ae",
-        "base_volume": 48.8126,
-        "target_volume": 29.52941386,
-        "price": 0.604955,
-        "time": 1637929769500,
-        "type": "buy"
-    },
-    {
-        "trade_id": "61a0fcf65f0f4674848b0cf4",
-        "base_volume": 12.9939,
-        "target_volume": 7.86070962,
-        "price": 0.60495104,
-        "time": 1637929668000,
-        "type": "sell"
-    }
-]
-```
+**Parameters**
 
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/tickers/:ticker_id/latest_trades`
-
-### Query Parameters
-
-Parameter | Mandatory | Default | Description
---------- | ------- | ----------- | --
-limit | false | 300 | The number of latest trades to return
-
-
-## Trade history
-Retrieve the recent transactions of an instrument, sorted by time from earlyer to latest.
-
-```shell
-curl "https://alcor.exchange/api/v2/tickers/pgl-prospectorsw_wax-eosio.token/historical_trades?limit=2"
-```
-> The above command returns JSON structured like this:
-
-```json
-[
-    {
-        "base_volume": 48.8126,
-        "price": 0.604955,
-        "target_volume": 29.52941386,
-        "time": 1637929769500,
-        "trade_id": "61a0fd5b5f0f4674848b26ae",
-        "type": "buy"
-    },
-    {
-        "base_volume": 12.9939,
-        "price": 0.60495104,
-        "target_volume": 7.86070962,
-        "time": 1637929668000,
-        "trade_id": "61a0fcf65f0f4674848b0cf4",
-        "type": "sell"
-    }
-]
-```
-
-Endpoint using to return data on historical completed trades for a given ticker.
-
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/tickers/:ticker_id/historical_trades`
-
-Sorting from lasted to oldest deals
-
-### Query Parameters
-
-| Parameter | Type | Description |
-| --- | --- | --- |
-| type | string | Filter by "sell" or "buy" trades |
-| limit | integer | Number of trades to retrieve |
-| step | integer | Offset, used for step-by-step loading of the entire history |
-| from | timestamp | Start time from which to query trades (milliseconds) |
-| to | timestamp | End time for historical trades (milliseconds) |
-
-### Response
-| Name | Type | Description |
-| --- | --- | --- |
-| trade_id | string | A unique ID associated with the trade |
-| price | decimal | Transaction price. |
-| base_volume | decimal | Transaction amount in base pair volume |
-| target_volume | decimal | Transaction amount in target pair volume. |
-| time | timestamp | Unix timestamp in milliseconds for when the transaction occurred. |
-| type | string | Type of the transaction that was completed. |
-
-## Klines (Candles)
-```shell
-curl "https://alcor.exchange/api/v2/tickers/pgl-prospectorsw_wax-eosio.token/charts?resolution=60&from=1637856799500&to=1637869859000"
-```
-
-> The above command returns JSON structured like this:
-
-```json
-[
-    {
-        "close": 0.57009415,
-        "high": 0.58999718,
-        "low": 0.57009415,
-        "open": 0.58999718,
-        "time": 1637856799500,
-        "volume": 1.34580567 // Volume in TARGET currency
-    },
-    {
-        "close": 0.5889,
-        "high": 0.5889,
-        "low": 0.553,
-        "open": 0.57009415,
-        "time": 1637859602500,
-        "volume": 817.85241392
-    }
-]
-```
-This endpoint retrieves klines for specific ticker in a specific range.
-
-### HTTP Request
-
-`GET https://alcor.exchange/api/v2/tickers/:ticker_id/charts`
-
-
-### Query Parameters
-
-from, to, resolution, limit
-
-| Parameter | Mandatory | Type | Description |
+| Name | Type | Required | Description |
 | --- | --- | --- | --- |
-| ticker_id | true | string | Ticker id |
-| resolution | true | string | Resolution |
-| from | false | timestamp | Start time for getting historical candles |
-| to | false | timestamp | End time till which query candles |
+| ticker_id | string | yes | Ticker id, in the path |
+| depth | number | no | Price levels per side. Default `300` |
 
-**Supported resolutions:**
+**Example**
 
-`1, 5, 15, 30, 60, 240, 1D, 1W, 1M`
+```shell
+curl "https://wax.alcor.exchange/api/v2/tickers/tlm-alien.worlds_wax-eosio.token/orderbook?depth=2"
+```
+
+```json
+{
+  "ticker_id": "tlm-alien.worlds_wax-eosio.token",
+  "timestamp": 1792068184805,
+  "bids": [
+    ["0.24701200", "14224.8352"],
+    ["0.24625802", "500.0000"]
+  ],
+  "asks": [
+    ["0.25100000", "154048.5865"],
+    ["0.25150125", "116243.9926"]
+  ]
+}
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| ticker_id | string | Ticker id |
+| timestamp | number | Server time, unix milliseconds |
+| bids | array | Buy levels, highest price first: `[price, quantity]` |
+| asks | array | Sell levels, lowest price first: `[price, quantity]` |
+
+Prices are in target per base, quantities in base. Orders at the same price are merged into one level.
+
+## Historical trades
+
+The most recent trades of a spot market, oldest first.
+
+`GET https://wax.alcor.exchange/api/v2/tickers/<ticker_id>/historical_trades`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| ticker_id | string | yes | Ticker id, in the path |
+| type | string | no | `buy` or `sell` |
+| limit | number | no | Number of trades. Default `200`, maximum `1000`; `0` returns the maximum |
+| start_time | number | no | Only trades at or after this time, unix seconds |
+| end_time | number | no | Only trades at or before this time, unix seconds |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v2/tickers/tlm-alien.worlds_wax-eosio.token/historical_trades?limit=2"
+```
+
+```json
+[
+  {
+    "trade_id": "6ad0881529945be352b4a651",
+    "price": 0.25,
+    "base_volume": 0.7387,
+    "target_volume": 0.18465495,
+    "trade_timestamp": 1792051221,
+    "type": "sell",
+    "trx_id": "996734af8d0c193c69940c745efa35fd34028f7b24461db7caf7507278ec2d92"
+  }
+]
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| trade_id | string | Trade id |
+| price | number | Trade price, target per base |
+| base_volume | number | Amount of base traded |
+| target_volume | number | Amount of target traded |
+| trade_timestamp | number | Trade time, unix seconds |
+| type | string | `buy` or `sell`, from the taker's side |
+| trx_id | string | Transaction id |
+
+## Candles
+
+OHLCV candles of a spot market, oldest first. Periods without trades are filled with flat candles at the last price.
+
+`GET https://wax.alcor.exchange/api/v2/tickers/<ticker_id>/charts`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| ticker_id | string | yes | Ticker id, in the path |
+| resolution | string | yes | Candle size: `1`, `5`, `15`, `30`, `60`, `240` (minutes), `1D`, `1W`, `1M` |
+| from | number | yes | Start time, unix milliseconds |
+| to | number | no | End time, unix milliseconds |
+| limit | number | no | Most candles to return. Maximum and default `5000` |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v2/tickers/tlm-alien.worlds_wax-eosio.token/charts?resolution=60&from=1792057410000&to=1792068210000"
+```
+
+```json
+[
+  { "time": 1792054800000, "open": 0.247012, "high": 0.247012, "low": 0.247012, "close": 0.247012, "volume": 0 },
+  { "time": 1792058400000, "open": 0.247012, "high": 0.247012, "low": 0.247012, "close": 0.247012, "volume": 0.02573648 }
+]
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| time | number | Candle start, unix milliseconds |
+| open, high, low, close | number | Prices, target per base |
+| volume | number | Volume in target |
+
+## AMM pairs
+
+Active AMM pools, one entry per pool. A pool's ticker id follows its token order, `<tokenA>_<tokenB>`, so pools of
+the same pair with different fees share a ticker id and are told apart by `pool_id`.
+
+`GET https://wax.alcor.exchange/api/v2/amm/pairs`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| min_liquidity_usd | number | no | Only pools with at least this TVL, in USD |
+| hide_scam | boolean | no | `true` leaves out pools with a token on the scam lists |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v2/amm/pairs?min_liquidity_usd=10000"
+```
+
+```json
+[
+  {
+    "ticker_id": "wax-eosio.token_nbg-gkniftyheads",
+    "base": { "id": "wax-eosio.token", "contract": "eosio.token", "symbol": "WAX", "precision": 8 },
+    "target": { "id": "nbg-gkniftyheads", "contract": "gkniftyheads", "symbol": "NBG", "precision": 8 },
+    "pool_id": "9107"
+  }
+]
+```
+
+## AMM tickers
+
+Price, volume and liquidity of every active AMM pool, by TVL (highest first). Takes the same parameters as
+[AMM pairs](#amm-pairs).
+
+`GET https://wax.alcor.exchange/api/v2/amm/tickers`
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v2/amm/tickers?min_liquidity_usd=10000&hide_scam=true"
+```
+
+```json
+[
+  {
+    "ticker_id": "parausd-parareserves_usdt-wrap.alcor",
+    "base_currency": "parausd-parareserves",
+    "target_currency": "usdt-wrap.alcor",
+    "base_cmc_ucid": null,
+    "target_cmc_ucid": 825,
+    "global_ticker_id": null,
+    "pool_id": "12468",
+    "last_price": 0.999038,
+    "base_volume": 232.622545,
+    "target_volume": 232.340836,
+    "liquidity_in_usd": 99908.95,
+    "high": null,
+    "low": null,
+    "volume_usd_24h": 232.36,
+    "fee_percent": 0.05,
+    "trade_url": "https://alcor.exchange/v/wax/swap/parausd-parareserves_usdt-wrap.alcor"
+  }
+]
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| ticker_id | string | `<tokenA>_<tokenB>` |
+| base_currency, target_currency | string | Token ids of token A and token B |
+| base_cmc_ucid, target_cmc_ucid | number | CoinMarketCap ids, or `null` |
+| global_ticker_id | string | `BASE-TARGET` when CoinMarketCap lists both tokens, otherwise `null` |
+| pool_id | string | Pool id |
+| last_price | number | Current pool price, target per base |
+| base_volume, target_volume | number | 24-hour volume in each token |
+| liquidity_in_usd | number | Pool TVL in USD |
+| high, low | number | 24-hour price range, `null` when the pool has not traded |
+| volume_usd_24h | number | 24-hour volume in USD |
+| fee_percent | number | Pool fee, percent |
+| trade_url | string | Swap page on Alcor |
+
+## AMM historical trades
+
+The most recent swaps of all active pools of one ticker, oldest first.
+
+`GET https://wax.alcor.exchange/api/v2/amm/historical_trades`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| ticker_id | string | yes | `<tokenA>_<tokenB>`, as in [AMM pairs](#amm-pairs) |
+| type | string | no | `buy` or `sell`, the base token's side |
+| limit | number | no | Number of trades. Default `200`, maximum `1000`; `0` returns the maximum |
+| start_time | number | no | Only trades at or after this time, unix seconds |
+| end_time | number | no | Only trades at or before this time, unix seconds |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v2/amm/historical_trades?ticker_id=wax-eosio.token_usdt-usdt.alcor&limit=1"
+```
+
+```json
+[
+  {
+    "trade_id": "110411821387",
+    "ticker_id": "wax-eosio.token_usdt-usdt.alcor",
+    "pool_id": "1095",
+    "price": 0.004925598210938818,
+    "base_volume": 87.80659353,
+    "target_volume": 0.4325,
+    "trade_timestamp": 1792065005,
+    "type": "buy",
+    "trx_id": "096bbefb42fe7e43580c68d05c02b95682b5c722b1fd01fb90fadf29e0abb90e"
+  }
+]
+```
+
+The fields are those of spot [Historical trades](#historical-trades), plus `ticker_id` and `pool_id`. `trade_id` is the
+swap action's global sequence. A ticker without an active pool answers HTTP 404.

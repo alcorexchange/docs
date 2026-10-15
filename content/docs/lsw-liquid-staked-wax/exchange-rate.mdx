@@ -1,34 +1,33 @@
 ---
 title: "Exchange rate"
-description: "The exchange rate of LSW:WAX ensures accuracy and fairness in liquid staking. It starts at 1:1, dynamically updating based on accrued staking rewards."
+description: "How the LSW/WAX exchange rate is calculated and why it changes."
 ---
 
-$$
-Exchange   Rate =Total LiquidStakedWAX/ TotalNativeWAX
-$$
+The exchange rate is the amount of LSW one WAX buys:
 
-TotalNativeWAX = Staked WAX+ accrued staking reward from DeFi
+```
+Exchange rate = total LSW in circulation / total WAX staked (including rewards)
+```
 
-TotalLiquidStakedWAX = LSW minted
+Both totals are in the `stakemints` table of `liquid.alcor` (`totalLiquidStakedToken` and `totalNativeToken`).
 
-**For example:**
+- **Staking**: LSW received = WAX deposited × exchange rate.
+- **Unstaking**: WAX received = LSW returned / exchange rate.
 
-The pool will initially start at a 1:1 ratio and will be dynamically updated based on the accrued staking rewards. To understand how this works, let’s consider an example:
+The rate started at 1. Every time staking rewards are added, the WAX total grows while the LSW total stays the same, so the rate goes down: each LSW is redeemable for more WAX. Staking and unstaking themselves do not change the rate. The staking page shows the current rate.
 
-Avral is LSWs first user and he stakes 100 WAX, he then receives 100 LSW in return.
+## Example
 
-$$
-ExchangeRate: 100/100=1
-$$
+1. Alice is the first staker. She stakes 100 WAX and receives 100 LSW.
 
-Let’s assume that time has passed and 10 rewards in WAX were accrued.
+   ```
+   Exchange rate = 100 / 100 = 1
+   ```
 
-Now, the new exchange rate would be:
+2. Over time, 10 WAX of rewards are added.
 
-$$
-ExchangeRate: 100/100+10= 0.91
-$$
+   ```
+   Exchange rate = 100 / (100 + 10) ≈ 0.909
+   ```
 
-If Avral decides to withdraw his WAX, he will receive 110 WAX for 100 LSW based on the new exchange rate.
-
-\ <br />
+3. Alice unstakes her 100 LSW and receives 100 / 0.909 ≈ 110 WAX.

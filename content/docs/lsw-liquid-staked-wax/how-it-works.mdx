@@ -1,20 +1,22 @@
 ---
 title: "How it works"
+description: "What happens to your WAX when you stake it for LSW."
 ---
 
-**Key Terms**
+## Staking
 
-**-WAX:** The native coin on WAX.
+1. You transfer WAX to `liquid.alcor` with the memo `stake` (the staking page does this for you).
+2. The contract calculates the LSW amount at the current [exchange rate](/lsw-liquid-staked-wax/exchange-rate), issues that much LSW from `lsw.alcor` and sends it to you in the same transaction.
+3. The deposited WAX is staked to CPU of the `liquid.alcor` account.
 
-**-LSW**: A reward-bearing token received when staking WAX with Alcor DEX.
+## Voting and rewards
 
-**-Staker Multisig:** Account on Alcor holding stakers’ funds.
+- `liquid.alcor` votes through the `top21.oig` proxy, so its stake supports the top 21 WAX guilds.
+- The rewards this earns (WAX voter pay and other WAX rewards sent to the contract) are added to the pool of staked WAX and staked again right away. LSW supply does not change, so every LSW becomes worth more WAX.
+- The contract can keep a protocol fee from rewards (`feePct`, sent to `fees.alcor`). It is currently 0%.
 
-**Process Overview**
+The contract's `stakemints` table shows the totals: `totalNativeToken` (WAX staked including rewards) and `totalLiquidStakedToken` (LSW in circulation).
 
-1. **Initiation:** User stakes WAX and deposits it into an Alcor Staking Contract.2. 
-2. **Calculation and Minting:** The contract calculates LSW based on WAX´s exchange rate, mints LSW, and sends it to the user's WAX account.
-3. **Stake:** Alcor contract uniformly stakes across the top 21 Guilds on WAX using the liquid.alcor account.
-4. **Compound:** Alcor constantly claims revenue from WAX DeFi and retakes the profits, ensuring capital efficiency in terms of voting power and resource availability. 
+## Unstaking
 
-<br />
+You can get WAX back in two ways: unstake through the contract (takes several days) or sell LSW for WAX on Alcor Swap (instant, at the market price). See [Withdrawal process](/lsw-liquid-staked-wax/withdrawal-process).

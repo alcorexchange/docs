@@ -1,19 +1,20 @@
 ---
 title: "Formulas"
+description: "Low-level price math for swap.alcor pools."
 ---
 
-For application development, we recommend to use our [SDK](https://github.com/alcorexchange/alcor-v2-sdk). But here you can find formulas for interaction at a low level.
+For applications, use the [Alcor SDK](https://github.com/alcorexchange/alcor-v2-sdk). The formulas below are for working with the contract directly.
 
-Here you can find formulas for **swap.alcor** contract.
+## Pool price
 
-#### Pool token price calculation
+`sqrtPriceX64` is in the `currSlot` field of the pool row. `precisionA` and `precisionB` are the token precisions.
 
 ```
-tokenA price in terms of tokenB:
-sqrtPriceX64 ** 2 / 2 ** 128 * 10 ** (precisionA-precisionB)
+Price of tokenA in tokenB:
+sqrtPriceX64 ** 2 / 2 ** 128 * 10 ** (precisionA - precisionB)
 
-tokenB price in terms of tokenA:
-2 ** 128 / sqrtPriceX64 ** 2 * 10 ** (precisionB-precisionA)
+Price of tokenB in tokenA:
+2 ** 128 / sqrtPriceX64 ** 2 * 10 ** (precisionB - precisionA)
 ```
 
-[^1]:
+`sqrtPriceX64` is a 128-bit integer. Square it with big integers (e.g. `BigInt`) to avoid losing precision.

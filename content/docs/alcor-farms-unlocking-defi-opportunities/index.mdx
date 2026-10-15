@@ -1,20 +1,34 @@
 ---
-title: "Alcor Farms: Unlocking DeFi Opportunities"
+title: "Farms"
+description: "Stake Alcor Swap liquidity positions in farms to earn extra token rewards."
 ---
 
-Alcor Farms are a cornerstone of decentralized finance (DeFi) within the Alcor Exchange ecosystem. Designed to empower users, Alcor Farms provides a unique opportunity to participate in yield farming. Users can contribute liquidity to various token pairs and earn rewards, fostering a vibrant and engaged community.
+A farm (an "incentive" in the contract) pays a set amount of a reward token to the liquidity positions of one Alcor Swap pool over a fixed period. Projects create farms to attract liquidity to their pools. Liquidity providers stake their positions in a farm to earn its rewards on top of swap fees.
 
-**Key Features:**
+Farms run entirely on-chain, in the `swap.alcor` contract.
 
-1. **Liquidity Provision:** Users can contribute their assets to liquidity pools, enhancing the overall trading experience on Alcor Exchange.
-2. **Reward Generation:** By participating in Alcor Farms, users earn rewards in various tokens, creating an additional income stream.
-3. **Diverse Token Pairs:** Alcor Farms support a range of token pairs, allowing users to choose and participate in the pools that align with their preferences.
-4. **Community Engagement:** Alcor Farms promote community engagement by encouraging users to actively participate in the decentralized ecosystem.
+## Farming in the app
 
-**Purpose:**
+Farms are at `alcor.exchange/v/<chain>/swap/farms`, where `<chain>` is `wax`, `xpr`, `vaulta` (EOS) or `telos`.
 
-* **Liquidity Boost:** Alcor Farms play a vital role in boosting liquidity across different token pairs on the Alcor Exchange, creating a more dynamic and efficient trading environment.
-* **Community Incentives:** The primary purpose is to incentivize community members to contribute to the liquidity and growth of the Alcor ecosystem.
-* **Yield Farming Opportunities:** Users can engage in yield farming, capitalizing on opportunities to earn rewards through their contributions to liquidity pools.
+- **My Farms**, **All** and **Ended** filter the list. Search by token, contract or reward, and **Hide low TVL** hides small pools.
+- Each pool shows its farms with APR, end date, total staked, and your share, daily reward and earned amount.
+- If you have no position in a farmed pool, **Add liquidity** opens the [new position form](/alcor-swap/providing-liquidity). When the pool has running farms, the form stakes the new position in them in the same transaction (you can opt out).
+- **Stake All** stakes every in-range position you have that is not yet staked in a running farm. **Claim All** claims all your rewards.
 
-Alcor Farms embody the principles of decentralization, community-driven growth, and user empowerment within the Alcor Exchange ecosystem.
+You can also stake, claim and unstake from a [position's page](/alcor-swap/pool-page#position-page).
+
+## Rules
+
+- **Only in-range positions can be staked.** A position's staking weight is √(amount A × amount B) of the tokens it holds. A position outside its range holds only one token, so its weight is zero and the contract refuses to stake it.
+- The weight is calculated when the position is staked, and recalculated when liquidity is added to or removed from it.
+- A farm releases its rewards evenly over its duration. At every moment, each staked position gets a share in proportion to its weight.
+- Rewards can be claimed at any time. Unstaking also pays out the rewards earned so far.
+- A position can be staked in up to 15 farms at once.
+- A position must be unstaked from all farms before it can be [locked permanently](/alcor-swap/locking-liquidity).
+
+<Cards>
+  <Card title="Creating a Farm" href="/alcor-farms-unlocking-defi-opportunities/creating-farm-incentives-quick-tutorial" />
+  <Card title="Link to Your Project's Farms" href="/alcor-farms-unlocking-defi-opportunities/project-farms-unique-link" />
+  <Card title="Technical Details" href="/alcor-farms-unlocking-defi-opportunities/technical-details" />
+</Cards>

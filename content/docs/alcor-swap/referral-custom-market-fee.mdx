@@ -1,65 +1,56 @@
 ---
 title: "Referral / Custom Market Fee"
-description: "Referral program for additional earnings for providing UI for Alcor Swap"
+description: "Earn an extra fee on Alcor Swap trades routed through your link, widget or interface."
 ---
 
-Register your market
+Any account can register as a "market" on the `swap.alcor` contract with its own fee. When a swap names that market, the contract charges the market fee on top of the pool fee and sends it to the market account.
 
-To receive additional commission as a referral or as an additional UI provider. First, you need to register your account  which will receive your additional fee, specifying the amount of the desired fee. The fee will be charged from input token amount and sent to market account.
+## 1. Register your market
 
-![](https://1106702801-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F-MJILKtslrmNIVV9CYCR%2Fuploads%2FSKXbu6wP6bVAdwvyr14g%2FScreenshot%202024-02-07%20at%2012.46.33.png?alt=media\&token=87396fa1-f3a4-465f-8e6d-ba9617f6f4bc)\
-\<https://wax.bloks.io/account/swap.alcor?loadContract=true&tab=Actions&account=swap.alcor&scope=swap.alcor&limit=100&action=regmarket> (for example WAX contract)
+Call the `regmarket` action of `swap.alcor`, signed by the market account itself:
 
-Call **regmarket** action on swap.alcor contract with following parameters:
-
-* **marketName**: account for receiving fee.
-* **marketFee:** as part of 10^6
-
-**marketFee** Percent should be part of the 10^6 number. For example:
+- `marketName`: the account that receives the fee.
+- `marketFee`: the fee in millionths (parts of 10^6).
 
 ```
-1000 will be 0.1%
-500 will be 0.05%
-
-and so on.
-
-MAXIMUM fee is: 10000 (1%).
+1000  = 0.1%
+500   = 0.05%
+10000 = 1% (maximum)
 ```
 
-## Chose the UI you want to attract users to.
+Calling `regmarket` again with the same account changes its fee.
 
-There are few option for you.
+The market fee is charged in every pool the swap passes through, in that pool's input token, and is sent to the market account in the same transaction.
 
-#### 1) Land user to Alcor Swap page directly
+## 2. Send swaps through your market
 
-Simply add your market(from 1 step) as query parameter to swap url and share this as your referal link.
+A swap names the market as the last field of its transfer memo. There are two ways to get it there.
 
-```
-&market=<marketName>
+### Swap widget
 
-// For example
-// The fee will be sent to fees.alcor account
-
-https://alcor.exchange/swap?market=fees.alcor
-```
-
-#### 2) User Swap Widget(Iframe) on your web site
-
-Add widget to your site
-
-[Swap Widget](/swap-widget)
-
-And add the market query parameter to your iframe URL
+Embed the [Swap Widget](/swap-widget) and add your market as the `market` query parameter:
 
 ```html
-<iframe src="http://alcor.exchange/swap-widget?market=<marketAccount>"></iframe>
+<iframe src="https://wax.alcor.exchange/swap-widget?market=<marketName>" width="445" height="600"></iframe>
 ```
 
-**3) Create custom UI and add your market to swap memo, use following format:**
+Use the domain of your chain: `wax.alcor.exchange`, `proton.alcor.exchange`, `eos.alcor.exchange` or `telos.alcor.exchange`.
+
+### Your own interface
+
+Build the swap transfer yourself and put the market account at the end of the memo. The transfer goes to `swap.alcor`:
 
 ```
-<swapexactin/swapexactout>#<Pool ID's>#<Recipient>#<Output Token>#<Deadline>#<marketAccount>
+<swapexactin|swapexactout>#<Pool IDs>#<Recipient>#<Output Token>#<Deadline>#<marketName>
 
-// Example | fees.alcor is market account thar receives fee
+// fees.alcor is the market account that receives the fee
 swapexactin#401,1212#alcordexfund#5.3645 USDT@usdt.alcor#0#fees.alcor
 ```
+
+The route and memo for a swap can be requested from the API: see [Swap API](/api/swap).
+
+<Callout type="info">
+
+The swap page at `alcor.exchange` does not read a `market` parameter, so a plain link to it does not earn a market fee.
+
+</Callout>

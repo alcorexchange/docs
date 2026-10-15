@@ -1,0 +1,30 @@
+---
+title: "Ranges"
+description: "Choosing a price range for a liquidity position, and using a range as an order."
+---
+
+Every Alcor Swap position has a price range: a **Min Price** and a **Max Price**. The position earns swap fees only while the pool price is inside its range. For the basics, see [Concentrated liquidity](/alcor-swap/introduction#concentrated-liquidity).
+
+## Setting a range
+
+The range is set while [opening a position](/alcor-swap/providing-liquidity):
+
+- **Presets** depend on the fee tier. **Infinity** is the full range. The others are set around the current price, for example ±1%, ±5%, ±10%, −5/+20% and −20/+5% in a 0.3% pool. Lower fee tiers offer narrower presets and the 1% tier offers wider ones.
+- **Min Price** and **Max Price** can be typed or stepped with the +/− buttons.
+- **Chart**: the range can be dragged on the liquidity chart. **Advanced** shows the pool's liquidity and price history; **Simple** is a basic range selector. The arrow button switches which token the prices are quoted in.
+
+At the minimum price the position is made up entirely of one token, and at the maximum price entirely of the other. The form shows which.
+
+A range cannot be edited later. To move it, remove the liquidity and open a new position.
+
+## Range orders
+
+A range placed entirely above or below the current price holds only one token. When the price moves into the range, that token is gradually swapped into the other one, and the swaps through your liquidity pay you fees. This works like a limit order that also earns fees.
+
+For example, WAX trades at 0.08 USDT. You add 10,000 WAX to a WAX/USDT position with a range of 0.10–0.20:
+
+- At 0.10 the position is 100% WAX.
+- Between 0.10 and 0.20 it is a mix of WAX and USDT.
+- At 0.20 and above it is 100% USDT: about 1,414 USDT plus the fees earned on the way. The average sale price of a range is the geometric mean of its bounds, here √(0.10 × 0.20) ≈ 0.1414.
+
+If the price falls back into the range, the USDT is swapped back into WAX. To keep the USDT, remove the liquidity once the price is above the range.

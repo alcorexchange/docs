@@ -1,25 +1,27 @@
 ---
-title: "How to Use Alcor Price Oracle"
-description: "In 4 easy steps!"
+title: "How to Use the Alcor Price Oracle"
+description: "Reading TWAP prices from Alcor Swap pools in your own contract."
 ---
 
-We've made it even easier for you to get started with the Alcor Price Oracle! You can find the full interface project at this **GitHub repository:** \<https://github.com/alcorexchange/alcor-oracle-price>
+The interface and an example contract are in [alcorexchange/alcor-oracle-price](https://github.com/alcorexchange/alcor-oracle-price) on GitHub.
 
-Here's a step-by-step guide to help you effectively utilize the Alcor Price Oracle:
+1. Copy the `include` folder of the repository into your contract project. It reads the `pools` and `observations` tables of `swap.alcor` directly, so no call to Alcor is needed.
+2. Include `alcorpriceoracle_interface.hpp` and call:
 
-**Step 1**: Copy the hpp folder from our repository where we've provided a full interface for using the Alcor Price Oracle and paste it into your own project. 
+   ```cpp
+   uint128_t priceX64 = AlcorPriceOracle::getPriceTwapX64(poolId, twapInterval);
+   ```
 
-**Step 2:** Access the Alcor Price Oracle within your cpp project by simply adding the following line of code:
+   - `poolId`: the Alcor Swap pool to read.
+   - `twapInterval`: the averaging window in seconds. `0` returns the current spot price.
+   - The result is the price of the pool's `tokenA` in `tokenB`, in raw token units (without decimals), as a Q64.64 fixed-point number: divide by 2^64 to get the ratio.
 
-| uint128\_t AlcorPriceOracle::getPriceTwapX64(poolId, twapInterval) |
-| --- |
+3. Make sure the pool keeps enough history for your window. `AlcorPriceOracle::getOldestObservationSecondsAgo(poolId)` returns the age of the oldest stored observation. If it is shorter than your window, [buy more observations](/alcor-swap/alcorswap-v2-price-oracles/expanding-price-availability-with-ram-purchase).
 
-Note: Most protocols use a 30-minute running TWAP, but it's essential to understand the trade-offs involved. Longer TWAPs are more tamper-resistant but may provide less accurate data during volatility. Shorter TWAPs offer more accurate data during volatility but may be less tamper-resistant. Consider your project needs and risks when selecting the TWAP length. 
+The interface also has `consult(poolId, secondsAgo)`, which returns the tick change and the harmonic mean liquidity over a window.
 
-**Step 3:** Modify and adapt it to work with your DApp's architecture and requirements. 
+## Choosing the window
 
-**Step 4:** Collaborate with the [**Community**](https://t.me/alcorexchange) We encourage you to join our community and engage with developers who are using the Alcor Price Oracle in their projects. Collaboration and knowledge-sharing are essential for building a stronger WAX Defi ecosystem.
+Many protocols use a 30-minute TWAP. A longer window is harder to manipulate but follows the market more slowly during volatility. A shorter window tracks the market more closely but is cheaper to manipulate. Choose according to your protocol's risks, and use a pool with deep liquidity.
 
-By following these steps and using our provided interface, you can effortlessly integrate the Alcor Price Oracle into your project and leverage accurate and reliable asset prices on the WAX blockchain.
-
-<br />
+Questions: [Alcor Telegram](https://t.me/alcorexchange).

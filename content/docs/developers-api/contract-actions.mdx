@@ -1,53 +1,74 @@
 ---
 title: "Contract actions"
-description: "Description of contract actions and memo format."
+description: "Order book DEX contract: transfer memos for orders and market creation, and cancel actions."
 ---
 
-**Open new market**
+You trade by transferring tokens to the DEX contract with a memo. The contract account differs per chain (see [Smart Contracts](/developers-api#contract-accounts)). The examples below use WAX (`alcordexmain`).
 
-Transfer 3.0000 EOS to dex contract account with memo:\
-\
-`new_market|0.<token_precision> <token_symbol>@<token_contract>`
+A memo that has no `@` or no space is treated as a plain transfer.
 
-Example memo:
+## Limit order
 
-```
-new_market|0.00000000 WEED@weedcashnt
-```
-
-<Callout type="info">
-
- Check dex contract account name on Developers API main page.
-
-</Callout>
-
-**Submit order**
-
-Send the amoun&#x74;**(bid)** you want to sell to dex contract account, and specify the amount you **ask** in the memo, the price and market will be automatically determined in the contract. Memo format(**ask** token):\
-\
-`<token_amount> <token_symbol>@<token_contract>`
-
-Example:
+Transfer the amount you sell (the **bid**) and put the amount you want to receive (the **ask**) in the memo. The contract finds the market by the token pair and derives the price from bid and ask.
 
 ```
-1000.0000 TKT@eossanguotkt
+<amount> <SYMBOL>@<token_contract>
 ```
 
-<Callout type="info">
+```
+1000.0000 TLM@alien.worlds
+```
 
-Make sure you provide token contract and correct precision!
+- The ask must use the token's exact precision and contract.
+- The part of the order that matches is filled at once. The rest stays in the order book.
+- Each market has minimum amounts, `min_buy` (base token) and `min_sell` (quote token), in the [markets table](/developers-api/contract-tables#markets).
+- An account can hold up to 300 open orders by default.
+- Orders cannot be edited. Cancel and place a new one.
 
-</Callout>
+## Market order
 
-**Order cancelation**
+Set the ask amount to zero. The order fills against the best opposite orders, and the unfilled remainder is refunded.
 
-Call action `cancelsell` or `cancelbuy` with parameters
+```
+0.0000 TLM@alien.worlds
+```
 
-* **executor** - order owner account name
-* **market\_id -** id of the order related market
-* **order\_id -** order id.
+To fail the transaction unless you receive at least a minimum amount (after fees), put that amount in the memo and add `|min`:
 
-**View actions on bloks.io** (Links)
+```
+950.0000 TLM@alien.worlds|min
+```
 
-[Cancelbuy](https://bloks.io/account/eostokensdex?loadContract=true\&tab=Actions\&table=markets\&account=eostokensdex\&scope=eostokensdex\&limit=100\&action=cancelbuy)\
-[Cancelsell](https://bloks.io/account/eostokensdex?loadContract=true\&tab=Actions\&table=markets\&account=eostokensdex\&scope=eostokensdex\&limit=100\&action=buyreceipt)
+## Cancel order
+
+Call `cancelbuy` or `cancelsell` on the DEX contract, signed by the order owner. The remaining bid is returned to the owner.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `executor` | `name` | Order owner |
+| `market_id` | `uint64` | Market ID |
+| `order_id` | `uint64` | Order ID in `buyorder` or `sellorder` |
+
+```shell
+cleos -u https://wax.greymass.com push action alcordexmain cancelsell '["bob", 26, 1284277]' -p bob
+```
+
+## Fees
+
+Each market has a `fee` in hundredths of a percent (`20` = 0.2%). On every match, both sides receive their amount minus the fee.
+
+## Open a new market
+
+Transfer the market creation fee in the chain's system token (from `eosio.token`) with this memo:
+
+```
+new_market|<base>|<quote>
+```
+
+`<base>` and `<quote>` are zero amounts with full precision, symbol and contract:
+
+```
+new_market|0.00000000 WAX@eosio.token|0.0000 TLM@alien.worlds
+```
+
+The transaction fails if the market already exists or both tokens are the same. The fee goes to the Alcor fee account. See [Market creation](/developers-api/market-creation) for the fee on each chain.

@@ -1,202 +1,217 @@
 ---
 title: "WebSocket"
+description: "Live trades, order books, candles and account events over Socket.IO."
 ---
+
+Live updates are served over [Socket.IO](https://socket.io/) (version 4 client). Connect once, then join rooms with
+`subscribe` and leave them with `unsubscribe`. Every room takes the chain in its `params`: `wax`, `eos`, `telos` or
+`proton`.
 
 ```javascript
 import { io } from 'socket.io-client'
 
-const socket = io('https://alcor.exchange')
+const socket = io('https://wax.alcor.exchange', { transports: ['websocket'] })
+
+socket.emit('subscribe', { room: 'deals', params: { chain: 'wax', market: 26 } })
+socket.on('new_deals', deals => console.log(deals))
 ```
-Alcor using [Socket.IO](https://socket.io/) for interact via WebSocket technology.
 
-**There are two commands for subscribing to and channel with specific information.**
-
-* **subscribe**: Subscribing for an specific room.
-* **unsubscribe**: Unsubscribe from sprcific room.
-
-**You can subscribe to rooms to receive specific event information.**
-
-* deals
-* ticker
-* account
-* orderbook
+| Room | Params | Events |
+| --- | --- | --- |
+| deals | `chain`, `market` | `new_deals` |
+| orderbook | `chain`, `market`, `side` | `orderbook_buy`, `orderbook_sell` |
+| ticker | `chain`, `market`, `resolution` | `tick` |
+| swap-ticker-v2 | `chain`, `pool`, `resolution` | `swap-tick-v2` |
+| account | `chain`, `name` | `match`, `account:update-v2` |
 
 ## Deals
+
+New trades of a spot market.
+
 ```javascript
-// Subscribe to deals
-socket.emit('subscribe', {
-    room: 'deals',
-    params: {
-        chain: 'wax', // Chain
-        market: 26 // Market id
-    }
-})
+socket.emit('subscribe', { room: 'deals', params: { chain: 'wax', market: 26 } })
 
-// Handle new deals
-socket.on('new_deals', deals => { ... })
+socket.on('new_deals', deals => { /* ... */ })
 
-// Unsubscribe from deals (will unsubscribe from all markets)
-socket.emit('unsubscribe', { room: 'deals', params: { chain: 'wax' } })
+socket.emit('unsubscribe', { room: 'deals', params: { chain: 'wax', market: 26 } })
 ```
 
-> Responce:
+On subscribe, `new_deals` delivers the market's last 200 trades. After that, each new trade arrives as a one-element
+array:
 
 ```json
 [
-    {
-      "time": 1674820074000,
-      "ask": 3.5771,
-      "bid": 0.99799129,
-      "type": "buymatch",
-      "unit_price": 0.27899985,
-      "trx_id": "d4acaa5ae75bccad12ca82dd2d1d3fa5822cece1307ced10ee0daefaeb6d5009"
-    }
+  {
+    "time": 1674820074000,
+    "ask": 3.5771,
+    "bid": 0.99799129,
+    "type": "buymatch",
+    "unit_price": 0.27899985,
+    "trx_id": "d4acaa5ae75bccad12ca82dd2d1d3fa5822cece1307ced10ee0daefaeb6d5009"
+  }
 ]
 ```
 
-Subscribing to new deals for specific market.
+The fields are those of [Spot trades](/api/account#spot-trades). `time` is unix milliseconds in new trades and an ISO
+8601 string in the initial batch, whose trades also carry `_id`.
 
-**Room name**: deals
+## Order book
 
-**Params**:
+Order book levels of one side of a spot market. Subscribe to each side you need.
 
-| Key | Value |
-| --- | --- |
-| chain | chain id |
-| market | market id |
-
-## Orderbook
 ```javascript
-// Subscribe to buy orderbook of 26 (TLM on wax) market.
-socket.emit('subscribe', {
-    room: 'deals',
-    params: {
-        chain: 'orderbook', // Chain
-        market: 26, // Market id,
-        side: 'buy'
-    }
-})
+socket.emit('subscribe', { room: 'orderbook', params: { chain: 'wax', market: 26, side: 'buy' } })
+socket.emit('subscribe', { room: 'orderbook', params: { chain: 'wax', market: 26, side: 'sell' } })
 
-// On orderbook bid side update
-socket.on('orderbook_buy', bids => { ... })
+socket.on('orderbook_buy', levels => { /* bids */ })
+socket.on('orderbook_sell', levels => { /* asks */ })
 
-// On orderbook ask side update
-socket.on('orderbook_sell', asks => { ... })
-
-// Unsubscribe from orderbook (all, buy and sell)
+// Leaves both sides
 socket.emit('unsubscribe', { room: 'orderbook', params: { chain: 'wax', market: 26 } })
 ```
 
-> Responce:
-
 ```json
 [
-    [
-      27899985,
-      3044158,
-      8493196253
-    ]
+  [27899985, 3044158, 8493196253]
 ]
 ```
 
-Subscribe to orderbook updates. First update is full order book state.
+The first message holds the whole side (up to 1000 levels), best price first. Later messages hold only the levels that
+changed. Each level is `[unit_price, bid, ask]`:
 
-**Room name**: orderbook
-
-**Params**:
-
-| Key | Value |
+| Index | Description |
 | --- | --- |
-| chain | chain id |
-| market | market id |
-| side | **sell** or **buy** |
+| 0 | Price as an integer: target per base multiplied by 10^8. Identifies the level |
+| 1 | Sum of what the level's orders offer, in the smallest units of that token |
+| 2 | Sum of what they want in return, in the smallest units of that token |
+
+A level whose amounts are both `0` has been removed.
 
 ## Ticker
+
+Live candle of a spot market: every change to the current candle is pushed.
+
 ```javascript
-// Subscribe
-socket.emit('subscribe', {
-  room: 'ticker',
-  params: {
-    chain: 'wax',
-    market: 26,
-    resolution: '30'
-  }
-})
+socket.emit('subscribe', { room: 'ticker', params: { chain: 'wax', market: 26, resolution: '30' } })
 
-// Unsubscribe
-socket.emit('unsubscribe', {
-  room: 'ticker',
-  params: {
-    chain: 'wax',
-    market: 26,
-    resolution: '30'
-  }
-})
+socket.on('tick', candle => { /* ... */ })
 
+// Without resolution, leaves every resolution of the market
+socket.emit('unsubscribe', { room: 'ticker', params: { chain: 'wax', market: 26, resolution: '30' } })
 ```
-
-> Responce:
 
 ```json
-[
-  "tick",
-  {
-    "close": 0.01175084,
-    "open": 0.01175084,
-    "high": 0.01175084,
-    "low": 0.01175084,
-    "volume": 0.11727339,
-    "time": 1674821301500
-  }
-]
+{
+  "open": 0.01175084,
+  "high": 0.01175084,
+  "low": 0.01175084,
+  "close": 0.01175084,
+  "volume": 0.11727339,
+  "time": 1674821301500
+}
 ```
 
-Subscribe for chart updates.
+Resolutions are those of [Candles](/api/market-data#candles): `1`, `5`, `15`, `30`, `60`, `240`, `1D`, `1W`, `1M`.
+`time` is the candle start in unix milliseconds, `volume` is in target.
 
-**Room name**: ticker
+## Pool ticker
 
-**Params**:
+Live candle of an AMM pool. The current candle is sent at once on subscribe, then on every change.
 
-| Key | Value |
+```javascript
+socket.emit('subscribe', { room: 'swap-ticker-v2', params: { chain: 'wax', pool: 1095, resolution: '60' } })
+
+socket.on('swap-tick-v2', tick => { /* ... */ })
+
+socket.emit('unsubscribe', { room: 'swap-ticker-v2', params: { chain: 'wax', pool: 1095, resolution: '60' } })
+```
+
+```json
+{
+  "v": 2,
+  "chain": "wax",
+  "poolId": 1095,
+  "resolution": "60",
+  "time": 1792062000000,
+  "bar": {
+    "volumeUSD": 1.47,
+    "sqrtPriceX64": { "open": "12900000000000000", "high": "12931342024590619", "low": "12900000000000000", "close": "12931342024590619" },
+    "price": {
+      "aPerB": { "open": "0.00489139", "high": "0.00491414", "low": "0.00489139", "close": "0.00491414" },
+      "bPerA": { "open": "204.4407", "high": "204.4407", "low": "203.494", "close": "203.494" }
+    }
+  },
+  "pair": {
+    "tokenA": { "id": "wax-eosio.token", "contract": "eosio.token", "symbol": "WAX", "decimals": 8 },
+    "tokenB": { "id": "usdt-usdt.alcor", "contract": "usdt.alcor", "symbol": "USDT", "decimals": 4 }
+  },
+  "serverTime": 1792065005120,
+  "source": "chain"
+}
+```
+
+| Name | Description |
 | --- | --- |
-| chain | chain id |
-| market | market id |
-| resolution | Resolution (see list below) |
-
-Supported resolutions:
-
-`1, 5, 15, 30, 60, 240, 1D, 1W, 1M`
+| poolId, resolution | Which candle this is. Filter on them if you hold several subscriptions |
+| time | Candle start, unix milliseconds |
+| bar.volumeUSD | Candle volume, USD |
+| bar.price.aPerB | Prices of token A in token B |
+| bar.price.bPerA | Prices of token B in token A |
+| bar.sqrtPriceX64 | The same candle as Q64.64 square-root prices |
+| source | `chain`: pushed at once from the swap action. `db`: the stored candle, authoritative |
+| serverTime | When the server sent it, unix milliseconds |
 
 ## Account
+
+Events of one account.
+
 ```javascript
-socket.emit('subscribe', {
-    room: 'account', params: {
-        chain: 'wax',
-        'name': 'randomuser' // Account for listen events
-    }
-})
+socket.emit('subscribe', { room: 'account', params: { chain: 'wax', name: 'alice.wam' } })
+
+socket.on('match', match => { /* one of the account's orders traded */ })
+socket.on('account:update-v2', update => { /* something of the account changed */ })
+
+socket.emit('unsubscribe', { room: 'account', params: { chain: 'wax', name: 'alice.wam' } })
 ```
 
-> Responce
+**match**: an order of the account traded.
 
 ```json
-[
-  "match",
-  {
-    "ask": 0.11727339,
-    "market_id": 156,
-    "price": 0.01175084
-  }
-]
+{
+  "market_id": 156,
+  "price": 0.01175084,
+  "side": "buy",
+  "match_type": "buymatch",
+  "base_volume": 9.98,
+  "target_volume": 0.11727339,
+  "ask": 0.11727339
+}
 ```
 
-Subscribe to account events/notifications. Only order matches for now.
+`side` is `buy` or `sell` for the taking order, `base_volume` and `target_volume` are the traded amounts. The event
+sent to the asker carries `ask`, the one sent to the bidder carries `bid` instead: the amount that account received.
 
-**Room name**: account
+**account:update-v2**: the account's balances, orders or positions changed. Use it as a signal to reload them.
 
-**Params**:
+```json
+{
+  "v": 2,
+  "chain": "wax",
+  "account": "alice.wam",
+  "balances": [{ "contract": "eosio.token", "symbol": "WAX" }],
+  "balancesAll": false,
+  "orders": [26],
+  "positions": [],
+  "accountLimits": true,
+  "meta": { "contract": "alcordexmain", "action": "buyreceipt", "trx_id": "…", "block_num": 461162168 }
+}
+```
 
-| Key | Value |
+| Name | Description |
 | --- | --- |
-| chain | chain id |
-| name | Account |
+| balances | Token balances that changed, or `null` |
+| balancesAll | `true` when any balance may have changed: reload all |
+| orders | Spot market ids where the account's orders changed |
+| positions | AMM position ids that changed |
+| accountLimits | `true` when the account's resources may have changed |
+| meta | The action that caused the update |

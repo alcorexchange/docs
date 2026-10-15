@@ -1,23 +1,26 @@
 ---
-title: "Contract Tables"
-description: "Alcor contract tables structure for contracts communication."
+title: "Contract tables"
+description: "Table structures of the order book DEX contract and the legacy AMM contract."
 ---
 
-#### Markets
+Tables of the order book DEX contract (`alcordexmain` on WAX, `eostokensdex` on EOS and Telos, `alcor` on XPR Network).
 
-```
-struct[[eosio::table]] market {
+## Markets
+
+Table `markets`, scope: the contract account.
+
+```cpp
+struct [[eosio::table]] market {
   uint64_t id;
 
-  extended_symbol base_token;
-  extended_symbol quote_token;
+  extended_symbol base_token;   // token prices are quoted in, e.g. WAX
+  extended_symbol quote_token;  // traded token, e.g. TLM
 
-  asset min_buy;
-  asset min_sell;
+  asset min_buy;   // minimum order amount in base_token
+  asset min_sell;  // minimum order amount in quote_token
 
   bool frozen = false;
-
-  uint8_t fee = 0;
+  uint8_t fee = 0;  // hundredths of a percent, 20 = 0.2%
 
   uint64_t primary_key() const { return id; }
   checksum256 get_secondary_1() const {
@@ -29,85 +32,105 @@ struct[[eosio::table]] market {
     );
   }
 
+  // e.g. "TLM/WAX"
   string get_market_symbol() const {
     return quote_token.get_symbol().code().to_string() + "/" + base_token.get_symbol().code().to_string();
   }
 };
 
 typedef eosio::multi_index<"markets"_n, market,
-  indexed_by<"bytokens"_n, const_mem_fun<market, checksum256, &market::get_secondary_1 >
-> > markets_index;
+  indexed_by<"bytokens"_n, const_mem_fun<market, checksum256, &market::get_secondary_1>>
+> markets_index;
+```
 
+The `bytokens` index finds a market by its token pair. The key does not depend on token order:
 
-// Helper function for market 256 id
-
+```cpp
 uint128_t make128key(uint64_t a, uint64_t b) {
-    uint128_t aa = a;
-    uint128_t bb = b;
-    return (aa << 64) + bb;
+  uint128_t aa = a;
+  uint128_t bb = b;
+  return (aa << 64) + bb;
 }
 
 checksum256 make256key(uint64_t a, uint64_t b, uint64_t c, uint64_t d) {
   if (make128key(a, b) < make128key(c, d))
-    return checksum256::make_from_word_sequence < uint64_t > (a, b, c, d);
+    return checksum256::make_from_word_sequence<uint64_t>(a, b, c, d);
   else
-    return checksum256::make_from_word_sequence < uint64_t > (c, d, a, b);
+    return checksum256::make_from_word_sequence<uint64_t>(c, d, a, b);
 }
 ```
 
-256key **JavaScript** function: \<https://github.com/avral/alcor-ui/blob/7bd8483435c26bc3cdd1017d8f6efe1f5b0fe6e2/utils/index.js#L28>
+A JavaScript version is `make256key` in [alcor-ui/utils/index.js](https://github.com/alcorexchange/alcor-ui/blob/master/utils/index.js).
 
-#### Order
+## Orders
 
-in contract it's two same structure tables: **buyorder** and **sellorder**
+Tables `buyorder` and `sellorder` have the same structure. Scope: the market ID.
 
-```
-struct [[eosio::table]] sellorder {
-    uint64_t id;
-    name account;
-    asset bid;
-    asset ask;
-    uint128_t unit_price;
-    uint32_t timestamp;
-        
-    uint64_t primary_key() const { return id; }
-    uint64_t get_account() const { return account.value; }
+```cpp
+struct [[eosio::table]] buyorder {
+  uint64_t id;
+  name account;          // order owner
+  asset bid;             // amount the owner gives
+  asset ask;             // amount the owner wants
+  uint128_t unit_price;  // price in base_token per quote_token, times 10^8
+  uint32_t timestamp;    // seconds
+
+  uint64_t primary_key() const { return id; }
+  uint128_t get_price() const { return -unit_price; }  // sellorder: unit_price
+  uint64_t get_account() const { return account.value; }
 };
-    
-typedef eosio::multi_index< "buyorder"_n, buyorder, 
-  indexed_by<"byprice"_n, const_mem_fun<buyorder, uint128_t, &buyorder::get_price> >,
-  indexed_by<"byaccount"_n, const_mem_fun<buyorder, uint64_t, &buyorder::get_account> >
+
+typedef eosio::multi_index<"buyorder"_n, buyorder,
+  indexed_by<"byprice"_n, const_mem_fun<buyorder, uint128_t, &buyorder::get_price>>,
+  indexed_by<"byaccount"_n, const_mem_fun<buyorder, uint64_t, &buyorder::get_account>>
 > buyorders_t;
-
-
 ```
 
-#### Swap liquidity pool Pairs table
+In a buy order `bid` is in the base token and `ask` in the quote token. A sell order is the other way round. The `byprice` index (index position 2, key type `i128`) returns the best orders first: highest price for `buyorder`, lowest for `sellorder`. The `byaccount` index (position 3, `i64`) filters by owner.
 
+```shell
+cleos -u https://wax.greymass.com get table alcordexmain 26 buyorder --index 2 --key-type i128 -l 10
 ```
-struct[[eosio::table]] pairs_struct {
+
+## Accounts
+
+Table `account`, scope: the contract account. Counts open orders per owner.
+
+```cpp
+struct [[eosio::table]] account {
+  name account;
+  map<uint64_t, uint16_t> buyorders;   // market_id -> open buy orders
+  map<uint64_t, uint16_t> sellorders;  // market_id -> open sell orders
+  uint16_t orders_total = 0;
+  uint16_t orders_limit = 300;
+};
+```
+
+## Legacy AMM pairs
+
+The first-generation AMM contract `alcorammswap` (WAX and Telos) keeps pools in table `pairs`, scope `alcorammswap`. Current pools are on [swap.alcor](/developers-api/amm-swap-contract-api).
+
+```cpp
+struct [[eosio::table]] pairs_struct {
   uint64_t id;
 
-  asset supply;
+  asset supply;          // LP token supply
   extended_asset pool1;
   extended_asset pool2;
 
-  int fee;
+  int32_t fee;
   name fee_contract;
 
-  uint64_t primary_key() const {
-    return id;
-  }
-  
+  uint64_t primary_key() const { return id; }
   checksum256 secondary_key() const {
-    return make256key( // this function can be find in markets table example above.
+    return make256key(
       pool1.contract.value, pool1.quantity.symbol.code().raw(),
       pool2.contract.value, pool2.quantity.symbol.code().raw()
     );
   }
 };
 
-typedef eosio::multi_index< "pairs"_n, pairs_struct,
-indexed_by<"extended"_n, const_mem_fun<pairs_struct, checksum256, 
-  &pairs_struct::secondary_key>> > pairs_index;
+typedef eosio::multi_index<"pairs"_n, pairs_struct,
+  indexed_by<"extended"_n, const_mem_fun<pairs_struct, checksum256, &pairs_struct::secondary_key>>
+> pairs_index;
 ```

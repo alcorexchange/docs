@@ -1,15 +1,22 @@
 ---
-title: "Project Farms Unique Link"
+title: "Link to Your Project's Farms"
+description: "Share a link that opens the farms page filtered to your project."
 ---
 
-To get link, that will open list with project only farms. Just set **contracts** query parameter for /farm page. User "," for separation if you want set multiple contracts.\
-\
-For example:
+Add the `q` query parameter to the farms page to open it with a search already applied:
 
 ```
-// Will show only farms with martia token pools
-https://alcor.exchange/farm?contracts=martia
-
-// OR Multiple contracts
-https://alcor.exchange/farm?contracts=eosio.token,usdt.alcor
+https://alcor.exchange/v/<chain>/swap/farms?q=<search>
 ```
+
+`<chain>` is `wax`, `xpr`, `vaulta` (EOS) or `telos`. The search matches token symbols and contracts of the pool, the reward token and the pool ID.
+
+```
+// Farms of pools or rewards involving the martia contract
+https://alcor.exchange/v/wax/swap/farms?q=martia
+
+// Farms on the WAX/TLM pools
+https://alcor.exchange/v/wax/swap/farms?q=WAX%20TLM
+```
+
+Several words must all match, so a link cannot list several unrelated contracts at once.
