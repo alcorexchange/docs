@@ -27,15 +27,15 @@ Get single token price by id
 
 `GET https://alcor.exchange/api/v2/tokens/:<token_id>`
 
-### Responce
-Name | Type | Description
----------- | --------------------------- | ----------- | -----------
-contract | string | token contract
-decimals | number | token precision
-symbol | string | token symbol
-id | string | token-id
-system_price | number | token price in chain system token
-usd_price | number | token price in USD
+### Response
+| Name | Type | Description |
+| --- | --- | --- |
+| contract | string | token contract |
+| decimals | number | token precision |
+| symbol | string | token symbol |
+| id | string | token-id |
+| system_price | number | token price in chain system token |
+| usd_price | number | token price in USD |
 
 ## All tokens prices
 ```shell
@@ -64,15 +64,15 @@ Get all tokens with it's prices
 
 `GET https://alcor.exchange/api/v2/tokens`
 
-### Responce
-Name | Type | Description
----------- | --------------------------- | ----------- | -----------
-contract | string | token contract
-decimals | number | token precision
-symbol | string | token symbol
-id | string | token-id
-system_price | number | token price in chain system token
-usd_price | number | token price in USD
+### Response
+| Name | Type | Description |
+| --- | --- | --- |
+| contract | string | token contract |
+| decimals | number | token precision |
+| symbol | string | token symbol |
+| id | string | token-id |
+| system_price | number | token price in chain system token |
+| usd_price | number | token price in USD |
 
 ## Token Logo
 ```shell
@@ -86,9 +86,9 @@ Get token logo image (PNG) by token id.
 `GET https://alcor.exchange/api/v2/tokens/<token_id>/logo`
 
 ### URL Parameters
-Name | Type | Description
----------- | --------------------------- | -----------
-token_id | string | Token identifier (symbol-contract)
+| Name | Type | Description |
+| --- | --- | --- |
+| token_id | string | Token identifier (symbol-contract) |
 
 ### Response
 Returns PNG image file if logo exists, or 404 error if not found.

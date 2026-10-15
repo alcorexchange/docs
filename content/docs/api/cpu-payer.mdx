@@ -51,16 +51,16 @@ Check if CPU payer service is available and signing.
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-available | boolean | Whether the service is available
-signing | boolean | Whether the service is currently signing transactions
-throttled | boolean | Whether rate limiting is in effect
-cpu | object | Current CPU usage info
-cpu.used | number | Current CPU usage in microseconds
-cpu.max | number | Maximum CPU available in microseconds
-cpu.percent | number | CPU usage percentage
-lastCheck | number | Timestamp of last CPU status check
+| Name | Type | Description |
+| --- | --- | --- |
+| available | boolean | Whether the service is available |
+| signing | boolean | Whether the service is currently signing transactions |
+| throttled | boolean | Whether rate limiting is in effect |
+| cpu | object | Current CPU usage info |
+| cpu.used | number | Current CPU usage in microseconds |
+| cpu.max | number | Maximum CPU available in microseconds |
+| cpu.percent | number | CPU usage percentage |
+| lastCheck | number | Timestamp of last CPU status check |
 
 ## Cosign
 
@@ -86,15 +86,15 @@ Cosign a pre-built transaction. The transaction must have `liquid.alcor::noop` a
 
 ### Request Body
 
-Name | Type | Description | Required
---- | --- | --- | ---
-serializedTransaction | string | Hex-encoded serialized transaction | true
+| Name | Type | Description | Required |
+| --- | --- | --- | --- |
+| serializedTransaction | string | Hex-encoded serialized transaction | true |
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-signature | string | The payer's signature (SIG_K1_...)
+| Name | Type | Description |
+| --- | --- | --- |
+| signature | string | The payer's signature (SIG_K1_...) |
 
 ### Errors
 
@@ -104,18 +104,18 @@ signature | string | The payer's signature (SIG_K1_...)
 }
 ```
 
-Error | Description
---- | ---
-Rate limit exceeded | Too many requests from this IP or account
-Invalid transaction | Transaction format is invalid
-First action must be noop | Transaction doesn't start with liquid.alcor::noop
-Unauthorized contract | Transaction contains actions to non-whitelisted contracts
-Service unavailable | CPU payer is currently disabled or overloaded
+| Error | Description |
+| --- | --- |
+| Rate limit exceeded | Too many requests from this IP or account |
+| Invalid transaction | Transaction format is invalid |
+| First action must be noop | Transaction doesn't start with liquid.alcor::noop |
+| Unauthorized contract | Transaction contains actions to non-whitelisted contracts |
+| Service unavailable | CPU payer is currently disabled or overloaded |
 
 ## Rate Limits
 
 | Limit | Default | Description |
-|-------|---------|-------------|
+| --- | --- | --- |
 | Per IP (hourly) | 500 | Requests per IP per hour |
 | Per Account (hourly) | 300 | Requests per WAX account per hour |
 | Per IP (daily) | 5000 | Requests per IP per day |

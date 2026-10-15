@@ -36,28 +36,28 @@ API for getting the spot deals history of a specific account.
 
 **Query params:**
 
-| Name    | Type   | Description                  | Required |
-|---------|--------|------------------------------|----------|
-| account | string | Account ID                   | true     |
-| from    | number | Start time in seconds        | false    |
-| to      | number | End time in seconds          | false    |
-| limit   | number | Limit of records to return   | false    |
-| skip    | number | Number of records to skip    | false    |
-| market  | number | Market ID                    | false    |
+| Name | Type | Description | Required |
+| --- | --- | --- | --- |
+| account | string | Account ID | true |
+| from | number | Start time in seconds | false |
+| to | number | End time in seconds | false |
+| limit | number | Limit of records to return | false |
+| skip | number | Number of records to skip | false |
+| market | number | Market ID | false |
 
 ### Response
-| Name              | Type   | Description                             |
-|-------------------|--------|-----------------------------------------|
-| _id               | string | Deal ID                                 |
-| market            | number | Market ID                               |
-| type              | string | Type of the deal                        |
-| trx_id            | string | Transaction ID                          |
-| unit_price        | number | Unit price                              |
-| ask               | number | Ask amount                              |
-| asker             | string | Asker account                           |
-| bid               | number | Bid amount                              |
-| bidder            | string | Bidder account                          |
-| time              | string | Time of the deal                        |
+| Name | Type | Description |
+| --- | --- | --- |
+| _id | string | Deal ID |
+| market | number | Market ID |
+| type | string | Type of the deal |
+| trx_id | string | Transaction ID |
+| unit_price | number | Unit price |
+| ask | number | Ask amount |
+| asker | string | Asker account |
+| bid | number | Bid amount |
+| bidder | string | Bidder account |
+| time | string | Time of the deal |
 
 
 ## Account Positions
@@ -107,25 +107,25 @@ API for getting all positions belong to specific account
 
 Pool id should be provided inside the URL structure
 
-Name | Type | Description | required
---- | --- | --- | ---
-pool_id | number | Pool ID | true
+| Name | Type | Description | required |
+| --- | --- | --- | --- |
+| pool_id | number | Pool ID | true |
 
-### Responce
-Name | Type | Description
---- | --- | --- | ---
-id | number | position id
-owner | string | position owner account
-tickLower | number | lower tick of position
-tickUpper | number | upper tick of position
-liquidity | number | position liquidity amount
-feeGrowthInsideALastX64 | number | token A fees grow value
-feeGrowthInsideBLastX64 | number | token B fees grow value
-feesA | number | token A accumulated fees
-feesB | number | token B accumulated fees
-pool | number | pool ID
-amountA | asset | Positoin token A amount
-amountB | asset | Positoin token B amount
+### Response
+| Name | Type | Description |
+| --- | --- | --- |
+| id | number | position id |
+| owner | string | position owner account |
+| tickLower | number | lower tick of position |
+| tickUpper | number | upper tick of position |
+| liquidity | number | position liquidity amount |
+| feeGrowthInsideALastX64 | number | token A fees grow value |
+| feeGrowthInsideBLastX64 | number | token B fees grow value |
+| feesA | number | token A accumulated fees |
+| feesB | number | token B accumulated fees |
+| pool | number | pool ID |
+| amountA | asset | Positoin token A amount |
+| amountB | asset | Positoin token B amount |
 
 depositedUSDTotal | number | total USD value deposited to position
 closed | number | is position closed
@@ -169,27 +169,27 @@ API for getting the position history of a specific account.
 
 **Query params:**
 
-| Name    | Type   | Description                  | Required |
-|---------|--------|------------------------------|----------|
-| account | string | Account ID                   | true     |
-| limit   | number | Limit of records to return   | false    |
-| skip    | number | Number of records to skip    | false    |
+| Name | Type | Description | Required |
+| --- | --- | --- | --- |
+| account | string | Account ID | true |
+| limit | number | Limit of records to return | false |
+| skip | number | Number of records to skip | false |
 
 ### Response
-| Name              | Type   | Description                             |
-|-------------------|--------|-----------------------------------------|
-| _id               | string | Position history ID                     |
-| tokenAUSDPrice    | number | Token A USD price                       |
-| tokenBUSDPrice    | number | Token B USD price                       |
-| owner             | string | Position owner account                  |
-| type              | string | Type of the position history            |
-| id                | number | Position history ID                     |
-| pool              | number | Pool ID                                 |
-| tokenA            | number | Token A amount                          |
-| tokenB            | number | Token B amount                          |
-| totalUSDValue     | number | Total USD value                         |
-| trx_id            | string | Transaction ID                          |
-| time              | string | Time of the position history            |
+| Name | Type | Description |
+| --- | --- | --- |
+| _id | string | Position history ID |
+| tokenAUSDPrice | number | Token A USD price |
+| tokenBUSDPrice | number | Token B USD price |
+| owner | string | Position owner account |
+| type | string | Type of the position history |
+| id | number | Position history ID |
+| pool | number | Pool ID |
+| tokenA | number | Token A amount |
+| tokenB | number | Token B amount |
+| totalUSDValue | number | Total USD value |
+| trx_id | string | Transaction ID |
+| time | string | Time of the position history |
 
 
 ## Account Swap History
@@ -223,21 +223,21 @@ API for getting the swap history of a specific account.
 
 **Query params:**
 
-| Name    | Type   | Description                  | Required |
-|---------|--------|------------------------------|----------|
-| account | string | Account ID                   | true     |
-| limit   | number | Limit of records to return   | false    |
-| skip    | number | Number of records to skip    | false    |
+| Name | Type | Description | Required |
+| --- | --- | --- | --- |
+| account | string | Account ID | true |
+| limit | number | Limit of records to return | false |
+| skip | number | Number of records to skip | false |
 
 ### Response
-| Name              | Type   | Description                             |
-|-------------------|--------|-----------------------------------------|
-| _id               | string | Swap history ID                         |
-| pool              | number | Pool ID                                 |
-| trx_id            | string | Transaction ID                          |
-| sender            | string | Swap sender account                     |
-| sqrtPriceX64      | string | Square root price X64                   |
-| totalUSDVolume    | number | Total USD volume                        |
-| tokenA            | number | Token A amount                          |
-| tokenB            | number | Token B amount                          |
-| time              | string | Time of the swap history                |
+| Name | Type | Description |
+| --- | --- | --- |
+| _id | string | Swap history ID |
+| pool | number | Pool ID |
+| trx_id | string | Transaction ID |
+| sender | string | Swap sender account |
+| sqrtPriceX64 | string | Square root price X64 |
+| totalUSDVolume | number | Total USD volume |
+| tokenA | number | Token A amount |
+| tokenB | number | Token B amount |
+| time | string | Time of the swap history |

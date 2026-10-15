@@ -1,10 +1,18 @@
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Provider } from '@/components/provider';
+import { appName } from '@/lib/shared';
 import './global.css';
 
 const inter = Inter({
   subsets: ['latin'],
 });
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://docs.alcor.exchange'),
+  title: { default: appName, template: `%s | ${appName}` },
+  description: 'Guides and API reference for Alcor, the multi-chain DEX on WAX, XPR, EOS and Telos.',
+};
 
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (

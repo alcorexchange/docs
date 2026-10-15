@@ -12,7 +12,7 @@ Here's a step-by-step guide to help you effectively utilize the Alcor Price Orac
 **Step 2:** Access the Alcor Price Oracle within your cpp project by simply adding the following line of code:
 
 | uint128\_t AlcorPriceOracle::getPriceTwapX64(poolId, twapInterval) |
-| ------------------------------------------------------------------ |
+| --- |
 
 Note: Most protocols use a 30-minute running TWAP, but it's essential to understand the trade-offs involved. Longer TWAPs are more tamper-resistant but may provide less accurate data during volatility. Shorter TWAPs offer more accurate data during volatility but may be less tamper-resistant. Consider your project needs and risks when selecting the TWAP length. 
 

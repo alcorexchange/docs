@@ -74,24 +74,24 @@ Every token: the system token first, then the priced tokens by `liquidity`, then
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-block | number | Last block the data reflects
-systemToken | string | Token every `price` is quoted in
-systemUsdPrice | string | USD price of the system token, `null` when unknown
-tokens | array | Tokens, see below
+| Name | Type | Description |
+| --- | --- | --- |
+| block | number | Last block the data reflects |
+| systemToken | string | Token every `price` is quoted in |
+| systemUsdPrice | string | USD price of the system token, `null` when unknown |
+| tokens | array | Tokens, see below |
 
 **Token:**
 
-Name | Type | Description
---- | --- | ---
-id, symbol, contract, decimals | | The token
-price | string | System tokens per one token, `null` when unpriced
-priceUsd | string | USD per one token
-liquidity | string | What backs the price: system-token value in the weakest pool on the path the price comes through. `null` for the system token
-liquidityUsd | string | The same in USD
-pools | number | Pools trading the token
-orderbooks | number | Order book markets trading the token
+| Name | Type | Description |
+| --- | --- | --- |
+| id, symbol, contract, decimals |  | The token |
+| price | string | System tokens per one token, `null` when unpriced |
+| priceUsd | string | USD per one token |
+| liquidity | string | What backs the price: system-token value in the weakest pool on the path the price comes through. `null` for the system token |
+| liquidityUsd | string | The same in USD |
+| pools | number | Pools trading the token |
+| orderbooks | number | Order book markets trading the token |
 
 ## Market token
 
@@ -166,30 +166,30 @@ would, so the gap between their prices is what a round trip of that size costs.
 
 **Query params:**
 
-Name | Type | Description | required
---- | --- | --- | ---
-base | string | Base token id | true
-quote | string | Quote token id | true
-amount | string | Amount of base to sell, e.g. `1000` | false
+| Name | Type | Description | required |
+| --- | --- | --- | --- |
+| base | string | Base token id | true |
+| quote | string | Quote token id | true |
+| amount | string | Amount of base to sell, e.g. `1000` | false |
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-block | number | Last block the data reflects
-base, quote | object | The tokens: `id`, `symbol`, `contract`, `decimals`
-mid | string | Quote per one base, from the token prices. `null` when either token is unpriced
-sell | object | Only with `amount`: selling it. `null` when no route can
-buy | object | Only with `amount`: buying base back with what the sell receives. `null` when no route can
+| Name | Type | Description |
+| --- | --- | --- |
+| block | number | Last block the data reflects |
+| base, quote | object | The tokens: `id`, `symbol`, `contract`, `decimals` |
+| mid | string | Quote per one base, from the token prices. `null` when either token is unpriced |
+| sell | object | Only with `amount`: selling it. `null` when no route can |
+| buy | object | Only with `amount`: buying base back with what the sell receives. `null` when no route can |
 
 **sell / buy:**
 
-Name | Type | Description
---- | --- | ---
-input | string | Amount spent
-output | string | Amount received
-price | string | Quote per one base, as executed, fees included
-priceImpact | string | Percent below the spot prices of the routes taken, as in the route API
+| Name | Type | Description |
+| --- | --- | --- |
+| input | string | Amount spent |
+| output | string | Amount received |
+| price | string | Quote per one base, as executed, fees included |
+| priceImpact | string | Percent below the spot prices of the routes taken, as in the route API |
 
 ## Depth
 
@@ -236,21 +236,21 @@ A depth search is expensive, so answers are cached for 10 seconds per pair and l
 
 **Query params:**
 
-Name | Type | Description | required
---- | --- | --- | ---
-input | string | Token id to sell | true
-output | string | Token id to receive | true
-impact | string | Comma-separated levels in percent, up to 10, each between 0 and 100. Default `0.5,1,2,5` | false
+| Name | Type | Description | required |
+| --- | --- | --- | --- |
+| input | string | Token id to sell | true |
+| output | string | Token id to receive | true |
+| impact | string | Comma-separated levels in percent, up to 10, each between 0 and 100. Default `0.5,1,2,5` | false |
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-block | number | Last block the data reflects
-input, output | object | The tokens
-reference | string | Output per one input that impact is measured against. `null` when there is no route
-referenceKind | string | `mid` (the pair's mid price) or `smallTrade` (the price of a small trade)
-levels | array | One per requested level: `impact`, and the `input` sold and `output` received at that level
+| Name | Type | Description |
+| --- | --- | --- |
+| block | number | Last block the data reflects |
+| input, output | object | The tokens |
+| reference | string | Output per one input that impact is measured against. `null` when there is no route |
+| referenceKind | string | `mid` (the pair's mid price) or `smallTrade` (the price of a small trade) |
+| levels | array | One per requested level: `impact`, and the `input` sold and `output` received at that level |
 
 ## Market pools
 
@@ -294,26 +294,26 @@ Every AMM pool, or the pools trading `token`, by id.
 
 **Query params:**
 
-Name | Type | Description | required
---- | --- | --- | ---
-token | string | Only pools trading this token id | false
+| Name | Type | Description | required |
+| --- | --- | --- | --- |
+| token | string | Only pools trading this token id | false |
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-id | number | Pool id
-tokenA, tokenB | object | The tokens
-fee | string | Fee in percent
-tickSpacing | number | Tick spacing
-active | boolean | Whether the pool is active
-price | string | Token B per one token A
-sqrtPriceX64 | string | Current sqrt price, Q64.64
-tick | number | Current tick
-liquidity | string | In-range liquidity
-reserveA, reserveB | string | Token balances the pool holds
-tvl | string | Both reserves in system tokens; `null` unless both tokens are priced
-tvlUsd | string | The same in USD
+| Name | Type | Description |
+| --- | --- | --- |
+| id | number | Pool id |
+| tokenA, tokenB | object | The tokens |
+| fee | string | Fee in percent |
+| tickSpacing | number | Tick spacing |
+| active | boolean | Whether the pool is active |
+| price | string | Token B per one token A |
+| sqrtPriceX64 | string | Current sqrt price, Q64.64 |
+| tick | number | Current tick |
+| liquidity | string | In-range liquidity |
+| reserveA, reserveB | string | Token balances the pool holds |
+| tvl | string | Both reserves in system tokens; `null` unless both tokens are priced |
+| tvlUsd | string | The same in USD |
 
 ## Market order books
 
@@ -356,20 +356,20 @@ Order book markets. A single market comes with its best 20 orders on each side.
 
 **Query params of the list:**
 
-Name | Type | Description | required
---- | --- | --- | ---
-token | string | Only markets trading this token id | false
+| Name | Type | Description | required |
+| --- | --- | --- | --- |
+| token | string | Only markets trading this token id | false |
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-id | number | Market id
-base, quote | object | The tokens
-fee | string | Fee in percent
-frozen | boolean | Whether the market is frozen
-bestBid, bestAsk | string | Best buy and sell prices, in base per one quote
-bids, asks | array | Single market only: `{price, amount}`, best first. Price in base per one quote, amount in quote
+| Name | Type | Description |
+| --- | --- | --- |
+| id | number | Market id |
+| base, quote | object | The tokens |
+| fee | string | Fee in percent |
+| frozen | boolean | Whether the market is frozen |
+| bestBid, bestAsk | string | Best buy and sell prices, in base per one quote |
+| bids, asks | array | Single market only: `{price, amount}`, best first. Price in base per one quote, amount in quote |
 
 ## Market stream
 
@@ -407,12 +407,12 @@ A plain WebSocket (not Socket.IO) that pushes the market API as the chain moves.
 Subscribe with JSON text messages. Each subscription is answered at once with the channel's current state, and then
 again after every block that changes it.
 
-Channel | Subscribe with | Pushes
---- | --- | ---
-price | `base`, `quote` | The pair's `mid`
-pool | `id` | The pool, as in [Market pools](#market-pools). `null` once removed
-orderbook | `id` | The market with its orders, as in [Market order books](#market-order-books). `null` once removed
-tokens | | Every token on subscribe, then only the tokens whose price moved
+| Channel | Subscribe with | Pushes |
+| --- | --- | --- |
+| price | `base`, `quote` | The pair's `mid` |
+| pool | `id` | The pool, as in [Market pools](#market-pools). `null` once removed |
+| orderbook | `id` | The market with its orders, as in [Market order books](#market-order-books). `null` once removed |
+| tokens |  | Every token on subscribe, then only the tokens whose price moved |
 
 A bad request is answered with `{"error": "<message>"}` and the connection stays open. One connection holds up to 100
 subscriptions. The server pings every 30 seconds.

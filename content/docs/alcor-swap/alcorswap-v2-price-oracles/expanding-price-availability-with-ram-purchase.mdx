@@ -5,16 +5,16 @@ title: "Expanding Price Availability with RAM Purchase"
 To extend the availability of historical price data within the Alcor Price Oracle, users can purchase additional RAM. The cost of purchasing RAM is determined by the current market price on the EOSIO blockchain, which can vary based on supply and demand. To calculate the RAM required for the desired data availability period, users can use the following formula: 
 
 | RAM Required (in bytes) = Number of Observations \* Size of Each Observation |
-| ---------------------------------------------------------------------------- |
+| --- |
 
 For instance, if a user wishes to have the price data available for 3 hours and each observation requires 160 bytes of RAM, they would need to calculate: 
 
 | \<p>RAM Required = 160 bytes \* 3 hours \* 60 minutes \* 60 seconds = 1.728 MB.<br /><br />WAX Token = 0.4073 \* 1728 = 703.81440000 WAX (with RAM price is 0.4073 WAX per KB)\</p> |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --- |
 
 Once users have determined the required RAM size, they can proceed with the RAM purchase process by following:
 
 | Transfer WAX to the swap.alcor account with the memo: "addoraclerow#poolId". |
-| ---------------------------------------------------------------------------- |
+| --- |
 
 Additionally, users can easily track the number of observations they have purchased by reviewing their [**transaction history**](https://wax.bloks.io/transaction/8430511460ddd7232cd35461fe0088966e3d71346cf5f860dee168561dca0dba)

@@ -32,15 +32,15 @@ needed on your side.
 
 ### Query Parameters
 
-Parameter | Example | Description
---------- | ------- | -----------
-from | `ethereum` | Chain to start on. The user can still change it.
-to | `wax` | Chain the tokens land on.
-recipient | `alice.wam` | Receiving account, prefilled. The user can edit it on this page.
-token | `USDC` | Asset, by the symbol the bridge lists (`USDC`, `USDT`, `ETH`).
-amount | `50` | Prefilled amount, in token units.
-partner | `mygame` | Your id, so the deposits you bring are attributed to you.
-return_url | `https://mygame.io/play` | Shows a "← Back to mygame.io" link. `https` only (`http` is allowed on `localhost`).
+| Parameter | Example | Description |
+| --- | --- | --- |
+| from | `ethereum` | Chain to start on. The user can still change it. |
+| to | `wax` | Chain the tokens land on. |
+| recipient | `alice.wam` | Receiving account, prefilled. The user can edit it on this page. |
+| token | `USDC` | Asset, by the symbol the bridge lists (`USDC`, `USDT`, `ETH`). |
+| amount | `50` | Prefilled amount, in token units. |
+| partner | `mygame` | Your id, so the deposits you bring are attributed to you. |
+| return_url | `https://mygame.io/play` | Shows a "← Back to mygame.io" link. `https` only (`http` is allowed on `localhost`). |
 
 All parameters are optional. A malformed value is ignored rather than guessed at.
 
@@ -77,28 +77,28 @@ The script is tiny and has no dependencies. The path is versioned:
 
 ### Functions
 
-Function | Shows | Returns
--------- | ----- | -------
-`AlcorBridge.open(options)` | Modal over your page | `{ close() }`
-`AlcorBridge.popup(options)` | Separate window. Call it from a click handler. | `{ close() }`, or `null` if the popup was blocked
-`AlcorBridge.mount(element, options)` | Inline iframe that grows with its content | `{ destroy() }`
-`AlcorBridge.url(options)` | Nothing. Returns the widget address for your own iframe or link. | `string`
+| Function | Shows | Returns |
+| --- | --- | --- |
+| `AlcorBridge.open(options)` | Modal over your page | `{ close() }` |
+| `AlcorBridge.popup(options)` | Separate window. Call it from a click handler. | `{ close() }`, or `null` if the popup was blocked |
+| `AlcorBridge.mount(element, options)` | Inline iframe that grows with its content | `{ destroy() }` |
+| `AlcorBridge.url(options)` | Nothing. Returns the widget address for your own iframe or link. | `string` |
 
 Browser extension wallets (MetaMask, Rabby) and WalletConnect work in all modes.
 In the popup the user's existing Alcor session and wallet connection carry over.
 
 ### Options
 
-Option | Required | Description
------- | -------- | -----------
-to | true | Chain the tokens land on: `wax`, `telos` or `ethereum`. Into WAX the bridge pays out by itself. A deposit to Telos ends with a **Collect** step signed on Telos, and a withdrawal to Ethereum with a **Release** step signed on Ethereum. The widget shows that button when its turn comes.
-recipient | false | Receiving account. When given, it is **fixed** in the widget. For WAX, the widget checks that the account exists before anything is signed.
-from | false | Chain to start on. Defaults to `ethereum`, or `telos` when `to` is Ethereum.
-token | false | `USDC`, `USDT`, `ETH`.
-amount | false | Prefilled amount, in token units.
-partner | false | Your id, for attribution.
-origin | false | Where the widget is served from. Defaults to the origin of the script itself.
-onReady, onSent, onFailed, onFinished, onClose | false | Event callbacks, see below.
+| Option | Required | Description |
+| --- | --- | --- |
+| to | true | Chain the tokens land on: `wax`, `telos` or `ethereum`. Into WAX the bridge pays out by itself. A deposit to Telos ends with a **Collect** step signed on Telos, and a withdrawal to Ethereum with a **Release** step signed on Ethereum. The widget shows that button when its turn comes. |
+| recipient | false | Receiving account. When given, it is **fixed** in the widget. For WAX, the widget checks that the account exists before anything is signed. |
+| from | false | Chain to start on. Defaults to `ethereum`, or `telos` when `to` is Ethereum. |
+| token | false | `USDC`, `USDT`, `ETH`. |
+| amount | false | Prefilled amount, in token units. |
+| partner | false | Your id, for attribution. |
+| origin | false | Where the widget is served from. Defaults to the origin of the script itself. |
+| onReady, onSent, onFailed, onFinished, onClose | false | Event callbacks, see below. |
 
 ### Events
 
@@ -133,13 +133,13 @@ onReady, onSent, onFailed, onFinished, onClose | false | Event callbacks, see be
 }
 ```
 
-Callback | When | Data
--------- | ---- | ----
-onReady | The widget has loaded and is prefilled | `{ to, recipient }`
-onSent | The user signed and the transfer is on its way | Transfer details and the first transaction
-onFailed | The transfer could not be started, e.g. rejected in the wallet | Transfer details plus `errorCode`, `error`
-onFinished | The transfer reached its end | `{ key, outcome, token, amount, transactions }`
-onClose | The user closed the widget | `{}`
+| Callback | When | Data |
+| --- | --- | --- |
+| onReady | The widget has loaded and is prefilled | `{ to, recipient }` |
+| onSent | The user signed and the transfer is on its way | Transfer details and the first transaction |
+| onFailed | The transfer could not be started, e.g. rejected in the wallet | Transfer details plus `errorCode`, `error` |
+| onFinished | The transfer reached its end | `{ key, outcome, token, amount, transactions }` |
+| onClose | The user closed the widget | `{}` |
 
 `outcome` is `delivered`, or `returned` if the destination refused the tokens
 and they went back to the sender. `key` identifies the transfer in
@@ -158,10 +158,10 @@ If you embed the iframe yourself, listen for `postMessage` events from
 
 `{ source: "alcor-bridge", version: 1, type, data }`
 
-Type | Data
----- | ----
-ready, sent, failed, finished, close | Same as the callbacks above
-resize | `{ height }`, the content height in pixels, so you can size the iframe
+| Type | Data |
+| --- | --- |
+| ready, sent, failed, finished, close | Same as the callbacks above |
+| resize | `{ height }`, the content height in pixels, so you can size the iframe |
 
 Add `mode=inline` to the widget URL to hide its close button. Everything in the
 messages is public on-chain data.
@@ -225,15 +225,15 @@ Every way each asset can travel right now, with its limits.
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-symbol | string | Asset symbol
-precision | number | Decimals of `min` and `max`
-from, to | string | Chain ids of both ends
-via | string | Chain the transfer passes through, or `null` for a direct route
-open | boolean | Whether the route accepts transfers now
-min, max | string | Amount limits, in the smallest unit
-how | object | How the transfer is started. Used by the widget, and by your own code if you send the transaction yourself.
+| Name | Type | Description |
+| --- | --- | --- |
+| symbol | string | Asset symbol |
+| precision | number | Decimals of `min` and `max` |
+| from, to | string | Chain ids of both ends |
+| via | string | Chain the transfer passes through, or `null` for a direct route |
+| open | boolean | Whether the route accepts transfers now |
+| min, max | string | Amount limits, in the smallest unit |
+| how | object | How the transfer is started. Used by the widget, and by your own code if you send the transaction yourself. |
 
 ## Chains
 
@@ -272,14 +272,14 @@ currently takes. Timing is measured on recent transfers, not configured.
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-sources[].id | string | Chain id
-sources[].name | string | Display name
-sources[].timing.deposit.seconds | number | Typical time for a deposit from this chain
-sources[].timing.deposit.range | number[] | Fastest and slowest recent times, in seconds
-sources[].timing.deposit.measured | boolean | `true` when measured on recent transfers
-sources[].timing.deposit.human | string | The same, phrased for people
+| Name | Type | Description |
+| --- | --- | --- |
+| sources[].id | string | Chain id |
+| sources[].name | string | Display name |
+| sources[].timing.deposit.seconds | number | Typical time for a deposit from this chain |
+| sources[].timing.deposit.range | number[] | Fastest and slowest recent times, in seconds |
+| sources[].timing.deposit.measured | boolean | `true` when measured on recent transfers |
+| sources[].timing.deposit.human | string | The same, phrased for people |
 
 ## Transfer status
 
@@ -323,14 +323,14 @@ form returns `{ "hops": [ … ] }`, newest first.
 
 ### Status
 
-Status | Meaning
------- | -------
-arriving | Locked on Ethereum, waiting for Ethereum to finalize
-sending | Passed through Telos, on its way to the destination
-delivered | Paid out to the recipient
-bounced | Refused by the destination, sent back
-returning | Coming back to the sender
-returned | Back with the sender
+| Status | Meaning |
+| --- | --- |
+| arriving | Locked on Ethereum, waiting for Ethereum to finalize |
+| sending | Passed through Telos, on its way to the destination |
+| delivered | Paid out to the recipient |
+| bounced | Refused by the destination, sent back |
+| returning | Coming back to the sender |
+| returned | Back with the sender |
 
 ## Bridge contracts
 
@@ -359,18 +359,18 @@ Do not hardcode addresses in a bot. Read them from <a href="#chains">Chains</a> 
 
 ### Addresses
 
-Chain | Contract | Address | What it is
------ | -------- | ------- | ----------
-Ethereum | `AlcorVault` | `0x3e447d533321ad6a8412f97034ac295a9ff8d858` | Deposits in, withdrawals paid out
-Ethereum | `AlcorWithdrawals` | `0x04fb700b93eb68cadd88d8e8d4dfe4857d5cb3c6` | Verifies a withdrawal proof and tells the vault to pay
-Ethereum | USDC, USDT | `0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48`, `0xdac17f958d2ee523a2206206994597c13d831ec7` | ETH is native: token `0x0000000000000000000000000000000000000000`
-BSC | `AlcorVault` | `0x53f18eaa8bf8099b5ba21bb7e11ed311b677690e` | Same contract as on Ethereum
-BSC | `AlcorWithdrawals` | `0x6132b4d02e02f1b378f0fc67c3d4f553eb76acb5` | Same contract as on Ethereum. BNB is native
-Telos | `bridge.alcor` | | The ledger: credits deposits, opens withdrawals
-Telos | `wrap.alcor` | | Bridged tokens on Telos: `USDC` and `USDT` (6 decimals), `ETH`, `BNB` and `WAX` (8)
-Telos | `hop.alcor` | | Carries a transfer between two chains through Telos
-WAX | `bridge.alcor` | | The vault on WAX: holds WAX, mints and burns the mirrors
-WAX | `wrap.alcor` | | Mirror tokens on WAX: `USDC`, `USDT`, `ETH`, `BNB`. WAX itself is `eosio.token`
+| Chain | Contract | Address | What it is |
+| --- | --- | --- | --- |
+| Ethereum | `AlcorVault` | `0x3e447d533321ad6a8412f97034ac295a9ff8d858` | Deposits in, withdrawals paid out |
+| Ethereum | `AlcorWithdrawals` | `0x04fb700b93eb68cadd88d8e8d4dfe4857d5cb3c6` | Verifies a withdrawal proof and tells the vault to pay |
+| Ethereum | USDC, USDT | `0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48`, `0xdac17f958d2ee523a2206206994597c13d831ec7` | ETH is native: token `0x0000000000000000000000000000000000000000` |
+| BSC | `AlcorVault` | `0x53f18eaa8bf8099b5ba21bb7e11ed311b677690e` | Same contract as on Ethereum |
+| BSC | `AlcorWithdrawals` | `0x6132b4d02e02f1b378f0fc67c3d4f553eb76acb5` | Same contract as on Ethereum. BNB is native |
+| Telos | `bridge.alcor` |  | The ledger: credits deposits, opens withdrawals |
+| Telos | `wrap.alcor` |  | Bridged tokens on Telos: `USDC` and `USDT` (6 decimals), `ETH`, `BNB` and `WAX` (8) |
+| Telos | `hop.alcor` |  | Carries a transfer between two chains through Telos |
+| WAX | `bridge.alcor` |  | The vault on WAX: holds WAX, mints and burns the mirrors |
+| WAX | `wrap.alcor` |  | Mirror tokens on WAX: `USDC`, `USDT`, `ETH`, `BNB`. WAX itself is `eosio.token` |
 
 ABIs of the EVM contracts:
 [AlcorVault.json](https://api.alcor.exchange/abi/AlcorVault.json),
@@ -379,11 +379,11 @@ The Antelope contracts publish theirs on chain (`get_abi`).
 
 ### Domains and units
 
-Chain | Domain
------ | ------
-Ethereum | `1`
-BSC | `56`
-WAX | `1181148696416462999` (first 8 bytes of the WAX chain id)
+| Chain | Domain |
+| --- | --- |
+| Ethereum | `1` |
+| BSC | `56` |
+| WAX | `1181148696416462999` (first 8 bytes of the WAX chain id) |
 
 The domain names the far chain in every memo and key. It is a decimal string
 in the API: the WAX one is larger than a JSON number holds exactly.
@@ -427,14 +427,14 @@ await vault.deposit(USDC, 50_000000n, telosName('alice'), me, 0, 0, '0x')
 ERC-20, after `approve(vault, amount)`.
 `depositNative(telosTo, refundTo, fillFee, filler, memo)` payable, for ETH or BNB.
 
-Parameter | Type | Description
---------- | ---- | -----------
-token | address | ERC-20 address from [Routes](#routes) (`how.deposit.token`)
-amount | uint256 | Raw token units
-telosTo | uint64 | Who receives on Telos: an account, or `hop.alcor` to go on to another chain
-refundTo | address | Where the deposit goes back if it cannot be delivered. Must not be zero
-fillFee, filler | uint64 | Reserved. Pass `0`
-memo | bytes | Up to 256 bytes, see below
+| Parameter | Type | Description |
+| --- | --- | --- |
+| token | address | ERC-20 address from [Routes](#routes) (`how.deposit.token`) |
+| amount | uint256 | Raw token units |
+| telosTo | uint64 | Who receives on Telos: an account, or `hop.alcor` to go on to another chain |
+| refundTo | address | Where the deposit goes back if it cannot be delivered. Must not be zero |
+| fillFee, filler | uint64 | Reserved. Pass `0` |
+| memo | bytes | Up to 256 bytes, see below |
 
 **Where it lands** depends on `telosTo` and `memo`:
 
@@ -567,28 +567,28 @@ with `action` saying `release` or `expire`.
 cleos -u https://mainnet.telos.net push action bridge.alcor claim '["alice", "USDC"]' -p alice
 ```
 
-Action | Who may call | What it does
------- | ------------ | ------------
-`bridge.alcor::claim(owner, sym_code)` | The owner | Transfers a credited deposit to its owner. Table `claims`, scope = owner
-`bridge.alcor::forward(domain, nonce)` | Anyone | Delivers a deposit that carried a memo. The relayer does it; call it if you do not want to wait
-`bridge.alcor::bounce(domain, nonce)` | Anyone, an hour after arrival | Sends an undeliverable deposit back to its `refundTo`
-`hop.alcor::recover(id)` | Anyone | Sends a hop that came back from its destination on to its way-back address
-`<gateway>::credit` | Anyone, with a proof | Credits a deposit. The relayer does it. To do it yourself, send the `actions` of `GET /v1/proofs/d:<domain>:<nonce>` in one transaction
+| Action | Who may call | What it does |
+| --- | --- | --- |
+| `bridge.alcor::claim(owner, sym_code)` | The owner | Transfers a credited deposit to its owner. Table `claims`, scope = owner |
+| `bridge.alcor::forward(domain, nonce)` | Anyone | Delivers a deposit that carried a memo. The relayer does it; call it if you do not want to wait |
+| `bridge.alcor::bounce(domain, nonce)` | Anyone, an hour after arrival | Sends an undeliverable deposit back to its `refundTo` |
+| `hop.alcor::recover(id)` | Anyone | Sends a hop that came back from its destination on to its way-back address |
+| `<gateway>::credit` | Anyone, with a proof | Credits a deposit. The relayer does it. To do it yourself, send the `actions` of `GET /v1/proofs/d:<domain>:<nonce>` in one transaction |
 
 Tables worth reading on `bridge.alcor`: `routes` (limits and backing per route),
 `claims` (credited, not yet collected), `wdraws` (withdrawals and their status).
 
 ## Contract events
 
-Contract | Event | Meaning
--------- | ----- | -------
-`AlcorVault` | `Deposit(token, from, amount, canonical, telosTo, nonce, refundTo, fillFee, filler, memo)` | Deposit locked. Key `d:<chainId>:<nonce>`
-`AlcorVault` | `Released(id, token, to, amount, feeTo, fee)` | Withdrawal `w:<id>` paid out, raw units
-`AlcorVault` | `Voided(id)` | Withdrawal `w:<id>` expired, refunded on Telos
-`AlcorWithdrawals` | `Released(id, token, to, amount, memo)` | The same payout with the Telos memo, in Telos units
-`AlcorWithdrawals` | `Expired(id)` | `expire` accepted
-WAX `bridge.alcor` | action `deplog(nonce, bridge, token_contract, token_symbol, from, raw, canonical, beneficiary, memo)` | Deposit from WAX. Key `d:1181148696416462999:<nonce>`
-Telos `bridge.alcor` | action `wdlog(id, domain, vault, token, recipient, amount, deadline, fee, memo)` | Withdrawal opened. Key `w:<id>`
+| Contract | Event | Meaning |
+| --- | --- | --- |
+| `AlcorVault` | `Deposit(token, from, amount, canonical, telosTo, nonce, refundTo, fillFee, filler, memo)` | Deposit locked. Key `d:<chainId>:<nonce>` |
+| `AlcorVault` | `Released(id, token, to, amount, feeTo, fee)` | Withdrawal `w:<id>` paid out, raw units |
+| `AlcorVault` | `Voided(id)` | Withdrawal `w:<id>` expired, refunded on Telos |
+| `AlcorWithdrawals` | `Released(id, token, to, amount, memo)` | The same payout with the Telos memo, in Telos units |
+| `AlcorWithdrawals` | `Expired(id)` | `expire` accepted |
+| WAX `bridge.alcor` | action `deplog(nonce, bridge, token_contract, token_symbol, from, raw, canonical, beneficiary, memo)` | Deposit from WAX. Key `d:1181148696416462999:<nonce>` |
+| Telos `bridge.alcor` | action `wdlog(id, domain, vault, token, recipient, amount, deadline, fee, memo)` | Withdrawal opened. Key `w:<id>` |
 
 ## Transfers and timing
 
@@ -613,15 +613,15 @@ withdrawal   burned ──▶ provable ──▶ released
 Typical times, measured on recent transfers. The live figures are in
 [Chains](#chains) under `timing`:
 
-From → to | Time | Your transactions
---------- | ---- | -----------------
-Ethereum → Telos | about 17 min, Ethereum finality | Deposit
-Ethereum → WAX | about 20 min | Deposit
-BSC → Telos | about 30 s | Deposit
-BSC → WAX | about 3 min | Deposit
-WAX → Telos | about 50 s | Transfer
-Telos → WAX | about 2 min | Transfer
-Telos → Ethereum or BSC | about 1 min to the proof | Transfer, then release
-WAX → Ethereum or BSC | about 2–3 min to the proof | Transfer, then release
+| From → to | Time | Your transactions |
+| --- | --- | --- |
+| Ethereum → Telos | about 17 min, Ethereum finality | Deposit |
+| Ethereum → WAX | about 20 min | Deposit |
+| BSC → Telos | about 30 s | Deposit |
+| BSC → WAX | about 3 min | Deposit |
+| WAX → Telos | about 50 s | Transfer |
+| Telos → WAX | about 2 min | Transfer |
+| Telos → Ethereum or BSC | about 1 min to the proof | Transfer, then release |
+| WAX → Ethereum or BSC | about 2–3 min to the proof | Transfer, then release |
 
 Poll every 10–15 seconds: a transfer changes state on the scale of minutes.

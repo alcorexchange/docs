@@ -59,15 +59,15 @@ So in the market table on dex contract, the <b>base_token</b> is actually <b>quo
 **market_id** are used as scope for orders table and should be provided as parameter for canceling order.
 
 ### Table structute
-key | description
----- | -----
-id | market_id
-base_token | target currency
-quote_token | base_token currency
-min_buy |  Min buy amount
-min_sell | Min sell amount
-frozen | Market are frozen if 1
-fee | Market fee
+| key | description |
+| --- | --- |
+| id | market_id |
+| base_token | target currency |
+| quote_token | base_token currency |
+| min_buy | Min buy amount |
+| min_sell | Min sell amount |
+| frozen | Market are frozen if 1 |
+| fee | Market fee |
 
 ## Orders
 ```shell
@@ -121,9 +121,9 @@ Orders are stored in **buyorder** and **sellorder** tables.
 Scoped by market_id(you can find one in **markets** table)
 
 ### Table structute
-key | description
----- | -----
-id | order id
-account | order owner account
-unit_price | Price in integer
-timestamp | Order time creation
+| key | description |
+| --- | --- |
+| id | order id |
+| account | order owner account |
+| unit_price | Price in integer |
+| timestamp | Order time creation |

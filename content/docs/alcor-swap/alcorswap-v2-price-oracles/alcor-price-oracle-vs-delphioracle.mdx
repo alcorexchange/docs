@@ -3,13 +3,13 @@ title: "Alcor Price Oracle vs DelphiOracle"
 description: "Comparison between TWAP and DelphiOracle"
 ---
 
-| **Aspect**                              | **Alcor Price Oracle**                                                                                                                  | **DelphiOracle**                                               |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Data Source                             | Extracts data directly from Alcor Swap decentralized exchange.                                                                          | Aggregated from multiple centralized exchanges                 |
-| Price Calculation Method                | Time-weighted average price                                                                                                             | Average of prices fetched from exchanges                       |
-| Price Availability                      | Provides prices by timestamp and unlimited historical data availability.                                                                | Provides only the last price                                   |
-| Freshness/Accuracy                      | May not reflect the current spot price during high volatility                                                                           | Provides current spot price but may lag during high volatility |
-| Manipulation Susceptibility             | There is currently not enough economic incentive to manipulate TWAP. refer [**here**](https://blog.uniswap.org/uniswap-v3-oracles)**.** | Very hard to manipulate                                        |
-| Data Storage                            | Historical data is stored as an array of observations                                                                                   | Only stores recent historical data                             |
-| RAM Cost for Extended Data Availability | Requires RAM payment to extend data availability period                                                                                 | N/A                                                            |
-| Token Pairs                             | Provides for all token pairs available and trading on Alcor Swap                                                                        | Provides only some pairs like WAX/USD, BTC/USD, ETH/USD        |
+| **Aspect** | **Alcor Price Oracle** | **DelphiOracle** |
+| --- | --- | --- |
+| Data Source | Extracts data directly from Alcor Swap decentralized exchange. | Aggregated from multiple centralized exchanges |
+| Price Calculation Method | Time-weighted average price | Average of prices fetched from exchanges |
+| Price Availability | Provides prices by timestamp and unlimited historical data availability. | Provides only the last price |
+| Freshness/Accuracy | May not reflect the current spot price during high volatility | Provides current spot price but may lag during high volatility |
+| Manipulation Susceptibility | There is currently not enough economic incentive to manipulate TWAP. refer [**here**](https://blog.uniswap.org/uniswap-v3-oracles)**.** | Very hard to manipulate |
+| Data Storage | Historical data is stored as an array of observations | Only stores recent historical data |
+| RAM Cost for Extended Data Availability | Requires RAM payment to extend data availability period | N/A |
+| Token Pairs | Provides for all token pairs available and trading on Alcor Swap | Provides only some pairs like WAX/USD, BTC/USD, ETH/USD |

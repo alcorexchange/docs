@@ -75,50 +75,50 @@ Get pool by ID
 
 Pool id should be provided inside the URL structure
 
-Name | Type | Description | required
---- | --- | --- | ---
-pool_id | number | Pool ID | true
+| Name | Type | Description | required |
+| --- | --- | --- | --- |
+| pool_id | number | Pool ID | true |
 
 ### HTTP Request
 `GET https://alcor.exchange/api/v2/swap/pools/:<pool_id>`
 
-### Responce
-Name | Type | Description
---- | --- | --- | ---
-id | number | pool ID
-active | number | is pool active
-fee | number | fee percent as part of (fee / 10000)
-feeGrowthGlobalAX64 | number | Global accumulated fee for token A
-feeGrowthGlobalBX64 | number | Global accumulated fee for token B
-feeProtocol | number | Protocol fee percent
-liquidity | number | Pool liquidity amount
-maxLiquidityPerTick | number | Pool max liquidity ber one tick
-protocolFeeA | asset | Protocol earned fees
-protocolFeeB | asset | Protocol earned fees
-sqrtPriceX64 | number | Pool price as sqrtPriceX64
-tick | number | Pool current tick
-tickSpacing | number | Pool tick spacing
-tokenA | object | Token A
-tokenB | object | Token B
-volumeUSD24 | number | USD Volume for 24H
-volumeUSDWeek | number | USD Volume for 7D
-volumeUSDMonth | number | USD Volume for 30D
-volumeA24 | number | 24H volume of token A
-volumeAWeek | number | 7D volume of token A
-volumeAMonth | number | 30D volume of token A
-volumeB24 | number | 24H volume of token B
-volumeBWeek | number | 7D volume of token B
-volumeBMonth | number | 30D volume of token B
-volumeUSD24 | number | USD Volume for 24H
-volumeUSDWeek | number | USD Volume for 7D
-volumeUSDMonth | number | USD Volume for 30D
-tvlUSD | number | Total Value Locked in USD
-change24 | number | 24H price change
-changeWeek | number | 7D price change
-high24 | number | 24H price high
-low24 | number | 24H price low
-priceA | number | token A price in terms of token B
-priceB | number | token B price in terms of token A
+### Response
+| Name | Type | Description |
+| --- | --- | --- |
+| id | number | pool ID |
+| active | number | is pool active |
+| fee | number | fee percent as part of (fee / 10000) |
+| feeGrowthGlobalAX64 | number | Global accumulated fee for token A |
+| feeGrowthGlobalBX64 | number | Global accumulated fee for token B |
+| feeProtocol | number | Protocol fee percent |
+| liquidity | number | Pool liquidity amount |
+| maxLiquidityPerTick | number | Pool max liquidity ber one tick |
+| protocolFeeA | asset | Protocol earned fees |
+| protocolFeeB | asset | Protocol earned fees |
+| sqrtPriceX64 | number | Pool price as sqrtPriceX64 |
+| tick | number | Pool current tick |
+| tickSpacing | number | Pool tick spacing |
+| tokenA | object | Token A |
+| tokenB | object | Token B |
+| volumeUSD24 | number | USD Volume for 24H |
+| volumeUSDWeek | number | USD Volume for 7D |
+| volumeUSDMonth | number | USD Volume for 30D |
+| volumeA24 | number | 24H volume of token A |
+| volumeAWeek | number | 7D volume of token A |
+| volumeAMonth | number | 30D volume of token A |
+| volumeB24 | number | 24H volume of token B |
+| volumeBWeek | number | 7D volume of token B |
+| volumeBMonth | number | 30D volume of token B |
+| volumeUSD24 | number | USD Volume for 24H |
+| volumeUSDWeek | number | USD Volume for 7D |
+| volumeUSDMonth | number | USD Volume for 30D |
+| tvlUSD | number | Total Value Locked in USD |
+| change24 | number | 24H price change |
+| changeWeek | number | 7D price change |
+| high24 | number | 24H price high |
+| low24 | number | 24H price low |
+| priceA | number | token A price in terms of token B |
+| priceB | number | token B price in terms of token A |
 
 
 ## Pools
@@ -185,40 +185,40 @@ Get all swap pools
 ### HTTP Request
 `GET https://alcor.exchange/api/v2/swap/pools`
 
-### Responce
-Name | Type | Description
---- | --- | --- | ---
-id | number | pool ID
-active | number | is pool active
-fee | number | fee percent as part of (fee / 10000)
-feeGrowthGlobalAX64 | number | Global accumulated fee for token A
-feeGrowthGlobalBX64 | number | Global accumulated fee for token B
-feeProtocol | number | Protocol fee percent
-liquidity | number | Pool liquidity amount
-maxLiquidityPerTick | number | Pool max liquidity ber one tick
-protocolFeeA | asset | Protocol earned fees
-protocolFeeB | asset | Protocol earned fees
-sqrtPriceX64 | number | Pool price as sqrtPriceX64
-tick | number | Pool current tick
-tickSpacing | number | Pool tick spacing
-tokenA | object | Token A
-tokenB | object | Token B
-volumeA24 | number | 24H volume of token A
-volumeAWeek | number | 7D volume of token A
-volumeAMonth | number | 30D volume of token A
-volumeB24 | number | 24H volume of token B
-volumeBWeek | number | 7D volume of token B
-volumeBMonth | number | 30D volume of token B
-volumeUSD24 | number | USD Volume for 24H
-volumeUSDWeek | number | USD Volume for 7D
-volumeUSDMonth | number | USD Volume for 30D
-tvlUSD | number | Total Value Locked in USD
-change24 | number | 24H price change
-changeWeek | number | 7D price change
-high24 | number | 24H price high
-low24 | number | 24H price low
-priceA | number | token A price in terms of token B
-priceB | number | token B price in terms of token A
+### Response
+| Name | Type | Description |
+| --- | --- | --- |
+| id | number | pool ID |
+| active | number | is pool active |
+| fee | number | fee percent as part of (fee / 10000) |
+| feeGrowthGlobalAX64 | number | Global accumulated fee for token A |
+| feeGrowthGlobalBX64 | number | Global accumulated fee for token B |
+| feeProtocol | number | Protocol fee percent |
+| liquidity | number | Pool liquidity amount |
+| maxLiquidityPerTick | number | Pool max liquidity ber one tick |
+| protocolFeeA | asset | Protocol earned fees |
+| protocolFeeB | asset | Protocol earned fees |
+| sqrtPriceX64 | number | Pool price as sqrtPriceX64 |
+| tick | number | Pool current tick |
+| tickSpacing | number | Pool tick spacing |
+| tokenA | object | Token A |
+| tokenB | object | Token B |
+| volumeA24 | number | 24H volume of token A |
+| volumeAWeek | number | 7D volume of token A |
+| volumeAMonth | number | 30D volume of token A |
+| volumeB24 | number | 24H volume of token B |
+| volumeBWeek | number | 7D volume of token B |
+| volumeBMonth | number | 30D volume of token B |
+| volumeUSD24 | number | USD Volume for 24H |
+| volumeUSDWeek | number | USD Volume for 7D |
+| volumeUSDMonth | number | USD Volume for 30D |
+| tvlUSD | number | Total Value Locked in USD |
+| change24 | number | 24H price change |
+| changeWeek | number | 7D price change |
+| high24 | number | 24H price high |
+| low24 | number | 24H price low |
+| priceA | number | token A price in terms of token B |
+| priceB | number | token B price in terms of token A |
 
 
 ## Pool Swaps
@@ -254,28 +254,28 @@ curl "https://alcor.exchange/api/v2/swap/pools/1095/swaps"
 
 ### Query Parameters
 
-Name | Type | Description | Required
---- | --- | --- | ---
-from | timestamp | Start time from which to query swaps (milliseconds) | false
-to | timestamp | End time till which to query swaps (milliseconds) | false
-recipient | string | Account that received the swap | false
-sender | string | Account that sent the swap | false
-limit | integer | Number of swaps to retrieve | false
-skip | integer | Number of swaps to skip | false
+| Name | Type | Description | Required |
+| --- | --- | --- | --- |
+| from | timestamp | Start time from which to query swaps (milliseconds) | false |
+| to | timestamp | End time till which to query swaps (milliseconds) | false |
+| recipient | string | Account that received the swap | false |
+| sender | string | Account that sent the swap | false |
+| limit | integer | Number of swaps to retrieve | false |
+| skip | integer | Number of swaps to skip | false |
 
 ### Response
 
-Name | Type | Description
---- | --- | ---
-pool | number | Pool ID
-recipient | string | Account that received the swap
-trx_id | string | Transaction ID
-sender | string | Account that sent the swap
-sqrtPriceX64 | string | Sqrt price X64
-totalUSDVolume | number | Total USD volume
-tokenA | object | Token A amount
-tokenB | object | Token B amount
-time | timestamp | Time of the swap (milliseconds)
+| Name | Type | Description |
+| --- | --- | --- |
+| pool | number | Pool ID |
+| recipient | string | Account that received the swap |
+| trx_id | string | Transaction ID |
+| sender | string | Account that sent the swap |
+| sqrtPriceX64 | string | Sqrt price X64 |
+| totalUSDVolume | number | Total USD volume |
+| tokenA | object | Token A amount |
+| tokenB | object | Token B amount |
+| time | timestamp | Time of the swap (milliseconds) |
 
 
 
@@ -316,25 +316,25 @@ API for getting all positions of pool
 
 Pool id should be provided inside the URL structure
 
-Name | Type | Description | required
---- | --- | --- | ---
-pool_id | number | Pool ID | true
+| Name | Type | Description | required |
+| --- | --- | --- | --- |
+| pool_id | number | Pool ID | true |
 
-### Responce
-Name | Type | Description
---- | --- | --- | ---
-id | number | position id
-owner | string | position owner account
-tickLower | number | lower tick of position
-tickUpper | number | upper tick of position
-liquidity | number | position liquidity amount
-feeGrowthInsideALastX64 | number | token A fees grow value
-feeGrowthInsideBLastX64 | number | token B fees grow value
-feesA | number | token A accumulated fees
-feesB | number | token B accumulated fees
-pool | number | pool ID
-amountA | asset | Positoin token A amount
-amountB | asset | Positoin token B amount
+### Response
+| Name | Type | Description |
+| --- | --- | --- |
+| id | number | position id |
+| owner | string | position owner account |
+| tickLower | number | lower tick of position |
+| tickUpper | number | upper tick of position |
+| liquidity | number | position liquidity amount |
+| feeGrowthInsideALastX64 | number | token A fees grow value |
+| feeGrowthInsideBLastX64 | number | token B fees grow value |
+| feesA | number | token A accumulated fees |
+| feesB | number | token B accumulated fees |
+| pool | number | pool ID |
+| amountA | asset | Positoin token A amount |
+| amountB | asset | Positoin token B amount |
 
 ## Output & Route calculation
 ```shell
@@ -379,24 +379,24 @@ EXACT_OUTPUT Will charge + 0.3% more imput amount for slippage, and will refund 
 
 **Query params:**
 
-Name | Type | Description | required
---- | --- | --- | ---
-trade_type | string | EXACT_OUTPUT or EXACT_INPUT | true
-input | string | Input token ID | true
-output | string | Output token ID | true
-amount | number | Amount of input/output(depends on trade_type) | true
-slippage | number | permissible slippage | false
-receiver | string | Account to receive output | false
-maxHops | number | Maximum number of intermediate pools for exchange route | false
+| Name | Type | Description | required |
+| --- | --- | --- | --- |
+| trade_type | string | EXACT_OUTPUT or EXACT_INPUT | true |
+| input | string | Input token ID | true |
+| output | string | Output token ID | true |
+| amount | number | Amount of input/output(depends on trade_type) | true |
+| slippage | number | permissible slippage | false |
+| receiver | string | Account to receive output | false |
+| maxHops | number | Maximum number of intermediate pools for exchange route | false |
 
-### Responce
-Name | Type | Description
---- | --- | --- | ---
-executionPrice | object | Execution price in format for Price object from Swap-SDK.
-input | number | Input Amount
-output | number | Output Amount
-maxSent | number | Amount(with slippage included) to get exact output
-memo | string | Memo for the transfer action
-minReceived | number | Amount to receive with max slippage
-priceImpact | number | Swap price impact percent
-route | array[number] | Sequence of the pools id's that swap will use
+### Response
+| Name | Type | Description |
+| --- | --- | --- |
+| executionPrice | object | Execution price in format for Price object from Swap-SDK. |
+| input | number | Input Amount |
+| output | number | Output Amount |
+| maxSent | number | Amount(with slippage included) to get exact output |
+| memo | string | Memo for the transfer action |
+| minReceived | number | Amount to receive with max slippage |
+| priceImpact | number | Swap price impact percent |
+| route | array[number] | Sequence of the pools id's that swap will use |
