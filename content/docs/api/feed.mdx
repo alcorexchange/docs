@@ -148,9 +148,9 @@ Swaps in the pair's pools and fills on its order book, merged, oldest first.
 one market per pair of assets instead of one per pool. Every pool, fee tier, order book and chain that trades
 the same two assets is one market:
 
-- A token CoinMarketCap lists is its asset, named by the CoinMarketCap symbol. A bridged token counts as its
-  origin: `usdc-wrap.alcor` on WAX, XPR and Telos and `xusdc-xtokens` on XPR are all `USDC`.
-- A token CoinMarketCap does not list stays its own `<chain>:<symbol>-<contract>`.
+- A token is its asset, named by the CoinMarketCap symbol. A token bridged through the Alcor Bridge or Metal X
+  counts as its origin: `usdc-wrap.alcor` on WAX, XPR and Telos and `xusdc-xtokens` on XPR are all `USDC`.
+- Only pairs of two tokens with a known CoinMarketCap id are listed.
 - The pair is quoted in a stablecoin first, then in a chain coin (`TLM_WAXP`, `WAXP_USDT`); otherwise its
   assets go in alphabetical order. A pool trading one asset on both sides (`usdc-wrap.alcor` / `xusdc-xtokens`)
   is a bridge and is left out.
