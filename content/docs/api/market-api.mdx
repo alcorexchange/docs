@@ -10,26 +10,61 @@ fetches, and how much a market takes before its price gives way. To build a swap
 
 `https://<chain>.alcor.exchange/api/v3/market/`, with `<chain>` one of `wax`, `eos`, `telos`, `proton`.
 
+| Endpoint | What it answers |
+| --- | --- |
+| [`GET tokens`](#market-tokens) | Every token with its price in the system token and in USD |
+| [`GET tokens/<id>`](#market-token) | One token |
+| [`GET price`](#pair-price) | A pair's mid price, and what selling and buying an amount fetches |
+| [`GET depth`](#depth) | How much a pair takes at each price impact level |
+| [`GET pools`](#market-pools), `pools/<id>` | AMM pools with price, reserves and TVL |
+| [`GET orderbooks`](#market-order-books), `orderbooks/<id>` | Order book markets with best bid and ask, and orders |
+| [`WSS stream`](#market-stream) | All of the above pushed after every block that changes it |
+
+## Conventions
+
 * Every answer carries `block`: the last block the data reflects.
-* Prices and values are decimal strings with 8 significant digits. Amounts are decimal strings in the token's precision.
+* Prices and values are decimal strings with 8 significant digits. Amounts are decimal strings in the token's
+  precision, e.g. `1000.0000` for a token with 4 decimals.
 * Token ids are `<symbol>-<contract>` in lower case, e.g. `tlm-alien.worlds`.
-* Errors are JSON, `{"error": "<message>"}`: HTTP 400 for a bad parameter, 404 for an unknown network, token, pool or
-  market.
+* A field with no value is `null`, never left out. Only `sell` and `buy` of [Pair price](#pair-price) without
+  `amount`, and `bids` and `asks` of the order book list, are left out.
+* Errors are JSON, `{"error": "<message>"}`:
+
+| Status | When | Messages |
+| --- | --- | --- |
+| 400 | A bad parameter of `price` or `depth`, including a token id that does not exist | `Unknown token`, `Invalid amount`, `Invalid impact`, `Base and quote are the same token`, `Input and output are the same token` |
+| 404 | An unknown network, or an id in the path that does not exist | `Unknown network`, `Unknown token`, `Unknown pool`, `Unknown order book` |
+| 429 | Over the rate limit | |
+
+Requests are rate-limited per IP address, with the same limits as the swap route. To follow prices all the time,
+open one [stream](#market-stream) instead of polling: a stream is one request, however long it stays open.
 
 #### How token prices are made
 
 Prices are in the chain's system token (WAX, EOS, TLOS, XPR), read off the AMM pools' spot prices. The system token
 is worth 1; every other token is priced through a pool whose other side is already priced. Of all the paths from the
 system token to a token, the price comes through the one whose weakest pool holds the most value, and a path through
-a pool below the liquidity threshold does not price at all, so a thin pool cannot set a token's price. A token
-traded only on order books has no price. USD prices multiply by the system token's USD price from CoinGecko.
+a pool below the liquidity threshold does not price at all, so a thin pool cannot set a token's price. The threshold
+is set per network, about $150 worth of the system token on the priced side of the pool. A token traded only on order books, or only in thin pools, has no
+price.
+
+USD prices multiply by the system token's USD price from CoinGecko, refreshed every minute. When CoinGecko has not
+answered for an hour, USD prices are `null` until it does.
+
 Prices are recomputed with every block that changes a pool.
 
 ## Market tokens
 
-Every token: the system token first, then the priced tokens by `liquidity`, then the unpriced ones.
+Every token: the system token first, then the priced tokens by `liquidity`, then the unpriced ones by id.
 
 `GET https://wax.alcor.exchange/api/v3/market/tokens`
+
+<Callout type="info">
+
+The list is large: on WAX about 2,100 tokens and 370 KB. To follow it, subscribe to the stream's
+[`tokens`](#channels) channel, which sends it once and then only the tokens whose price moved.
+
+</Callout>
 
 **Example**
 
@@ -39,9 +74,9 @@ curl https://wax.alcor.exchange/api/v3/market/tokens
 
 ```json
 {
-  "block": 451200345,
+  "block": 461732168,
   "systemToken": "wax-eosio.token",
-  "systemUsdPrice": "0.04512",
+  "systemUsdPrice": "0.00456392",
   "tokens": [
     {
       "id": "wax-eosio.token",
@@ -49,23 +84,35 @@ curl https://wax.alcor.exchange/api/v3/market/tokens
       "contract": "eosio.token",
       "decimals": 8,
       "price": "1",
-      "priceUsd": "0.04512",
+      "priceUsd": "0.00456392",
       "liquidity": null,
       "liquidityUsd": null,
-      "pools": 1873,
-      "orderbooks": 412
+      "pools": 3313,
+      "orderbooks": 833
     },
     {
       "id": "tlm-alien.worlds",
       "symbol": "TLM",
       "contract": "alien.worlds",
       "decimals": 4,
-      "price": "0.22424356",
-      "priceUsd": "0.010117869",
-      "liquidity": "1250340.5",
-      "liquidityUsd": "56415.363",
-      "pools": 37,
-      "orderbooks": 3
+      "price": "0.24765637",
+      "priceUsd": "0.0011302838",
+      "liquidity": "890719.54",
+      "liquidityUsd": "4065.1727",
+      "pools": 257,
+      "orderbooks": 12
+    },
+    {
+      "id": "a-ilbau.wam",
+      "symbol": "A",
+      "contract": "ilbau.wam",
+      "decimals": 6,
+      "price": null,
+      "priceUsd": null,
+      "liquidity": null,
+      "liquidityUsd": null,
+      "pools": 1,
+      "orderbooks": 0
     }
   ]
 }
@@ -86,15 +133,15 @@ curl https://wax.alcor.exchange/api/v3/market/tokens
 | --- | --- | --- |
 | id, symbol, contract, decimals |  | The token |
 | price | string | System tokens per one token, `null` when unpriced |
-| priceUsd | string | USD per one token |
-| liquidity | string | What backs the price: system-token value in the weakest pool on the path the price comes through. `null` for the system token |
+| priceUsd | string | USD per one token, `null` when unpriced or the USD price is unknown |
+| liquidity | string | What backs the price: the system-token value of the priced side of the weakest pool on the path the price comes through. `null` for the system token and for unpriced tokens |
 | liquidityUsd | string | The same in USD |
 | pools | number | Pools trading the token |
 | orderbooks | number | Order book markets trading the token |
 
 ## Market token
 
-One token, as in [Market tokens](#market-tokens).
+One token, as in [Market tokens](#market-tokens). An unknown id answers HTTP 404.
 
 `GET https://wax.alcor.exchange/api/v3/market/tokens/<token_id>`
 
@@ -106,18 +153,18 @@ curl https://wax.alcor.exchange/api/v3/market/tokens/tlm-alien.worlds
 
 ```json
 {
-  "block": 451200345,
+  "block": 461732168,
   "token": {
     "id": "tlm-alien.worlds",
     "symbol": "TLM",
     "contract": "alien.worlds",
     "decimals": 4,
-    "price": "0.22424356",
-    "priceUsd": "0.010117869",
-    "liquidity": "1250340.5",
-    "liquidityUsd": "56415.363",
-    "pools": 37,
-    "orderbooks": 3
+    "price": "0.24765637",
+    "priceUsd": "0.0011302838",
+    "liquidity": "890719.54",
+    "liquidityUsd": "4065.1727",
+    "pools": 257,
+    "orderbooks": 12
   }
 }
 ```
@@ -126,9 +173,9 @@ curl https://wax.alcor.exchange/api/v3/market/tokens/tlm-alien.worlds
 
 The price of a pair, and with `amount`, the price of trading that much of it.
 
-`mid` comes from the token prices. With `amount` (in base), `sell` sells it for quote, and `buy` spends what the sell
-receives to buy base back. Both go through the AMM and the order books, split across routes, exactly as a swap
-would, so the gap between their prices is what a round trip of that size costs.
+`mid` is the ratio of the two token prices. With `amount` (in base), `sell` sells it for quote, and `buy` spends what
+the sell receives to buy base back. Both go through the AMM and the order books, split across routes, exactly as a
+swap would, so the gap between their prices is what a round trip of that size costs.
 
 `GET https://wax.alcor.exchange/api/v3/market/price`
 
@@ -138,7 +185,7 @@ would, so the gap between their prices is what a round trip of that size costs.
 | --- | --- | --- | --- |
 | base | string | yes | Base token id |
 | quote | string | yes | Quote token id |
-| amount | string | no | Amount of base to sell, e.g. `1000` |
+| amount | string | no | Amount of base to sell, e.g. `1000`, at most the token's decimals |
 
 **Example**
 
@@ -148,21 +195,21 @@ curl "https://wax.alcor.exchange/api/v3/market/price?base=tlm-alien.worlds&quote
 
 ```json
 {
-  "block": 451200345,
+  "block": 461732115,
   "base": { "id": "tlm-alien.worlds", "symbol": "TLM", "contract": "alien.worlds", "decimals": 4 },
   "quote": { "id": "wax-eosio.token", "symbol": "WAX", "contract": "eosio.token", "decimals": 8 },
-  "mid": "0.22424356",
+  "mid": "0.24765637",
   "sell": {
     "input": "1000.0000",
-    "output": "223.12345678",
-    "price": "0.22312346",
-    "priceImpact": "0.5"
+    "output": "247.36208632",
+    "price": "0.24736209",
+    "priceImpact": "0.64"
   },
   "buy": {
-    "input": "223.12345678",
-    "output": "990.1234",
-    "price": "0.22534914",
-    "priceImpact": "0.49"
+    "input": "247.36208632",
+    "output": "995.7290",
+    "price": "0.2484231",
+    "priceImpact": "0.31"
   }
 }
 ```
@@ -181,8 +228,8 @@ curl "https://wax.alcor.exchange/api/v3/market/price?base=tlm-alien.worlds&quote
 
 | Name | Type | Description |
 | --- | --- | --- |
-| input | string | Amount spent |
-| output | string | Amount received |
+| input | string | Amount spent: base for `sell`, quote for `buy` |
+| output | string | Amount received: quote for `sell`, base for `buy` |
 | price | string | Quote per one base, as executed, fees included |
 | priceImpact | string | Percent below the spot prices of the routes taken, as in the route API |
 
@@ -199,7 +246,8 @@ does. Amounts are accurate to about 1%.
 
 <Callout type="info">
 
-A depth search is expensive, so answers are cached for 10 seconds per pair and levels.
+A depth search takes about a second, so answers are cached for 10 seconds per pair and levels. Asking again within
+that time answers the same `block`.
 
 </Callout>
 
@@ -211,7 +259,7 @@ A depth search is expensive, so answers are cached for 10 seconds per pair and l
 | --- | --- | --- | --- |
 | input | string | yes | Token id to sell |
 | output | string | yes | Token id to receive |
-| impact | string | no | Comma-separated levels in percent, up to 10, each between 0 and 100. Default `0.5,1,2,5` |
+| impact | string | no | Comma-separated levels in percent, up to 10, each above 0 and below 100. Default `0.5,1,2,5` |
 
 **Example**
 
@@ -221,16 +269,16 @@ curl "https://wax.alcor.exchange/api/v3/market/depth?input=wax-eosio.token&outpu
 
 ```json
 {
-  "block": 451200345,
+  "block": 461732117,
   "input": { "id": "wax-eosio.token", "symbol": "WAX", "contract": "eosio.token", "decimals": 8 },
   "output": { "id": "tlm-alien.worlds", "symbol": "TLM", "contract": "alien.worlds", "decimals": 4 },
-  "reference": "4.4594368",
+  "reference": "4.037853",
   "referenceKind": "mid",
   "levels": [
-    { "impact": "0.5", "input": "40778.18000000", "output": "180938.4779" },
-    { "impact": "1", "input": "56825.74000000", "output": "250866.6402" },
-    { "impact": "2", "input": "88639.27000000", "output": "387371.4417" },
-    { "impact": "5", "input": "186153.37000000", "output": "788632.2291" }
+    { "impact": "0.5", "input": "6654.20397186", "output": "26734.3509" },
+    { "impact": "1", "input": "24250.57497775", "output": "96941.0229" },
+    { "impact": "2", "input": "81250.75297357", "output": "321516.8950" },
+    { "impact": "5", "input": "318725.96867490", "output": "1222617.5391" }
   ]
 }
 ```
@@ -242,18 +290,18 @@ curl "https://wax.alcor.exchange/api/v3/market/depth?input=wax-eosio.token&outpu
 | block | number | Last block the data reflects |
 | input, output | object | The tokens |
 | reference | string | Output per one input that impact is measured against. `null` when there is no route |
-| referenceKind | string | `mid` (the pair's mid price) or `smallTrade` (the price of a small trade) |
-| levels | array | One per requested level: `impact`, and the `input` sold and `output` received at that level |
+| referenceKind | string | `mid` (the pair's mid price) or `smallTrade` (the price of a small trade); `null` when there is no route |
+| levels | array | One per requested level, in the order asked: `impact`, and the `input` sold and `output` received at that level |
 
 ## Market pools
 
 Every AMM pool, or the pools trading `token`, by id.
 
-`GET https://wax.alcor.exchange/api/v3/market/pools`
+`GET https://wax.alcor.exchange/api/v3/market/pools` answers `{"block", "pools"}`.
 
-`GET https://wax.alcor.exchange/api/v3/market/pools/<pool_id>` answers one pool as `{"block", "pool"}`.
+`GET https://wax.alcor.exchange/api/v3/market/pools/<pool_id>` answers one pool as `{"block", "pool"}`, or HTTP 404.
 
-**Parameters**
+**Parameters of the list**
 
 | Name | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -262,30 +310,28 @@ Every AMM pool, or the pools trading `token`, by id.
 **Example**
 
 ```shell
-curl "https://wax.alcor.exchange/api/v3/market/pools?token=tlm-alien.worlds"
+curl https://wax.alcor.exchange/api/v3/market/pools/0
 ```
 
 ```json
 {
-  "block": 451200345,
-  "pools": [
-    {
-      "id": 0,
-      "tokenA": { "id": "wax-eosio.token", "symbol": "WAX", "contract": "eosio.token", "decimals": 8 },
-      "tokenB": { "id": "tlm-alien.worlds", "symbol": "TLM", "contract": "alien.worlds", "decimals": 4 },
-      "fee": "0.3",
-      "tickSpacing": 60,
-      "active": true,
-      "price": "4.4594368",
-      "sqrtPriceX64": "38956049823463529530",
-      "tick": 14950,
-      "liquidity": "1825937489182",
-      "reserveA": "612034.12345678",
-      "reserveB": "2730511.4520",
-      "tvl": "1224335.3",
-      "tvlUsd": "55241.98"
-    }
-  ]
+  "block": 461732115,
+  "pool": {
+    "id": 0,
+    "tokenA": { "id": "tlm-alien.worlds", "symbol": "TLM", "contract": "alien.worlds", "decimals": 4 },
+    "tokenB": { "id": "wax-eosio.token", "symbol": "WAX", "contract": "eosio.token", "decimals": 8 },
+    "fee": "0.3",
+    "tickSpacing": 60,
+    "active": true,
+    "price": "0.24765637",
+    "sqrtPriceX64": "918003784128374099714",
+    "tick": 78150,
+    "liquidity": "5723638121470",
+    "reserveA": "3974114.3644",
+    "reserveB": "890719.54153255",
+    "tvl": "1874934.3",
+    "tvlUsd": "8557.05"
+  }
 }
 ```
 
@@ -294,12 +340,12 @@ curl "https://wax.alcor.exchange/api/v3/market/pools?token=tlm-alien.worlds"
 | Name | Type | Description |
 | --- | --- | --- |
 | id | number | Pool id |
-| tokenA, tokenB | object | The tokens |
+| tokenA, tokenB | object | The tokens, in the pool's order |
 | fee | string | Fee in percent |
 | tickSpacing | number | Tick spacing |
 | active | boolean | Whether the pool is active |
-| price | string | Token B per one token A |
-| sqrtPriceX64 | string | Current sqrt price, Q64.64 |
+| price | string | Token B per one token A, the pool's own spot price |
+| sqrtPriceX64 | string | Current sqrt price, Q64.64, in raw units |
 | tick | number | Current tick |
 | liquidity | string | In-range liquidity |
 | reserveA, reserveB | string | Token balances the pool holds |
@@ -312,7 +358,7 @@ Order book markets. The list comes without orders; a single market comes with it
 
 `GET https://wax.alcor.exchange/api/v3/market/orderbooks` answers `{"block", "orderbooks"}`.
 
-`GET https://wax.alcor.exchange/api/v3/market/orderbooks/<market_id>` answers `{"block", "orderbook"}`.
+`GET https://wax.alcor.exchange/api/v3/market/orderbooks/<market_id>` answers `{"block", "orderbook"}`, or HTTP 404.
 
 **Parameters of the list**
 
@@ -328,22 +374,22 @@ curl https://wax.alcor.exchange/api/v3/market/orderbooks/26
 
 ```json
 {
-  "block": 451200345,
+  "block": 461732115,
   "orderbook": {
     "id": 26,
     "base": { "id": "wax-eosio.token", "symbol": "WAX", "contract": "eosio.token", "decimals": 8 },
     "quote": { "id": "tlm-alien.worlds", "symbol": "TLM", "contract": "alien.worlds", "decimals": 4 },
     "fee": "0.2",
     "frozen": false,
-    "bestBid": "0.22301",
-    "bestAsk": "0.2251",
+    "bestBid": "0.24725901",
+    "bestAsk": "0.24950131",
     "bids": [
-      { "price": "0.22301", "amount": "15000.0000" },
-      { "price": "0.2229", "amount": "4210.5000" }
+      { "price": "0.24725901", "amount": "470.8472" },
+      { "price": "0.247012", "amount": "18000.0000" }
     ],
     "asks": [
-      { "price": "0.2251", "amount": "9800.0000" },
-      { "price": "0.22533", "amount": "120000.0000" }
+      { "price": "0.24950131", "amount": "500.0000" },
+      { "price": "0.24950131", "amount": "500.0000" }
     ]
   }
 }
@@ -357,8 +403,8 @@ curl https://wax.alcor.exchange/api/v3/market/orderbooks/26
 | base, quote | object | The tokens, named as the DEX contract names them |
 | fee | string | Fee in percent |
 | frozen | boolean | Whether the market is frozen |
-| bestBid, bestAsk | string | Best buy and sell prices, in base per one quote |
-| bids, asks | array | Single market only: `{price, amount}`, best first. Price in base per one quote, amount in quote |
+| bestBid, bestAsk | string | Best buy and sell prices, in base per one quote; `null` when the side is empty |
+| bids, asks | array | Single market only: `{price, amount}`, best first, one entry per order (two orders at one price are two entries). Price in base per one quote, amount in quote |
 
 <Callout type="info">
 
@@ -369,50 +415,156 @@ the contract's base (WAX in market 26) is the ticker's target.
 
 ## Market stream
 
-A plain WebSocket (not Socket.IO) that pushes the market API as the chain moves.
+A plain WebSocket (not Socket.IO) that pushes the market API as the chain moves: subscribe to a pair's price, a pool,
+an order book or the token list, get its current state at once, then a message after every block that changes it.
 
-`wss://wax.alcor.exchange/api/v3/market/stream`
+`wss://<chain>.alcor.exchange/api/v3/market/stream`, e.g. `wss://wax.alcor.exchange/api/v3/market/stream`.
 
-Subscribe with JSON text messages. Each subscription is answered at once with the channel's current state, and then
-again after every block that changes it.
+An unknown network answers the handshake with HTTP 404. Requests and messages are JSON text frames; binary frames are
+ignored.
 
-| Channel | Subscribe with | Pushes |
-| --- | --- | --- |
-| price | `base`, `quote` | The pair's `mid` |
-| pool | `id` | The pool, as in [Market pools](#market-pools). `null` once removed |
-| orderbook | `id` | The market with its orders, as in [Market order books](#market-order-books). `null` once removed |
-| tokens |  | Every token on subscribe, then only the tokens whose price moved |
-
-**Example**
-
-```javascript
-const ws = new WebSocket('wss://wax.alcor.exchange/api/v3/market/stream')
-
-ws.onopen = () => {
-  ws.send(JSON.stringify({ op: 'subscribe', channel: 'price', base: 'tlm-alien.worlds', quote: 'wax-eosio.token' }))
-  ws.send(JSON.stringify({ op: 'subscribe', channel: 'pool', id: 0 }))
-  ws.send(JSON.stringify({ op: 'subscribe', channel: 'orderbook', id: 26 }))
-  ws.send(JSON.stringify({ op: 'subscribe', channel: 'tokens' }))
-}
-
-ws.onmessage = ({ data }) => {
-  const message = JSON.parse(data)
-  if (message.error) return console.error(message.error)
-  console.log(message.channel, message.block, message)
-}
-
-// Stop a channel
-ws.send(JSON.stringify({ op: 'unsubscribe', channel: 'pool', id: 0 }))
-```
-
-Messages:
+#### Requests
 
 ```json
-{"channel": "price", "base": "tlm-alien.worlds", "quote": "wax-eosio.token", "block": 451200346, "mid": "0.22431"}
-{"channel": "pool", "id": 0, "block": 451200346, "pool": { "id": 0, "price": "4.4581", "...": "as in Market pools" }}
-{"channel": "orderbook", "id": 26, "block": 451200346, "orderbook": { "id": 26, "...": "as in Market order books" }}
-{"channel": "tokens", "block": 451200346, "tokens": [{ "id": "tlm-alien.worlds", "price": "0.22431", "...": "as in Market tokens" }]}
+{"op": "subscribe", "channel": "price", "base": "tlm-alien.worlds", "quote": "wax-eosio.token"}
+{"op": "subscribe", "channel": "pool", "id": 0}
+{"op": "subscribe", "channel": "orderbook", "id": 26}
+{"op": "subscribe", "channel": "tokens"}
+{"op": "unsubscribe", "channel": "pool", "id": 0}
 ```
 
-A bad request is answered with `{"error": "<message>"}` and the connection stays open. One connection holds up to 100
-subscriptions. The server pings every 30 seconds.
+| Name | Type | Description |
+| --- | --- | --- |
+| op | string | `subscribe` or `unsubscribe` |
+| channel | string | `price`, `pool`, `orderbook` or `tokens` |
+| base, quote | string | `price` only: the pair's token ids |
+| id | number | `pool` and `orderbook` only: the pool id or the market id |
+
+* A subscription is answered at once with the channel's current state (its snapshot).
+* Subscribing again to a channel already subscribed sends the snapshot again and does not count as a new subscription.
+  Use it to resynchronise one channel.
+* An unsubscription is not answered. Unsubscribing from a channel not subscribed does nothing.
+* Answers come in the order of the requests.
+
+#### Channels
+
+| Channel | Subscribe with | Snapshot and updates carry | Sent after a block when |
+| --- | --- | --- | --- |
+| price | `base`, `quote` | `mid`: quote per one base, as in [Pair price](#pair-price); `null` when either token is unpriced | Either token's price moved and the mid differs from the last one sent |
+| pool | `id` | `pool`, as in [Market pools](#market-pools); `null` once the pool is gone | The pool changed in the block and differs from the last one sent |
+| orderbook | `id` | `orderbook` with its orders, as in [Market order books](#market-order-books); `null` once the market is gone | The market changed in the block and differs from the last one sent |
+| tokens | | `tokens`: every token on subscribe, as in [Market tokens](#market-tokens); afterwards the tokens whose price moved | Some token's price moved |
+
+A block that leaves a channel as it was sends nothing on it, so a quiet pool or pair can go minutes without a message.
+
+#### Messages
+
+Every message names its channel, the fields it was subscribed with, and the `block` it reflects. The channel's data
+is in the field named in the table above.
+
+```json
+{"channel": "price", "base": "tlm-alien.worlds", "quote": "wax-eosio.token", "block": 461732254, "mid": "0.25123696"}
+{"channel": "pool", "id": 0, "block": 461732254, "pool": {"id": 0, "price": "0.24765637", "...": "as in Market pools"}}
+{"channel": "orderbook", "id": 26, "block": 461732254, "orderbook": {"id": 26, "bestBid": "0.24725901", "...": "as in Market order books"}}
+{"channel": "tokens", "block": 461732254, "tokens": [{"id": "tlm-alien.worlds", "price": "0.24765637", "...": "as in Market tokens"}]}
+```
+
+Each message carries the whole state of what it names, not a diff: replace the pool, the order book or the mid you
+hold with what arrives. A `tokens` message lists whole token entries; update the tokens it lists by `id` and keep the
+others.
+
+<Callout type="info">
+
+When the server falls behind a connection, or reloads a chain's state, it checks every channel of the connection again
+and sends what changed. Then `tokens` sends every token once more, as on subscribe.
+
+</Callout>
+
+The `tokens` snapshot is the whole [Market tokens](#market-tokens) list: on WAX about 370 KB in one message. Later
+messages are small, usually a few tokens.
+
+#### Errors
+
+A bad request is answered with `{"error": "<message>"}`, and the connection stays open. The error does not repeat the
+request; match it by order, as answers come in the order of the requests.
+
+| Message | When |
+| --- | --- |
+| `Invalid request` | Not JSON, an unknown `op` or `channel`, or a missing or wrong-typed field |
+| `Unknown token` | `price` names a token id that does not exist |
+| `Unknown pool` | `pool` names a pool id that does not exist |
+| `Unknown order book` | `orderbook` names a market id that does not exist |
+| `Too many subscriptions` | The connection already holds 100 subscriptions |
+
+#### Connection
+
+* One connection holds up to 100 subscriptions. For more, open more connections.
+* The server sends a WebSocket ping every 30 seconds, which keeps a quiet connection open through proxies; WebSocket
+  clients answer it on their own.
+* The server keeps no subscriptions across connections. On a disconnect, reconnect with a backoff and subscribe again:
+  the snapshots bring the state up to date.
+
+#### Example
+
+```javascript
+const SUBSCRIPTIONS = [
+  { op: 'subscribe', channel: 'price', base: 'tlm-alien.worlds', quote: 'wax-eosio.token' },
+  { op: 'subscribe', channel: 'pool', id: 0 },
+  { op: 'subscribe', channel: 'orderbook', id: 26 },
+]
+
+function connect(delay = 1000) {
+  const ws = new WebSocket('wss://wax.alcor.exchange/api/v3/market/stream')
+
+  ws.onopen = () => {
+    delay = 1000
+    for (const subscription of SUBSCRIPTIONS) ws.send(JSON.stringify(subscription))
+  }
+
+  ws.onmessage = ({ data }) => {
+    const message = JSON.parse(data)
+    if (message.error) return console.error(message.error)
+    if (message.channel === 'price') console.log(message.block, 'TLM/WAX', message.mid)
+    if (message.channel === 'pool') console.log(message.block, 'pool', message.id, message.pool?.price)
+    if (message.channel === 'orderbook') console.log(message.block, 'book', message.id, message.orderbook?.bestBid, message.orderbook?.bestAsk)
+  }
+
+  ws.onclose = () => setTimeout(() => connect(Math.min(delay * 2, 30000)), delay)
+}
+
+connect()
+```
+
+```python
+import asyncio
+import json
+
+import websockets  # pip install websockets
+
+URL = "wss://wax.alcor.exchange/api/v3/market/stream"
+SUBSCRIPTIONS = [
+    {"op": "subscribe", "channel": "price", "base": "tlm-alien.worlds", "quote": "wax-eosio.token"},
+    {"op": "subscribe", "channel": "tokens"},
+]
+
+
+async def main():
+    prices = {}  # token id -> price in WAX
+    async for ws in websockets.connect(URL, max_size=None):  # reconnects with a backoff; no limit on the tokens snapshot
+        try:
+            for subscription in SUBSCRIPTIONS:
+                await ws.send(json.dumps(subscription))
+            async for data in ws:
+                message = json.loads(data)
+                if "error" in message:
+                    print("error:", message["error"])
+                elif message["channel"] == "tokens":
+                    prices.update((token["id"], token["price"]) for token in message["tokens"])
+                elif message["channel"] == "price":
+                    print(message["block"], "TLM/WAX", message["mid"])
+        except websockets.ConnectionClosed:
+            continue
+
+
+asyncio.run(main())
+```

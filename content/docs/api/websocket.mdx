@@ -7,6 +7,13 @@ Live updates are served over [Socket.IO](https://socket.io/) (version 4 client).
 `subscribe` and leave them with `unsubscribe`. Every room takes the chain in its `params`: `wax`, `eos`, `telos` or
 `proton`.
 
+<Callout type="info">
+
+For token prices, pair prices, pools and order books updated every block, over a plain WebSocket with no Socket.IO
+client, use the [Market stream](/api/market-api#market-stream).
+
+</Callout>
+
 ```javascript
 import { io } from 'socket.io-client'
 
