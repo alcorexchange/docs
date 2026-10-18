@@ -1,0 +1,112 @@
+---
+title: "Create a token on Telos"
+description: "Deploy a standard token contract with cleos, issue the supply and list the token on Alcor"
+---
+
+A token on Telos is a standard Antelope token: the `eosio.token` contract deployed to an account you control. The account's name becomes the token's contract, so a token `ABC` deployed to `mytokenacct` is `ABC@mytokenacct` everywhere — in wallets, on Alcor and in block explorers.
+
+It takes four transactions from one account, and about 10 TLOS of RAM. Nothing has to be approved by Alcor: once the token has a pool, it trades.
+
+## What you need
+
+* A Telos account whose key you can sign with in [cleos](https://docs.eosnetwork.com/manuals/leap/latest/cleos/). A dedicated account is best, since its name is the token's contract name and it holds the contract from now on.
+* Some TLOS on that account for RAM, and enough CPU and NET for a few transactions.
+* An RPC endpoint, for example `https://telos.greymass.com` or `https://mainnet.telos.net`.
+
+The commands below use these names — replace them with yours:
+
+```bash
+TELOS=https://telos.greymass.com
+ACCOUNT=mytokenacct
+```
+
+## 1. Get the token contract
+
+Copy the code the network's own `TLOS` token runs:
+
+```bash
+mkdir token
+cleos -u $TELOS get code eosio.token --wasm -c token/eosio.token.wasm -a token/eosio.token.abi
+```
+
+You can also build it from the [reference contracts](https://github.com/AntelopeIO/reference-contracts). Use the token contract as it is: wallets and Alcor read the standard `stat` and `accounts` tables and the standard `transfer` action.
+
+## 2. Buy RAM
+
+The contract's code is stored in the account's RAM, about 160 KB. Buy a little more for the token's own rows:
+
+```bash
+cleos -u $TELOS system buyram $ACCOUNT $ACCOUNT 180 --kbytes -p $ACCOUNT@active
+```
+
+At the time of writing that costs about 10 TLOS. If the next step fails with `insufficient ram`, the error says how many bytes are missing — buy them and run it again.
+
+## 3. Deploy the contract
+
+```bash
+cleos -u $TELOS set contract $ACCOUNT ./token eosio.token.wasm eosio.token.abi -p $ACCOUNT@active
+```
+
+## 4. Create the token
+
+```bash
+cleos -u $TELOS push action $ACCOUNT create '["mytokenacct", "1000000000.0000 ABC"]' -p $ACCOUNT@active
+```
+
+* The first argument is the **issuer**, the account allowed to issue new tokens. Here it is the token account itself.
+* The second is the **maximum supply**. Its symbol — 1 to 7 capital letters, `A` to `Z` — and its number of decimals become the token's for good. Four decimals, as `TLOS` has, is the common choice.
+
+<Callout type="warn">
+The symbol, the decimals and the maximum supply cannot be changed after `create`. One contract can hold many tokens, each with its own symbol.
+</Callout>
+
+## 5. Issue the supply
+
+Issue to the issuer, then send the tokens wherever they go:
+
+```bash
+cleos -u $TELOS push action $ACCOUNT issue '["mytokenacct", "1000000000.0000 ABC", "initial supply"]' -p $ACCOUNT@active
+cleos -u $TELOS push action $ACCOUNT transfer '["mytokenacct", "myteamwallet", "1000000.0000 ABC", ""]' -p $ACCOUNT@active
+```
+
+Newer versions of the contract refuse to issue to anyone but the issuer, so issuing to the issuer works with any version. You can issue the whole supply now or part of it now and more later, up to the maximum.
+
+## 6. Check it
+
+```bash
+cleos -u $TELOS get currency stats $ACCOUNT ABC
+cleos -u $TELOS get currency balance $ACCOUNT mytokenacct ABC
+```
+
+## List it on Alcor
+
+A Telos token trades on Alcor as soon as it has a pool:
+
+1. Open **Pool → New position** on [Alcor Exchange](https://app.alcor.exchange/v/telos/swap/positions/new) or [alcor.exchange](https://alcor.exchange/v/telos/swap/positions/new).
+2. Pick your token by its contract, pair it with `TLOS` or `USDC`, set the starting price and add liquidity.
+
+From then on anyone can swap it. A pool against `TLOS` or a stablecoin also gives the token a [USD price](/adding-token-information/usd-price). To show its logo and description, see [Token logo](/adding-token-information/token-logo) and [Adding Token Information](/adding-token-information).
+
+### A token from another network
+
+A token that lives on another network reaches Alcor Exchange over the bridge, which Alcor sets up. Send its network, contract and symbol in the Alcor Telegram chat: [@alcorexchange](https://t.me/alcorexchange).
+
+## For scripts and agents
+
+| | |
+|---|---|
+| Network | Telos mainnet |
+| Chain ID | `4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11` |
+| RPC | `https://telos.greymass.com`, `https://mainnet.telos.net` |
+| System token | `TLOS@eosio.token`, 4 decimals |
+| Token code | `eosio.token`'s own (`get code eosio.token --wasm`) |
+| RAM for the code | about 160 KB; buy 180 KB |
+
+The actions, in order, all signed by the token account's `active` permission:
+
+1. `eosio::buyrambytes` — `{ payer, receiver: <account>, bytes: 184320 }`
+2. `eosio::setcode` and `eosio::setabi` on `<account>` — what `cleos set contract` sends
+3. `<account>::create` — `{ issuer, maximum_supply: "1000000000.0000 ABC" }`
+4. `<account>::issue` — `{ to: <issuer>, quantity, memo }`, signed by the issuer
+
+Steps 1 and 2 can be one transaction; RAM is checked at the end of it.
