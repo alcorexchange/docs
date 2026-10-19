@@ -28,6 +28,12 @@ The chain is part of every id because one contract name can exist on several cha
 (`usdt-wrap.alcor` is on WAX, XPR and Telos). Chains: `wax`, `xpr`, `eos`, `telos`.
 Several pools can share a ticker_id (one pair, different fee tiers); `pool_id` tells them apart.
 
+**One chain**
+
+`/pairs` and `/tickers` take `chain` to list one chain's markets only, for a page per chain:
+`https://api.alcor.exchange/v3/feed/tickers?chain=telos`. Without it they list every chain.
+`/orderbook` and `/historical_trades` need no filter: the chain is in the `ticker_id`.
+
 ## Pairs
 
 `GET https://api.alcor.exchange/v3/feed/pairs`
