@@ -3,12 +3,16 @@ title: "Order book"
 description: "Indexer API for the book.alcor order book: markets, depth, trades, candles, events, accounts and a WebSocket stream."
 ---
 
-The order book indexer reads `book.alcor` from irreversible blocks and serves it over HTTP and WebSocket.
+The order book indexer reads `book.alcor` from irreversible blocks and serves it over HTTP and WebSocket. Each
+network has its own host:
 
-`https://telos.alcor.exchange/api/v2/orderbook`
+| Network | Base URL | WebSocket |
+| --- | --- | --- |
+| Telos | `https://telos.alcor.exchange/api/v2/orderbook` | `wss://telos.alcor.exchange/api/v2/orderbook/ws` |
+| WAX | `https://wax.alcor.exchange/api/v2/orderbook` | `wss://wax.alcor.exchange/api/v2/orderbook/ws` |
+| XPR Network | `https://proton.alcor.exchange/api/v2/orderbook` | `wss://proton.alcor.exchange/api/v2/orderbook/ws` |
 
-Telos only for now; on WAX and XPR read the [contract tables](/developers-api/order-book/tables-and-events). The API
-is public and read-only and allows any origin. 64-bit numbers are strings in JSON. Prices are minimal quote units per
+Examples use Telos; change the host for another network. The API is public and read-only and allows any origin. 64-bit numbers are strings in JSON. Prices are minimal quote units per
 lot and quantities are lots, as in the contract — see [Units](/developers-api/order-book#units).
 
 <Callout type="info">
@@ -126,7 +130,7 @@ All take `limit` (1–1000, default 100) and `before` for paging: an order or tr
 
 ## WebSocket
 
-`wss://telos.alcor.exchange/api/v2/orderbook/ws`
+`wss://<network>.alcor.exchange/api/v2/orderbook/ws` — see the table at the top.
 
 Subscribe to one or more channels:
 
