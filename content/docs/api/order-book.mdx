@@ -1,0 +1,154 @@
+---
+title: "Order book"
+description: "Indexer API for the book.alcor order book: markets, depth, trades, candles, events, accounts and a WebSocket stream."
+---
+
+The order book indexer reads `book.alcor` from irreversible blocks and serves it over HTTP and WebSocket.
+
+`https://telos.alcor.exchange/api/v2/orderbook`
+
+Telos only for now; on WAX and XPR read the [contract tables](/developers-api/order-book/tables-and-events). The API
+is public and read-only and allows any origin. 64-bit numbers are strings in JSON. Prices are minimal quote units per
+lot and quantities are lots, as in the contract — see [Units](/developers-api/order-book#units).
+
+<Callout type="info">
+
+Contract, actions and the swap memo: [Order book (book.alcor)](/developers-api/order-book).
+A local order book kept by this API's events: [SDK](/developers-api/order-book/sdk#local-order-book).
+
+</Callout>
+
+## Status
+
+`GET /status` — the last processed block, the chain head and LIB, and how far the indexer is behind (`lag`, blocks).
+
+```json
+{"block": 495732770, "head": 495732772, "lib": 495732770, "time": 1792889210860, "lag": 0}
+```
+
+## Markets
+
+`GET /markets`, `GET /markets/:id` — markets with their tokens, the last trade price and 24-hour statistics.
+
+```json
+{
+  "id": "2", "base_id": "3", "quote_id": "1",
+  "lot_size": "100000", "tick_size": "100", "min_notional": "5000000",
+  "maker_bps": 0, "taker_bps": 0, "paused": 0, "event_seq": "3264",
+  "base": {"id": "3", "contract": "wrap.alcor", "symbol": "BNB", "precision": 8, "paused": 0, "held": "10000000"},
+  "quote": {"id": "1", "contract": "wrap.alcor", "symbol": "USDC", "precision": 6, "paused": 0, "held": "303000000"},
+  "last_price": null, "last_trade_time": null,
+  "day": {"trades": 0, "volume": "0", "quote_volume": "0", "high": null, "low": null, "open": null}
+}
+```
+
+`day.volume` is in lots, `day.quote_volume` in minimal quote units.
+
+## Depth
+
+`GET /markets/:id/depth?levels=20` — price levels and the `seq` they are current at. Expired orders are left out.
+`levels` is 1–1000, default 20.
+
+```json
+{
+  "market_id": "2", "seq": "3264",
+  "bids": [{"price": "739100", "qty": "33", "orders": 1}, {"price": "738300", "qty": "33", "orders": 1}],
+  "asks": [{"price": "739900", "qty": "33", "orders": 1}, {"price": "740600", "qty": "33", "orders": 1}]
+}
+```
+
+With a lot of 0.001 BNB, the best bid `739100` is 739.1 USDC per BNB for 0.033 BNB.
+
+## Book
+
+`GET /markets/:id/book` — every open order and the `seq` it is current at: the snapshot for a local book that you
+then keep with the events of the `market:<id>` channel.
+
+```json
+{
+  "seq": "3264",
+  "orders": [{"id": "562949953422943", "market_id": "2", "side": 0, "owner": "telosmmbot11", "price": "738300",
+              "qty": "33", "qty_rem": "33", "fee_bps": 0, "created_at": 1792889184, "expires_at": 1792889244}]
+}
+```
+
+The snapshot includes orders that have expired but are not yet removed. Drop those whose `expires_at` is not zero and
+not in the future.
+
+## Trades
+
+`GET /markets/:id/trades?limit=100&before=<seq>` — trades, newest first. Page back with `before`, the `seq` of the
+oldest trade you have. `limit` is 1–1000, default 100.
+
+```json
+[{"market_id": "1", "seq": "7", "block_num": 495114469, "trx_id": "8c9374b5…", "time": 1792580010,
+  "maker_order_id": "422212465065986", "maker": "avraldigital", "taker": "chasterpiece", "taker_side": 0,
+  "price": "10000", "qty": "200", "quote": "2000000", "maker_fee": "0", "taker_fee": "0", "trigger_id": "0"}]
+```
+
+## Candles
+
+`GET /markets/:id/candles?interval=60&from=<sec>&to=<sec>&limit=500` — candles, newest first. `interval` is one of
+60, 300, 900, 3600, 14400, 86400 seconds; another value is a `400`.
+
+## Events
+
+`GET /events?market=<id>&after=<seq>&limit=100` — the event stream of a market in order, from `after` (exclusive).
+`market=0` is the stream of deposits and withdrawals. Event types and fields:
+[Tables and events](/developers-api/order-book/tables-and-events#events). Each event also has `block_num` and
+`trx_id`.
+
+```json
+[{"type": 2, "market_id": "2", "seq": "1", "time": 1792876410, "trigger": "0", "id": "562949953421313",
+  "owner": "telosmmbot11", "taker": "", "side": 0, "flags": 0, "reason": 0, "price": "730200", "limit_price": "0",
+  "qty": "34", "qty_rem": "34", "maker_fee": "0", "taker_fee": "0", "sibling": "0", "expires_at": 1792876469,
+  "fee_bps": 0, "locked": "0", "block_num": 495707171, "trx_id": "ccdc1006…"}]
+```
+
+## Accounts
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /accounts/:owner/orders?status=open\|all` | The account's orders, newest first; `status` defaults to `open` |
+| `GET /accounts/:owner/triggers?status=open\|all` | The account's triggers |
+| `GET /accounts/:owner/trades` | Trades where the account is maker or taker |
+| `GET /accounts/:owner/swaps` | [Swaps](/developers-api/order-book/swap) where the account is sender or recipient; their trades are in `/trades` |
+| `GET /accounts/:owner/ledger` | Deposits and withdrawals |
+
+All take `limit` (1–1000, default 100) and `before` for paging: an order or trigger ID for orders and triggers, a
+`seq` for the ledger, a time in seconds for trades and swaps.
+
+```json
+{"id": "703687441778274", "market_id": "2", "side": 1, "owner": "telosmmbot11", "price": "740600", "qty": "33",
+ "qty_rem": "33", "filled": "0", "fee_bps": 0, "status": "open", "reason": null, "trigger_id": "0",
+ "expires_at": 1792889263, "created_at": 1792889205, "updated_at": 1792889205}
+```
+
+## WebSocket
+
+`wss://telos.alcor.exchange/api/v2/orderbook/ws`
+
+Subscribe to one or more channels:
+
+```json
+{"op": "subscribe", "channel": "market:2"}
+```
+
+| Channel | Events |
+| --- | --- |
+| `market:<id>` | Every event of the market |
+| `account:<name>` | Events where the account is the `owner` or the `taker`: its orders, fills on both sides, deposits, withdrawals, swaps |
+| `ledger` | All deposits and withdrawals |
+
+The server confirms with `{"op": "subscribe", "channel": "market:2", "ok": true}` and then pushes one message per block
+that touches the channel:
+
+```json
+{"channel": "market:2", "block": 495707171, "events": [{"type": 2, "seq": "1", "...": "..."}]}
+```
+
+`{"op": "unsubscribe", "channel": "..."}` stops a channel. A malformed message gets `{"error": "bad json"}` or
+`{"error": "bad channel"}`. The server pings every 30 seconds so that proxies keep a quiet connection open.
+
+To keep a local book: subscribe first, then load `GET /markets/:id/book` and apply the events with a `seq` above the
+snapshot's. If a `seq` is missing, load the snapshot again. After a reconnect, subscribe again and reload the snapshot.

@@ -1,0 +1,99 @@
+---
+title: "Order book (book.alcor)"
+description: "The Alcor spot order book contract: networks, internal balances, units, fees, limits and markets."
+---
+
+`book.alcor` is Alcor's spot order book contract: price-time priority, limit orders with post-only, IOC and FOK,
+market buys by amount, order expiry, stop and take-profit triggers with OCO, and swaps straight from a wallet with
+one transfer. The swap router reads it together with the AMM pools, so a swap on Alcor fills against the order book
+whenever its price is better.
+
+## Networks
+
+| Network | Contract | Fee account | Indexer API |
+| --- | --- | --- | --- |
+| Telos | `book.alcor` | `fees.alcor` | `https://telos.alcor.exchange/api/v2/orderbook` |
+| WAX | `book.alcor` | `fees.alcor` | not public yet |
+| XPR Network | `book.alcor` | `fees.alcor` | not public yet |
+
+The contract code is the same on every network. Where the indexer is not public, read the
+[contract tables](/developers-api/order-book/tables-and-events) directly.
+
+## Internal balances
+
+Trading runs on balances held by the contract:
+
+1. **Deposit** — transfer a token to `book.alcor` with any memo. The amount is credited to the sender.
+2. **Trade** — orders lock what they need from the available balance and trade without token transfers.
+3. **Withdraw** — `withdraw` sends tokens from the available balance to any account that has a row of that token.
+
+A [swap](/developers-api/order-book/swap) skips the ledger: one transfer in, the output and any change come back in
+the same action, and nothing stays on the exchange.
+
+Each balance has `available` and `locked`. A sell locks its base; a buy locks `qty * price` plus the taker fee and
+gets back whatever the fill did not need.
+
+## Units
+
+Every market has two fixed numbers:
+
+| Field | Meaning |
+| --- | --- |
+| `lot_size` | minimal base units in one lot |
+| `price` | minimal quote units one lot costs |
+
+An order of `qty` lots at `price` moves `qty * lot_size` base against `qty * price` quote. All math is in integers;
+only fees are rounded (down, per fill). `tick_size` is the price step, `min_notional` the smallest quote value of
+any order or trigger that rests in the book.
+
+**Example: WAX/USDT on WAX.** WAX has 8 decimals, USDT 6. `lot_size = 10000000000` is 100 WAX. At 0.00456 USDT per
+WAX a lot costs 0.456 USDT, so `price = 456000`. `tick_size = 10` makes the price step 0.00001 USDT per lot, or
+0.0000001 USDT per WAX. `min_notional = 1000000` is 1 USDT.
+
+`lot_size` never changes after listing. `tick_size` and `min_notional` can.
+
+## Fees
+
+Maker and taker fees are set per market in basis points (`maker_bps`, `taker_bps`). The fee is taken in quote and
+rounded down on each fill. The rate is fixed in the order when it is placed, so a later fee change never makes a
+resting order more expensive. The maker rate is never above the taker rate. All markets listed so far trade with
+0 / 0.
+
+## Limits
+
+- **Work budget.** One action does at most 1000 units of work: a fill, or the removal of one of your own orders or
+  an expired order in the way. If the budget runs out while the book still crosses, the rest comes back to you
+  (`truncated = true`) and never rests in the book.
+- **Minimum size.** A taker remainder below `min_notional` comes back instead of resting. A maker remainder that a
+  partial fill leaves below `min_notional` is cancelled and refunded.
+- **Self-trade prevention.** Your own order in the way of your taker order is cancelled, not traded.
+- **Expiry.** An order can carry `expires_at` (block time, seconds). After it the order no longer trades: a taker
+  that reaches it removes it and refunds its owner, and anyone may cancel it.
+
+## Markets
+
+Markets listed at launch. The live list is the `markets` table or [`GET /markets`](/api/order-book#markets).
+
+| Network | ID | Market | Lot | Price step | Min. order |
+| --- | --- | --- | --- | --- | --- |
+| Telos | 1 | `USDC@wrap.alcor` / `USDT@wrap.alcor` | 0.01 USDC | 0.0001 USDT | 1 USDT |
+| Telos | 2 | `BNB@wrap.alcor` / `USDC@wrap.alcor` | 0.001 BNB | 0.1 USDC | 5 USDC |
+| WAX | 1 | `WAX@eosio.token` / `USDT@wrap.alcor` | 100 WAX | 0.0000001 USDT | 1 USDT |
+| WAX | 2 | `TLM@alien.worlds` / `USDT@wrap.alcor` | 100 TLM | 0.0000001 USDT | 1 USDT |
+| WAX | 3 | `WAX@eosio.token` / `USDC@wrap.alcor` | 100 WAX | 0.0000001 USDC | 1 USDC |
+| XPR | 1 | `XPR@eosio.token` / `XUSDC@xtokens` | 100 XPR | 0.00000001 XUSDC | 1 XUSDC |
+| XPR | 2 | `XPR@eosio.token` / `USDC@wrap.alcor` | 100 XPR | 0.00000001 USDC | 1 USDC |
+| XPR | 3 | `XPR@eosio.token` / `USDT@wrap.alcor` | 100 XPR | 0.00000001 USDT | 1 USDT |
+
+Price steps are per one base token; a lot's price moves by `tick_size` minimal quote units.
+
+## Pages
+
+<Cards>
+  <Card title="Actions" href="/developers-api/order-book/actions" description="Deposit, withdraw, orders, cancels, triggers, read-only actions" />
+  <Card title="Swap by transfer" href="/developers-api/order-book/swap" description="One transfer with a swap# memo, straight from a wallet" />
+  <Card title="Tables and events" href="/developers-api/order-book/tables-and-events" description="What the contract stores and the event log it writes" />
+  <Card title="SDK" href="/developers-api/order-book/sdk" description="@alcorexchange/orderbook-sdk for frontends and bots" />
+  <Card title="Market making" href="/developers-api/order-book/market-making" description="Quoting with one transaction, expiry and post-only-skip" />
+  <Card title="Order book API" href="/api/order-book" description="Indexer: markets, depth, trades, candles, accounts, WebSocket" />
+</Cards>

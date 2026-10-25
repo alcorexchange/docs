@@ -1,0 +1,137 @@
+---
+title: "Actions"
+description: "book.alcor actions: deposit, withdraw, orders, cancels, triggers and read-only reads."
+---
+
+Examples use Telos and market 2, BNB/USDC (`lot_size` 0.001 BNB, `tick_size` 100). Amounts in actions are minimal
+units: a price is quote units per lot, a quantity is lots. See [Units](/developers-api/order-book#units).
+
+## Deposit
+
+Transfer the token to `book.alcor`. Any memo that does not start with `swap#` is a deposit to the sender.
+
+```shell
+cleos -u https://mainnet.telos.net push action wrap.alcor transfer \
+  '["alice", "book.alcor", "100.000000 USDC", ""]' -p alice
+```
+
+Transfers from system accounts (`eosio`, `eosio.*`, including Telos EVM withdrawals sent straight to the contract)
+are not credited to anyone. Tokens that take a fee on transfer are refused.
+
+## Withdraw
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `owner` | `name` | Account whose available balance pays |
+| `to` | `name` | Recipient |
+| `contract` | `name` | Token contract |
+| `quantity` | `asset` | Amount |
+| `memo` | `string` | Transfer memo |
+
+The contract only sends to an account that already has a row of the token, otherwise
+`recipient has no balance row`. Put the token's `open` before `withdraw` in the same transaction, signed by the
+owner: it does nothing when the row exists and creates it, paid by the owner, when it does not.
+
+```shell
+cleos -u https://mainnet.telos.net push transaction '{"actions":[
+  {"account":"wrap.alcor","name":"open","authorization":[{"actor":"alice","permission":"active"}],
+   "data":{"owner":"alice","symbol":"6,USDC","ram_payer":"alice"}},
+  {"account":"book.alcor","name":"withdraw","authorization":[{"actor":"alice","permission":"active"}],
+   "data":{"owner":"alice","to":"alice","contract":"wrap.alcor","quantity":"100.000000 USDC","memo":""}}]}'
+```
+
+## Place order
+
+`placeorder(owner, market_id, side, price, qty, flags, expires_at)`
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `owner` | `name` | Order owner |
+| `market_id` | `uint64` | Market ID |
+| `side` | `uint8` | `0` buy, `1` sell |
+| `price` | `uint64` | Quote units per lot, a multiple of `tick_size` |
+| `qty` | `uint64` | Lots |
+| `flags` | `uint8` | At most one: `0` none, `1` post-only, `2` IOC, `4` FOK, `8` post-only-skip |
+| `expires_at` | `uint32` | Block time in seconds after which the order no longer trades; `0` never |
+
+Buy 34 lots (0.034 BNB) at 730.0 USDC per BNB, post-only, no expiry. A lot of 0.001 BNB at 730 USDC costs 0.73 USDC,
+so the price is `730000`:
+
+```shell
+cleos -u https://mainnet.telos.net push action book.alcor placeorder \
+  '["alice", 2, 0, 730000, 34, 1, 0]' -p alice
+```
+
+The action returns `{order_id, filled, filled_quote, rested, truncated, work}`: the resting order's ID (`0` if nothing
+rests), lots filled at once and their quote value before fees, lots left in the book, whether the work budget cut the
+order short, and work units spent.
+
+**Flags**
+
+- **Post-only** (`1`) fails the transaction if any live order sits at its price, your own included.
+- **Post-only-skip** (`8`) is a post-only that, where it would trade, places nothing and does not fail:
+  `order_id = 0`, `rested = 0`, no event. A batch of cancels and new quotes in one transaction survives one quote
+  the price ran over. Other errors (funds, tick grid, `min_notional`) still fail the transaction.
+- **IOC** (`2`) fills what it can and returns the rest. A market sell by amount is an IOC at the worst price you
+  accept.
+- **FOK** (`4`) fills completely or fails.
+
+Only an order that can rest may carry `expires_at`, and it must be in the future.
+
+## Buy by amount
+
+`buyquote(owner, market_id, quote, max_price)` spends up to `quote` minimal quote units, fees included, at prices up
+to `max_price`. It never rests; whatever is not spent comes back. It returns the same result as `placeorder`.
+There is no sell by amount: sell by quantity.
+
+## Cancel
+
+| Action | Parameters | Who |
+| --- | --- | --- |
+| `cancel` | `order_id` | The owner; anyone for an expired order (funds go to its owner) |
+| `reduceorder` | `order_id`, `qty_rem` | The owner. Lowers the remaining lots and keeps the place in the queue. The new remainder must be smaller and not below `min_notional` |
+| `cancelall` | `owner`, `market_id`, `limit` | The owner. Cancels up to `limit` (at most 100) orders and triggers in one market and returns how many went. If that equals `limit`, call again |
+
+```shell
+cleos -u https://mainnet.telos.net push action book.alcor cancelall '["alice", 2, 100]' -p alice
+```
+
+## Triggers
+
+A trigger is a limit order with its funds locked at once, waiting for the market's reference price: the median of
+the last trade prices of the last three blocks that traded. One transaction is one block, so it cannot move the
+reference alone. Until three blocks have traded there is no reference and triggers do not fire.
+
+`placetrigger(owner, market_id, side, op, trigger_price, limit_price, qty, flags)`
+
+| Parameter | Description |
+| --- | --- |
+| `op` | `0` fires when the reference falls to `trigger_price`, `1` when it rises to it |
+| `limit_price` | Price of the order it places, and its worst execution price |
+| `flags` | `0` or `2` (IOC). Stop-market: IOC with a distant `limit_price`. Stop-limit: no IOC, the remainder rests |
+
+`placeoco(owner, market_id, side, qty, stop_price, stop_limit, stop_flags, take_price, take_limit, take_flags)` places
+two triggers on one quantity with one shared lock. When one leg fires or is cancelled, the other goes too.
+
+`canceltrig(trigger_id)` cancels a trigger and its OCO leg. Due triggers fire right after a trade, inside the same
+action, up to 16 at a time; `cranktrig(market_id, limit)`, which anyone may call, fires the rest.
+
+A trigger that is already due cannot be placed. Give a stop-market a limit a few percent from its trigger price:
+with a one-tick limit it sells at any price.
+
+## Read-only actions
+
+`getdepth(market_id, side, limit)`, `getorders(owner, market_id, after, limit)` and
+`gettriggers(owner, market_id, after, limit)` return data without changing state. Call them with
+`send_read_only_transaction` on an API node with read-only threads. In a normal transaction or `compute_transaction`
+the return value is capped at 256 bytes on Telos — about 12 depth levels or 4 orders.
+
+## Errors
+
+| Message | Cause |
+| --- | --- |
+| `post-only order would trade` | A post-only order meets a live order at its price |
+| `recipient has no balance row` | Withdraw or swap output to an account without a row of the token; add `open` first |
+| `only a resting order can expire` | `expires_at` on an IOC or FOK order |
+| `order already expired` | `expires_at` not after the current block time |
+| `swap: received <out>, less than minimum <min_out>` | A swap got less than its `min_out` |

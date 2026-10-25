@@ -1,0 +1,64 @@
+---
+title: "Market making"
+description: "Quoting on book.alcor: one transaction per update, post-only-skip, order expiry, fills and CPU."
+---
+
+The Alcor swap router reads `book.alcor` together with the AMM pools. When your quotes beat a pool, swaps fill
+against them — so liquidity in the book reaches every swap on Alcor, not only traders on the order book page.
+
+## Quote with one transaction
+
+Update a market with one transaction: first `cancel` the orders that moved, then `placeorder` the new ones. Actions run
+in order, so the funds the cancels release are already available to the new orders.
+
+- **Flag 8, post-only-skip.** If the price moves while your transaction is on its way, a quote that would now
+  cross the book is simply not placed, and the rest of the batch goes through. With plain post-only (`1`) one crossing
+  quote reverts the whole transaction — including the cancels, which leaves your old quotes standing exactly when the
+  price has run.
+- **`expires_at`.** Give every quote an expiry, for example 60 seconds ahead in block time. If your bot stops, its
+  quotes stop trading on their own. Refresh them well before they expire: the router treats an order as expired
+  10 seconds early.
+- **Requote threshold.** Leave an order in place while its price is within a few basis points of where you want it.
+  Every update costs CPU, and a new order loses its place in the queue.
+- **Start and stop with `cancelall`.** It removes up to 100 orders per call; call again while it returns 100.
+
+## Fills
+
+Subscribe to your account on the [order book API](/api/order-book#websocket):
+
+```json
+{"op": "subscribe", "channel": "account:alice"}
+```
+
+A `trade` event where `owner` is your account is a fill of your order: `id` is the order, `qty` the lots filled,
+`qty_rem` what is left. The events of your own transactions also come back in the transaction result
+(`KeySigner.transact` in the [SDK](/developers-api/order-book/sdk)).
+
+## Reading your own state
+
+A node in `read-mode = head` shows a transaction only once a producer's block includes it. Reading your orders right
+after sending can return the state from before. Wait until the orders your transaction opened appear and the ones it
+cancelled disappear — the transaction's `order_open` and `order_cancel` events list them — or until the head is a few
+blocks past the transaction's block.
+
+## Things to know
+
+- **Self-trade prevention.** Your own order in the way of your taker order is cancelled, not traded.
+- **Buy locks include the fee.** A buy locks `ceil(qty * price * (1 + fee_bps / 10000))`; check it against your
+  available quote with `buyReserve`.
+- **Dust.** A maker remainder below `min_notional` after a partial fill is cancelled and refunded.
+- **Swaps sell whole lots.** A swap of base sells `floor(amount / lot_size)` lots and returns the rest, so a large
+  lot means larger change for swappers.
+
+## CPU
+
+Cancelling and placing about eight orders in one transaction costs roughly 1–1.6 ms of CPU. Re-quoting a market
+every few seconds adds up to several seconds of CPU a day per market.
+
+| Network | How to get CPU |
+| --- | --- |
+| Telos | Stake TLOS to the account |
+| WAX | Stake WAX, or have another account pay: on WAX the first authorizer of the first action pays for the transaction, so a payer's permission linked to a no-op action can go first in every transaction |
+| XPR Network | `newaccres` gives a new account about 3 s a day. More comes as a 31-day plan from the `resources` contract: transfer XPR to `resources` (memo `account`), then `resources::buyplan(account, plan_index, plan_quantity)`. The plans are in its `plans` table; Plus (1000 XPR) gives about 320 s a day |
+
+On XPR, `eosio::stakexpr` is a voting stake and does not add CPU.

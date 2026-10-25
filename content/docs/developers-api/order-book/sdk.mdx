@@ -1,0 +1,105 @@
+---
+title: "SDK"
+description: "@alcorexchange/orderbook-sdk: exact units, action builders, reads, signing for bots and a local order book."
+---
+
+`@alcorexchange/orderbook-sdk` is the TypeScript client for `book.alcor`: exact unit conversions, action JSON for any
+wallet, table and read-only reads, transaction signing for bots, event decoding and a local order book kept current
+by events.
+
+```bash
+npm install @alcorexchange/orderbook-sdk @wharfkit/antelope
+```
+
+ESM only: Node 20.10+ or a modern bundler. Every 64-bit value is a `bigint`.
+
+<Callout type="info">
+
+The published 0.1.0 predates the swap and post-only-skip: `actions.swap`, `quoteSwap` and `OrderFlag.POST_ONLY_SKIP`
+come with the next release. Until then, build the [swap transfer](/developers-api/order-book/swap) yourself and pass
+flag `8` as a number.
+
+</Callout>
+
+## Quick start
+
+```ts
+import { OrderbookClient, OrderbookActions, KeySigner, Rpc, Side, OrderFlag, priceToUnits, baseToLots } from '@alcorexchange/orderbook-sdk';
+
+const rpc = new Rpc('https://mainnet.telos.net');
+const client = new OrderbookClient({ rpc, contract: 'book.alcor' });
+const actions = new OrderbookActions('book.alcor');
+
+const m = await client.market(2n);                        // BNB/USDC: lot size, tick, tokens, fees
+const order = actions.placeOrder({
+  owner: 'alice', marketId: m.id, side: Side.BUY,
+  price: priceToUnits(m, '730.0'), qty: baseToLots(m, '0.034'), flags: OrderFlag.POST_ONLY,
+});
+
+// Wallet users: session.transact({ actions: [order] }). Bots sign with a key:
+const signer = new KeySigner({ rpc, privateKey: process.env.KEY!, contract: 'book.alcor' });
+const { results, events } = await signer.transact([order]);
+```
+
+## Units
+
+Parsing is exact: a value off the token precision, the lot size or the tick grid throws instead of rounding.
+
+| Helper | From → to |
+| --- | --- |
+| `priceToUnits(m, '730.0')`, `unitsToPrice(m, units)` | price per base token ↔ contract price per lot |
+| `baseToLots(m, '0.034')`, `lotsToBase(m, lots)` | base amount ↔ lots |
+| `quoteToUnits(m, '12.5')`, `unitsToQuote(m, units)` | quote amount ↔ minimal units |
+| `parseUnits`, `formatUnits`, `assetString` | any token amount |
+
+## Actions
+
+`OrderbookActions` builds action JSON for any wallet (wharfkit Session, Anchor) or a key:
+
+- `deposit`, `withdraw` — `withdraw` returns two actions, the recipient's token `open` and the withdrawal;
+- `placeOrder` with `OrderFlag.POST_ONLY`, `IOC` or `FOK` and an optional `expiresAt` (seconds);
+- `buyQuote`, `cancel`, `reduceOrder`, `cancelAll`;
+- `placeTrigger`, `placeOco`, `cancelTrigger`, `crank`.
+
+## Reads
+
+`OrderbookClient` reads any API node:
+
+- `markets()`, `market(id)`, `tokens()`, `config()`;
+- `book(marketId, side)` (expired orders hidden), `depth(marketId, side, levels)`;
+- `balances(owner)`, `ordersOf(owner)`, `triggersOf(owner)`;
+- `triggerQueue(marketId, op)`, `referencePrice(marketId)`;
+- `readOnly(name, data)` for the read-only actions.
+
+## Local order book
+
+`BookState` keeps an order book from a snapshot and events, and throws `BookGapError` when an event `seq` is missing:
+take a new snapshot then. With the [order book API](/api/order-book) the snapshot is `GET /markets/:id/book` and the
+events come over the WebSocket; `toOrder` and `toEvent` turn their JSON into SDK types.
+
+```ts
+import { BookState, Side, toEvent, toOrder } from '@alcorexchange/orderbook-sdk';
+
+const api = 'https://telos.alcor.exchange/api/v2/orderbook';
+const ws = new WebSocket('wss://telos.alcor.exchange/api/v2/orderbook/ws');
+let book: BookState | undefined;
+
+ws.onopen = async () => {
+  ws.send(JSON.stringify({ op: 'subscribe', channel: 'market:2' }));   // subscribe first, then take the snapshot
+  const snap = await fetch(`${api}/markets/2/book`).then((r) => r.json());
+  book = new BookState(2n, snap.orders.map(toOrder), BigInt(snap.seq));
+};
+ws.onmessage = (msg) => {
+  const { events } = JSON.parse(msg.data);
+  for (const e of events ?? []) book?.apply(toEvent(e));                // BookGapError: take the snapshot again
+  if (book) render(book.levels(Side.BUY, 20), book.levels(Side.SELL, 20));
+};
+```
+
+Events at or below the snapshot's `seq` are skipped, so subscribing before the snapshot loses nothing.
+
+## Contract math
+
+`buyReserve`, `feeOf`, `affordableLots`, `orderLock`, `isDust`, `referencePrice` and `triggerDue` compute exactly what
+the contract does, for previews before signing. `KeySigner.transact` returns the events of its own transaction;
+`decodeEvents` decodes them from state history.

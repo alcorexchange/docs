@@ -5,6 +5,14 @@ description: "Alcor order book and swap contracts: accounts, actions, memos and 
 
 Markets, orders and pools live on chain. You can trade, cancel orders and read tables with a block explorer, `cleos` or a JavaScript client such as eosjs. For HTTP and WebSocket data, see the [API Reference](/api).
 
+<Callout type="info">
+
+The order book contract `book.alcor` runs on Telos, WAX and XPR Network: limit orders with post-only, IOC, FOK and
+expiry, stop and take-profit triggers, and swaps straight from a wallet with one transfer. See
+[Order book (book.alcor)](/developers-api/order-book).
+
+</Callout>
+
 ## Contract accounts
 
 | Chain | Order book DEX | Swap (AMM) |
@@ -19,6 +27,7 @@ The first-generation AMM contract `alcorammswap` still holds old liquidity on WA
 ## Pages
 
 <Cards>
+  <Card title="Order book (book.alcor)" href="/developers-api/order-book" />
   <Card title="Swap contract" href="/developers-api/amm-swap-contract-api" />
   <Card title="Order book actions" href="/developers-api/contract-actions" />
   <Card title="Order book tables" href="/developers-api/contract-tables" />

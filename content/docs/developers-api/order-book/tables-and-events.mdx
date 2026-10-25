@@ -1,0 +1,70 @@
+---
+title: "Tables and events"
+description: "book.alcor tables, IDs and scopes, and the event log it writes for indexers."
+---
+
+## Tables
+
+| Table | Scope | Key | Contents |
+| --- | --- | --- | --- |
+| `config` | `book.alcor` | singleton | `fee_account`, global `paused` bits, `ledger_seq` |
+| `tokens` | `book.alcor` | `id` | `contract`, `sym`, `paused`, `held` (sum of all internal balances of the token) |
+| `markets` | `book.alcor` | `id` | `base_id`, `quote_id`, `lot_size`, `tick_size`, `min_notional`, `maker_bps`, `taker_bps`, `paused`, `event_seq`, the last three block prices |
+| `balances` | owner | `token_id` | `available`, `locked` |
+| `orders` | `(market_id << 1) \| side` | `id` | `owner`, `price`, `qty`, `qty_rem`, `fee_bps`, `created_at`, `expires_at` |
+| `triggers` | `(market_id << 1) \| op` | `id` | `owner`, `side`, `flags`, `trigger_price`, `limit_price`, `qty`, `fee_bps`, `locked`, `sibling`, `created_at` |
+
+`orders` has two secondary indexes: `byprice` (2, `i128`) lists the best order first — the highest bid or the lowest
+ask, the oldest within a price — and `byowner` (3, `name`). `triggers` has `byfire` (2, `i128`), the next to fire
+first, and `byowner` (3).
+
+An order or trigger ID is `[market_id:16][side or op:1][seq:47]`, so the ID alone names its table scope.
+
+```shell
+# Best five asks of Telos market 2: scope (2 << 1) | 1 = 5
+cleos -u https://mainnet.telos.net get table book.alcor 5 orders --index 2 --key-type i128 --limit 5
+
+# Alice's balances
+cleos -u https://mainnet.telos.net get table book.alcor alice balances
+```
+
+<Callout type="warn">
+
+Expired orders stay in `orders` until someone removes them, but they no longer trade. When you read the table
+directly, drop rows whose `expires_at` is not zero and not after the current block time.
+
+</Callout>
+
+## Events
+
+Every action sends an inline `events` action to the contract itself with a list of events, up to 500 per action.
+Each market numbers its events with a gapless `seq`. Deposits and withdrawals have `market_id = 0` and their own
+gapless `seq`.
+
+| Type | Event | Fields |
+| --- | --- | --- |
+| 1 | `trade` | `id` maker order, `owner` maker, `taker`, `side` taker side, `price`, `qty`, `qty_rem` maker remainder, `maker_fee`, `taker_fee` |
+| 2 | `order_open` | `id`, `owner`, `side`, `price`, `qty` ordered, `qty_rem` resting, `expires_at`, `fee_bps` |
+| 3 | `order_cancel` | `id`, `owner`, `side`, `price`, `qty`, `reason` |
+| 4 | `order_truncated` | `owner`, `side`, `price`, `qty` filled, `qty_rem` returned |
+| 5 | `trigger_open` | `id`, `owner`, `side`, `flags`, `price` trigger price, `limit_price`, `qty`, `sibling`, `fee_bps`, `locked` |
+| 6 | `trigger_cancel` | as `trigger_open`, plus `reason` |
+| 7 | `trigger_fired` | as `trigger_open` |
+| 8 | `order_reduced` | `id`, `owner`, `side`, `price`, `qty` removed, `qty_rem` left |
+| 9 | `deposit` | `id` token, `owner`, `qty` amount |
+| 10 | `withdraw` | `id` token, `owner`, `taker` recipient, `qty` amount |
+| 11 | `trigger_requeued` | as `trigger_open`; `qty_rem` lots still to fire, `locked` the new lock, bit 128 of `flags` set (armed) |
+| 12 | `swap` | `owner` sender, `taker` recipient, `side` (`1` sold base, `0` bought base), `qty` input spent, `qty_rem` input returned, `locked` output sent — all in minimal units |
+
+`trigger` is non-zero on events caused by that trigger firing. `time` is the block time in seconds.
+
+**Cancel reasons:** `0` owner, `1` self-trade prevention, `2` admin, `3` the other OCO leg fired or was cancelled,
+`4` expired, `5` remainder below `min_notional`.
+
+### Reading events safely
+
+Accept an `events` action only when `act.account == book.alcor`, `receiver == book.alcor` and
+`creator_action_ordinal != 0`, that is, sent inline by the contract itself. Any contract can deliver an action named
+`events` by notification; this filter drops such fakes. Check that `seq` has no gaps.
+
+The [order book API](/api/order-book) does this for you and serves the events over HTTP and WebSocket.

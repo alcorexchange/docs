@@ -4,6 +4,7 @@
     "tokens",
     "market-data",
     "swap",
+    "order-book",
     "market-api",
     "feed",
     "global-data",

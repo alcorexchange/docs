@@ -1,6 +1,7 @@
 {
   "title": "Smart Contracts",
   "pages": [
+    "order-book",
     "amm-swap-contract-api",
     "contract-actions",
     "contract-tables",

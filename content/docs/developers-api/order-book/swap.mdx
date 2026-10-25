@@ -1,0 +1,74 @@
+---
+title: "Swap by transfer"
+description: "Swap on book.alcor with one transfer and a swap# memo: nothing stays on the exchange."
+---
+
+A transfer of the input token to `book.alcor` with this memo trades at once and leaves nothing on the exchange:
+
+```
+swap#<market_id>#<min_out>[#<recipient>]
+```
+
+| Part | Description |
+| --- | --- |
+| `market_id` | Decimal market ID |
+| `min_out` | Minimum output in minimal units of the output token: an integer, no decimal point or symbol |
+| `recipient` | Who gets the output; the sender by default |
+
+This is how the Alcor swap router fills a trade through the order book.
+
+## What happens
+
+- **Base in** sells `floor(quantity / lot_size)` whole lots, IOC, with no price limit. The part below one lot comes
+  back.
+- **Quote in** buys for the whole amount, fees included, like `buyquote` with no price limit. Whatever cannot buy
+  another lot comes back.
+- **Output and change** go out in the same action as inline transfers: the output to the recipient (memo `swap`),
+  the unused input to the sender (memo `swap refund`). Zero amounts are not sent.
+- **Price protection** is `min_out` alone. If the output is below it, the whole transfer fails with
+  `swap: received <out>, less than minimum <min_out>`.
+- **Internal balances** do not change and no balance rows are created. If the sender already has a balance, it stays
+  as it was, except where the swap meets the sender's own orders: those are cancelled on the way (self-trade
+  prevention) and their funds return to the sender's available balance.
+- The output is counted from the fills: for a sell, the quote received minus the taker fee; for a buy, lots filled
+  times `lot_size`.
+- The work budget is the same 1000 units. If it runs out, the unsold input comes back and `min_out` decides.
+
+## Example
+
+Sell 1111 WAX on WAX market 1 (WAX/USDT, lots of 100 WAX) for at least 5.033293 USDT:
+
+```shell
+cleos -u https://wax.greymass.com push transaction '{"actions":[
+  {"account":"wrap.alcor","name":"open","authorization":[{"actor":"alice","permission":"active"}],
+   "data":{"owner":"alice","symbol":"6,USDT","ram_payer":"alice"}},
+  {"account":"eosio.token","name":"transfer","authorization":[{"actor":"alice","permission":"active"}],
+   "data":{"from":"alice","to":"book.alcor","quantity":"1111.00000000 WAX","memo":"swap#1#5033293"}}]}'
+```
+
+The contract sells 11 lots (1100 WAX), sends the USDT to `alice` and returns 11 WAX.
+
+## Recipient's token row
+
+The recipient must exist, must not be `book.alcor`, and must have a row of the output token, or the swap fails with
+`recipient has no balance row`. Put `<output token>::open(recipient, symbol, sender)` before the transfer: it is a
+no-op when the row exists.
+
+## Choosing min_out
+
+Compute the expected output from a fresh book and take your slippage off it. The SDK does both: `quoteSwap` runs the
+contract's arithmetic on a copy of the book, `actions.swap` returns the `open` and the transfer.
+Count the part below one lot: with lots of 100 WAX, 1111 WAX sells as 1100.
+
+Anyone who trades before your swap lands can take the difference down to `min_out`, as with an AMM swap. Keep the
+tolerance tight.
+
+## Other rules
+
+- Pauses: market trading, deposits of the input token, withdrawals of the output token.
+- A memo that starts with `swap#` but does not parse fails (`swap: invalid memo`, `swap: invalid recipient`); it is
+  never taken as a deposit.
+- The sender gets the refund as an inline transfer. A contract that sends swaps must not fail on that incoming
+  transfer.
+- In the event log a swap writes its trades, then a `swap` event (type 12), then any triggers it fired. It writes no
+  deposit or withdrawal.
