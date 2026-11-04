@@ -1,6 +1,7 @@
 {
   "title": "Swap Widget",
   "pages": [
-    "swap-chart-widget"
+    "swap-chart-widget",
+    "token-analytics-widget"
   ]
 }

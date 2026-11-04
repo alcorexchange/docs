@@ -1,0 +1,42 @@
+---
+title: "Token Analytics Widget"
+description: "Embed a token's analytics page: price chart, liquidity, holders, pools"
+---
+
+The token analytics widget is the token page of Alcor Analytics made for an iframe: price chart, liquidity, market cap, volume, score, holders, and the token's pools and spot pairs. It has no site header and no wallet. Trade, Swap, Add Liquidity and every link inside it open Alcor in a new tab, so your page stays where it is.
+
+```
+https://alcor.exchange/embed/token/<network>/<token id>
+```
+
+| Network | `<network>` |
+|---|---|
+| WAX | `wax` |
+| XPR Network | `xpr` |
+| Vaulta (EOS) | `vaulta` |
+| Telos | `telos` |
+
+The token id uses the `symbol-contract` format with the symbol in lowercase, for example `wax-eosio.token` or `tlm-alien.worlds`. It is the same id as in the address of the token's page on Alcor: `alcor.exchange/v/wax/analytics/tokens/tlm-alien.worlds`.
+
+```html
+<iframe
+  src="https://alcor.exchange/embed/token/wax/tlm-alien.worlds"
+  width="100%"
+  height="900"
+  style="border: 0"
+></iframe>
+```
+
+<Callout type="warn">
+  Use the `/embed/token/...` address. Alcor's regular pages, `/v/<network>/analytics/tokens/...` included, cannot be shown in a frame on another site: the browser will display "alcor.exchange refused to connect".
+</Callout>
+
+The page is responsive: from about 900px wide the chart has a side column, narrower it stacks. Give it at least 800px of height so the chart and the figures above it fit without scrolling.
+
+## Query parameters
+
+| Parameter | Meaning | Example |
+|---|---|---|
+| `tab` | Table shown first under the chart: `pools`, `pairs` or `holders` | `holders` |
+
+For a swap form instead of analytics, see the [Swap Widget](/swap-widget). For a bare price chart of one pair, see the [Swap Chart Widget](/swap-widget/swap-chart-widget).
