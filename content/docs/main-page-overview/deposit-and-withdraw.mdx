@@ -1,0 +1,85 @@
+---
+title: "Deposit and Withdraw"
+description: "Funding your account from other networks or an exchange, and sending tokens back out"
+---
+
+The Deposit window brings tokens into your account on the network you are on: Telos, WAX, XPR Network or Vaulta. You can send them from Ethereum, BNB Smart Chain, Polygon, Sui, NEAR, another Antelope network, or an exchange. The Withdraw window sends them back out. Both use the [Alcor bridge](/main-page-overview/bridge) underneath.
+
+## Opening it
+
+* **Deposit** in the header (when you are signed in). A small counter on it shows transfers in progress.
+* **Deposit** and **Withdraw** next to the trade form.
+* **Deposit** and **Withdraw** next to each token on [Portfolio](/main-page-overview/portfolio).
+* **Deposit &lt;token&gt; from &lt;network&gt;** under a form when your balance is too low.
+
+The window has three tabs: **Deposit**, **Withdraw** and **History**.
+
+## Deposit
+
+1. **Choose a token.** Search by token or network name, for example `usdt` or `eth`. The icons on each row show where you can send it from. The number on the right is what your connected wallets already hold.
+2. **Choose the network** you send from (**From**). Each row shows the expected time. This step is skipped when there is only one way in.
+3. Send it in one of the ways below.
+
+### From an exchange or any wallet: deposit address
+
+For tokens from Ethereum, BNB Smart Chain or Polygon, the **Deposit address** tab gives you a personal address. You need no wallet connection and no gas, and you can send from an exchange's withdrawal page. The address is yours and does not change. It is the same on all three networks.
+
+The window shows the address, a QR code and:
+
+* **Network**: the network to send on.
+* **Minimum**: smaller amounts wait at the address until more arrives.
+* **Network fee**: paid out of the deposit.
+* **Arrives in**: counted from when the deposit enters the bridge.
+* **To**: your account.
+
+<Callout type="warn">
+Send only on the network shown: Ethereum, BNB Smart Chain or Polygon. A deposit sent on Arbitrum, Base, Tron or any other network may be lost. Send only the tokens listed under **Other tokens and networks**. Any other token is not forwarded; it waits at the address until support returns it.
+</Callout>
+
+The window watches the address. Once your transfer lands, it shows **Last received**, and the deposit appears in **History**. A tiny amount of ETH, BNB or POL below its minimum (at most 0.001 ETH, 0.001 BNB or 1 POL) goes to the courier when a token is forwarded from the address. An amount above a token's limit is forwarded in parts.
+
+### From your wallet
+
+The **Wallet** tab, and every other network (Sui, NEAR, WAX, XPR Network, Vaulta, Telos), sends from a wallet you connect:
+
+1. **Connect** a wallet for that network. Nothing leaves it until you confirm.
+2. Enter the amount, or use your full balance. Check **Arrives in** and **You receive**.
+3. Click **Deposit &lt;amount&gt; &lt;token&gt;** and confirm in your wallet. USDT and USDC from Ethereum, BNB Smart Chain or Polygon ask for two confirmations: an approval for exactly this amount, then the deposit.
+
+The wallet pays the network's gas in ETH, BNB, POL, SUI or NEAR. If it holds none, the window tells you to add a little first.
+
+### The network's own token
+
+For WAX, TLOS, XPR or A on its own network, choose **Exchange or wallet**. The window shows your account name: send the token to it from an exchange or any wallet, as an ordinary transfer.
+
+### No account yet
+
+On Telos, WAX and XPR Network you can create an account with a passkey. You need no seed phrase and nothing to install. The account opens with your first deposit: pick a name, then make the deposit as above. The window shows the account fee taken from it and the smallest deposit that opens an account. On Telos the deposit address works for this too. If someone takes the name before your deposit arrives, nothing is lost: pick another name and the deposit goes on to it.
+
+## Withdraw
+
+1. **Choose a token.** The tokens you hold come first.
+2. **Choose the network** to send to (**To**).
+3. **Enter the recipient.** **My wallet** and **Used before** fill it in for you. The window warns if the account does not exist, or if the address is a contract and not a wallet.
+4. For Ethereum, BNB Smart Chain and Polygon, choose the delivery:
+   * **Deliver it for me**: the courier pays the gas, and its fee is taken from the amount. Works for any address, an exchange's too.
+   * **I'll claim it myself**: free, but you press **Claim on &lt;network&gt;** later and pay the gas. The window says how long you have. An unclaimed withdrawal can be cancelled and refunded.
+5. Enter the amount and click **Withdraw &lt;amount&gt; &lt;token&gt;**. You sign once, on the network you are on.
+
+Withdrawals to WAX, XPR Network and Vaulta are delivered automatically. To Sui and NEAR, you connect the receiving wallet and claim with one cheap transaction.
+
+## Progress and History
+
+After you send, the window shows the transfer's steps: **Sent from…**, **Confirming…**, **Arriving on…**, **In your balance**. Each step links to its transaction, and there is a countdown. You can close the window; the transfer keeps going.
+
+The **History** tab lists your deposits and withdrawals, filtered by **All**, **Deposits** or **Withdrawals**. The ones in progress come first. Click one to open its progress. When a transfer needs you, it shows a button such as **Claim on &lt;network&gt;**, **Cancel transfer** or **Get refund on Telos**. A notification and the counter on **Deposit** in the header tell you when.
+
+## If something is wrong
+
+* **"Deposits are closed on the &lt;token&gt; route"** or **"No &lt;token&gt; to pay out on &lt;network&gt; yet"**: the route is paused, or the destination holds too little. Choose another network.
+* **"The route takes at least…"**: the amount is below the minimum. Click **use &lt;amount&gt;**.
+* **"The deposit service gave a wrong address. Do not send anything"**: don't send; contact support.
+* **"A deposit came back… and waits at this address — it is safe"**: contact support to have it forwarded or returned.
+* **Delivery delayed**: nothing is lost. The transfer shows a button to finish it yourself. Or ask in [Telegram](/social-media-contact) with the transfer from History.
+
+For transfers between any two networks, to another person, or with full detail, use the [Bridge page](/main-page-overview/bridge).

@@ -1,0 +1,120 @@
+---
+title: "Bridge"
+description: "Moving tokens between Ethereum, BNB Smart Chain, Polygon, Sui, NEAR and the Antelope networks"
+---
+
+The Bridge page (`/v/<network>/bridge`) moves tokens between networks straight from your wallet. It connects:
+
+* **Antelope networks:** Telos, WAX, XPR Network and Vaulta.
+* **Other networks:** Ethereum, BNB Smart Chain, Polygon, Sui and NEAR.
+
+To top up your account on the network you are trading on, the [Deposit window](/main-page-overview/deposit-and-withdraw) is usually simpler. It can even take tokens straight from an exchange.
+
+## How the bridge works
+
+* **Everything goes through Telos.** Telos is the hub. A transfer between two other networks, for example Ethereum → WAX, passes through Telos. It is still one transfer, and there is nothing to sign on Telos.
+* **No custodian.** No company or person holds the tokens or approves transfers. Each network checks the other's proof on chain, with a light client, and only then pays out. The **Info** tab explains this under **How it's verified**.
+* **Never lost.** A transfer that cannot be delivered is sent back to where it came from. A withdrawal that is not claimed in time is refunded to your Telos balance.
+
+On Telos, WAX, XPR Network and Vaulta, bridged tokens such as USDT and USDC are issued by the `wrap.alcor` contract.
+
+### Supported tokens
+
+The list changes as tokens are added. The **Info** tab always shows the current routes with their limits. As of this writing:
+
+| Network | Tokens |
+|---|---|
+| Ethereum | ETH, USDC, USDT |
+| BNB Smart Chain | BNB, USDC, USDT |
+| Polygon | POL, USDC |
+| WAX | WAX, USDC, USDT, ETH, BNB, POL |
+| XPR Network | XPR, USDC, USDT, ETH, BNB, EASY |
+| Vaulta | A, USDC, USDT |
+| Sui | SUI, USDC |
+| NEAR | NEAR, USDC, USDT |
+
+Want a token added? Use **Request a token** on the Info tab.
+
+### How long it takes
+
+These are typical times. The form shows a live estimate in **Arrives in** before you send.
+
+| From → to | Time |
+|---|---|
+| Ethereum → Telos | about 17 min (Ethereum has to finalize the block) |
+| BNB Smart Chain or Polygon → Telos | under a minute |
+| WAX → Telos | about 1 min |
+| XPR Network → Telos | about 3 min |
+| Vaulta, Sui or NEAR → Telos | seconds |
+| Telos → WAX, XPR Network or Vaulta | about 2 min |
+| Telos → Ethereum, BNB Smart Chain or Polygon | about 1 min, then the delivery or your claim |
+
+Between two networks that are not Telos, add the two legs together. For example, Ethereum → WAX takes about 20 minutes.
+
+Small deposits from Ethereum arrive faster: up to the amount shown in **Fast deposits up to**, the bridge waits for a few confirmations instead of full finality.
+
+## The page
+
+The page has four tabs:
+
+* **Bridge**: the transfer form. While a transfer is in flight, it shows its progress.
+* **History**: your transfers. The badge counts the ones not finished yet.
+* **Activity**: every transfer on the bridge, on the analytics page.
+* **Info**: networks, routes and limits, how the bridge is verified, and token requests.
+
+## Making a transfer
+
+1. **From.** Click the token button and choose the network and token you send. Then enter the amount, or click **MAX** or your balance.
+2. **To.** Choose the network you receive on. The arrow between the fields swaps the direction.
+3. **Connect wallets.** Use the wallet button next to each field:
+   * **Telos** and the network you are on: the account you signed in with in the header.
+   * **WAX, XPR Network, Vaulta**: Alcor Signer, Anchor, WAX Cloud Wallet (on WAX) or WebAuth (on XPR Network).
+   * **Ethereum, BNB Smart Chain, Polygon**: any browser wallet, such as MetaMask or Rabby, or WalletConnect for a mobile wallet.
+   * **Sui**: Slush or any Sui wallet extension.
+   * **NEAR**: Meteor, HOT, Intear or MyNearWallet.
+4. **Recipient.** Tokens go to your connected wallet. To send them somewhere else, click **Send to a different address** (or **account**) and enter it. The form warns you if the account does not exist, or if the address is a contract and not a wallet.
+5. **Delivery** (only for Ethereum, BNB Smart Chain and Polygon as the destination). See [Delivery or claim](#delivery-or-claim).
+6. **Check the details.** These are **Arrives in**, **On arrival**, the fee and **You receive**.
+7. Click **Bridge to &lt;network&gt;** and confirm in your wallet.
+   * A USDT or USDC deposit from Ethereum, BNB Smart Chain or Polygon takes two signatures. The first approves exactly this amount. The second is the deposit.
+   * Gas on the sending network is paid from your wallet in ETH, BNB, POL, SUI or NEAR. Keep a little there.
+
+Once sent, the form turns into the transfer's progress. You can close the page; the transfer keeps going.
+
+### Delivery or claim
+
+A withdrawal to Ethereum, BNB Smart Chain or Polygon is paid out by a transaction on that network. You choose who sends it:
+
+* **Deliver it for me** (the default). A courier sends it and pays the gas. Its fee is shown next to the option and taken from the amount. You need no wallet and no ETH, BNB or POL on that network. You can send to any address, an exchange's too.
+* **I'll claim it myself.** Free, but later you press **Claim on &lt;network&gt;** and pay the gas from your wallet. You have a limited time to claim, shown in the form. After it passes, you can cancel the transfer and get a refund on Telos.
+
+Withdrawals to WAX, XPR Network and Vaulta are delivered automatically, with nothing to claim. Withdrawals to Sui and NEAR are claimed from your wallet with one transaction that costs a little SUI or NEAR.
+
+## Tracking a transfer
+
+The progress view shows:
+
+* the amount and both ends of the transfer;
+* a progress bar with the time left;
+* the steps: **Send**, **Confirm**, **Verify**, then **Arrive**, **Deliver** or **Claim**. Each finished step links to its transaction in a block explorer.
+
+When a step needs you, it is marked **your turn** and a button appears:
+
+* **Claim on &lt;network&gt;**: collect a withdrawal you chose to claim yourself. **Copy link — anyone can claim it** lets someone else pay the gas for you; the tokens still go to your address.
+* **Deliver on Telos**: a deposit is half an hour late. Anyone can push it through by paying the network fee.
+* **Cancel transfer**, then **Get refund on Telos**: the claim deadline passed, and this returns the tokens to your Telos balance.
+
+The **History** tab lists your transfers, with the tabs **All**, **In progress** and **Done** and a search by token, amount, account or transaction. History is kept by the bridge, not your browser, so it is the same on every device. Each transfer has its own link (`/v/<network>/bridge/history/<id>`), and anyone can open it without a wallet.
+
+## If something is wrong
+
+* **The button says why it cannot send.** For example: **Enter an amount**, **Not enough balance**, **At least &lt;amount&gt;**, **At most &lt;amount&gt; at once**, or **Connect your &lt;network&gt; wallet**. Next to a limit there is a **use &lt;amount&gt;** link that fixes it.
+* **No gas.** "Sending from &lt;network&gt; pays gas in &lt;coin&gt;, and this wallet holds none": add a little ETH, BNB, POL, SUI or NEAR to the sending wallet.
+* **A network can't pay out enough.** A network can only pay out tokens that people brought in from it. If it holds too little, the form shows how much it can pay now. Click **Use &lt;amount&gt;** or choose another network from the list.
+* **A route is paused or closed.** The button and a note under the form say so, and the Info tab marks the route **Paused for now**. Wait, or choose another network.
+* **A maintenance banner** (**Update needed**, **Key needed**). A network needs an update from Telos before withdrawals to it go through. Anyone can send the update; it costs only gas.
+* **Delayed.** A transfer half an hour late shows **Delayed**. Nothing is lost. Use the button on the transfer, or ask in [Telegram](/social-media-contact) with the transfer's link.
+
+## Links to the bridge
+
+A link can open the bridge with a transfer already filled in. For example, `/v/wax/bridge/usdc-ethereum-to-wax` opens USDC from Ethereum to WAX. For links with an amount and recipient, and for the widget, see the [Bridge API](/api/bridge).

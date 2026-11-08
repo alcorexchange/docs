@@ -4,6 +4,8 @@
     "swap",
     "spot",
     "otc",
+    "bridge",
+    "deposit-and-withdraw",
     "portfolio"
   ]
 }
