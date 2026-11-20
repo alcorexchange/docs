@@ -3,7 +3,7 @@ title: "Bridge"
 ---
 
 The Alcor bridge moves tokens between Ethereum, BNB Smart Chain, Polygon, Telos,
-WAX, XPR Network, Vaulta, Sui, NEAR and TON. Telos is the hub: every route runs
+WAX, XPR Network, Vaulta, Sui, NEAR, TON and Solana. Telos is the hub: every route runs
 between Telos and one other chain, and a transfer between two other chains
 passes through Telos on its own — the user signs once.
 
@@ -24,7 +24,7 @@ This page explains each way. The complete reference — every endpoint and field
 </Callout>
 
 Supported assets: USDC, USDT, ETH, BNB, POL, WAX, XPR, A (Vaulta), EASY, SUI,
-NEAR and GRAM (TON). Which pairs are open right now, with minimums and maximums,
+NEAR, GRAM (TON) and SOL. Which pairs are open right now, with minimums and maximums,
 is always [Routes](#bridge-api).
 
 ## Deposit addresses
@@ -35,6 +35,9 @@ the account you named on Telos, WAX, XPR Network or Vaulta. The user needs no
 wallet connection, no signature and no gas. The address is permanent and works
 again and again.
 
+No API key, no sign-up, no bridge fee. The API is open to any origin (CORS `*`),
+so a page can call it straight from the user's browser.
+
 ```text
 user sends USDC on BNB Smart Chain to their address
   → forwarded into the bridge (≈15 s)        ← the gas, out of the deposit, at most 1%
@@ -42,7 +45,13 @@ user sends USDC on BNB Smart Chain to their address
   → paid out on WAX to your account, with your memo (≈2 min)
 ```
 
-### Get an address
+The whole integration is three steps:
+
+1. **Get the user's addresses**: one request, the same answer every time.
+2. **Credit the user** when the payout reaches your account on chain. That transfer, with your memo, is the signal: there is no webhook to wait for.
+3. **Show progress** in your page, if you want to: what the bridge sees at the address, then the crossing, pushed as server-sent events.
+
+### 1. Get the addresses
 
 ```shell
 curl -X POST https://telos.alcor.exchange/api/bridge/v1/deposit-addresses \
@@ -54,55 +63,167 @@ curl -X POST https://telos.alcor.exchange/api/bridge/v1/deposit-addresses \
 | --- | --- |
 | chain | Where it is paid out: `telos`, `wax`, `xpr` or `vaulta` |
 | to | The account paid. It must exist |
-| memo | Optional. The memo every payout carries, so one account of yours tells its users apart. 1–64 characters of `A-Z a-z 0-9 . _ - :`. Another memo is another address |
+| memo | Optional. The memo every payout carries, so one account of yours tells its users apart: put your user's id here. 1–64 characters of `A-Z a-z 0-9 . _ - :`. Another memo is another address |
 
-The same request always answers the same address, so call it whenever you show
-one. The answer has:
+The answer, trimmed:
 
-* `address` — the user's address on **Ethereum, BNB Smart Chain and Polygon** (one address on all three);
-* `ton.address`, `near.address`, `sui.address` — their addresses on **TON, NEAR and Sui**. Show the NEAR one only while `near.ready` is true;
-* per network, the `tokens` it takes, each with `min` and `max` in the token's raw units. Show only these.
+```json
+{
+  "address": "0xb4b257e395f84f586479548d624302384d65ec58",
+  "destination": { "chain": "wax", "to": "yourproject" },
+  "chains": [
+    { "id": "bsc", "name": "BNB Smart Chain", "chainId": 56,
+      "tokens": [ { "symbol": "USDT", "token": "0x55d3…7955", "decimals": 18,
+                    "min": "5000000000000000000", "max": "15449853123000000000000",
+                    "least": "5050505050505050506" } ] }
+  ],
+  "ton":    { "address": "UQ…", "rawAddress": "0:…", "tokens": [ … ] },
+  "near":   { "address": "<40 hex>.dep.alcorexchange.near", "ready": true, "tokens": [ … ] },
+  "sui":    { "address": "0x<64 hex>", "tokens": [ … ] },
+  "solana": { "address": "<base58>", "tokens": [ … ] },
+  "feeCap": "1%"
+}
+```
 
-A new address costs a registration: 20 an hour from one client. If you register
-from your server for many users, ask us to raise it.
+* `address` — the user's address on **Ethereum, BNB Smart Chain and Polygon**: one address on all three, listed in `chains`.
+* `ton.address`, `near.address`, `sui.address`, `solana.address` — their addresses on **TON, NEAR, Sui and Solana**, each its own. Show the NEAR one only while `near.ready` is true.
+* `tokens`, per network: what the address takes. Show only these. Amounts are raw units of that token (divide by `10^decimals`). **`least` is the minimum to show**: what to send so that it is forwarded now, with room for the gas. It moves with gas prices; read it again when you show the address. `max` is null where there is no limit.
+
+**Call it whenever you show the address.** It answers the same addresses for the
+same request, so you do not have to store them, though you may.
+
+**Limit:** 20 new addresses an hour from one client, 2000 a day in all
+(`429 RATE_LIMITED`). An address asked for before always answers. Call it from
+the user's browser and each user has their own allowance. If you register from
+your server for many users, ask us to raise it for your server.
+
+`400 INVALID_REQUEST` means a deposit would only come back: no such account,
+a bad memo. Show the message.
 
 ### Show it to the user
 
 * The address, a copy button and a QR of the **plain** address (exchanges scan plain addresses).
 * The networks it works on, by name, and plainly: **sending on any other network (Arbitrum, Base, Tron…) may lose the money.**
-* Per network, the tokens and the minimum. Less waits at the address until more arrives.
-* "You can withdraw straight from an exchange to this address."
+* Per network, the tokens and `least` as the minimum. Less waits at the address until more arrives.
+* "You can withdraw straight from an exchange to this address." Bybit refuses to send to the Solana and NEAR addresses; KuCoin and Binance send.
+* On Solana, USDC and USDT go to the address's token account. Phantom and exchanges create it themselves.
+
+### 2. Credit the user
+
+The payout is an ordinary token transfer to your account. On your chain it is
+final, and it is the one thing to credit on.
+
+| Chain | The payout |
+| --- | --- |
+| WAX, XPR, Vaulta | A `transfer` from `bridge.alcor` with the memo exactly as you set it. Token contract: `wrap.alcor` for USDC, USDT, ETH, BNB, POL, SOL; the chain's own for its coin (`eosio.token`, `core.vaulta`) |
+| Telos | A `transfer` from `bridge.alcor` of a `wrap.alcor` token, memo `<your memo>\|<network>:<deposit address>`. Read your memo up to the first `\|` |
+
+Watch your account's incoming transfers the way you already do for direct
+deposits: a contract's `on_notify`, or your history reader. Find the user by
+the memo. The amount is what arrived, after the forward's gas.
+
+<Callout type="warn">
+
+If <code>to</code> is a contract: check that the transfer's first receiver is the token contract you expect and that it comes from <code>bridge.alcor</code>, since anyone can notify you of a fake token. And never fail our transfer: a refused payout goes back to the deposit address and waits there for support. Accept it and settle with your user your own way.
+
+</Callout>
+
+### 3. Show progress
+
+A deposit goes through two stages, and the API has a stream for each. Both are
+[server-sent events](https://developer.mozilla.org/docs/Web/API/Server-sent_events):
+the browser's `EventSource` reconnects by itself.
+
+| Stage | What the user sees | Stream | Poll instead |
+| --- | --- | --- | --- |
+| At the address, not forwarded yet | "Received, forwarding…" | `GET /v1/deposit-addresses/<address>/stream` | `GET /v1/deposit-addresses/<address>` |
+| In the bridge, from the forward to the payout | A stage, a progress bar, "arrived" | `GET /v1/stream?party=<address>` | `GET /v1/activity?party=<address>` |
+
+```javascript
+const API = 'https://telos.alcor.exchange/api/bridge/v1'
+
+// The user's addresses
+const a = await (await fetch(`${API}/deposit-addresses`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ chain: 'wax', to: 'yourproject', memo: 'user-42' }),
+})).json()
+const addresses = [a.address, a.ton?.address, a.near?.address, a.sui?.address, a.solana?.address].filter(Boolean)
+
+// Stage 1: money at the address, on any of its networks
+const atAddress = new EventSource(`${API}/deposit-addresses/${a.address}/stream`)
+atAddress.addEventListener('status', (e) => {
+  const { pending, held } = JSON.parse(e.data)
+  showWaiting(pending)            // [] when nothing waits
+  if (Object.keys(held).length) showContactSupport()
+})
+
+// Stage 2: the crossing, from the forward to the payout
+const parties = addresses.map((p) => `party=${encodeURIComponent(p)}`).join('&')
+const crossing = new EventSource(`${API}/stream?${parties}`)
+crossing.addEventListener('snapshot', (e) => setList(JSON.parse(e.data).transfers))   // replace the list
+crossing.addEventListener('transfer', (e) => {
+  const { change, transfer } = JSON.parse(e.data)
+  upsert(transfer)                // by transfer.key
+  if (change === 'delivered') notify(`${transfer.amount} ${transfer.asset.symbol} arrived`)
+})
+```
+
+**Stage 1: `status`.** Sent on opening and again each time the courier's view
+of the address changes. One stream covers all of the address's networks.
+
+* `pending` — what is at the address and not forwarded yet: `[{ chainId, symbol, token, raw, since, reason?, nextTry? }]`. `raw` is in the token's units on that network; `reason` is a sentence saying why it waits (under the minimum, a failed forward retried at `nextTry`); without it, the next pass forwards it.
+* `forwards` — the last 20 forwards into the bridge, newest first: `{ chainId, tokens: [{ token, raw, fee }], tx, at }`.
+* `held` — what came back and waits for support, keyed `<chainId>:<address>:<token>`. Show "returned, contact support", not an error.
+
+**Stage 2: `snapshot` and `transfer`.** `snapshot` is the list as it stands, on
+opening (the newest 50). `transfer` is one change: put it in your list by its
+`key`. `change` is one word:
+
+| change | |
+| --- | --- |
+| `new` | The bridge has just seen it |
+| `progress` | A confirmation, a stage, a transaction. Update the bar |
+| `delivered` | Paid out to your account |
+| `returned` | Not delivered, back at the deposit address |
+
+Each transfer has `stage` (a sentence to show as it is), `percent` (0–100),
+`etaAt` (the unix second it should be done, for a countdown), `sent` (what the
+user sent) and `amount` (what arrives, after the forward's gas). `party` takes up
+to 10 addresses, so the user's addresses on every network fit in one stream. A
+dropped connection loses nothing: the events since are sent again on reconnect.
+
+**One stream for all your users.** A backend can follow every deposit to your
+account at once: `GET /v1/stream?party=yourproject&role=recipient`. Each
+transfer's `from.address` is the deposit address it came through, so you know
+whose it is (a TON one is spelled `0x` and the 64 hex digits of `ton.rawAddress`).
+Use it for display and alerts; credit on the transfer on your chain. To poll
+instead: `GET /v1/events?party=yourproject&change=delivered&after=<last>`.
 
 ### What it costs
 
 There is no bridge fee. The only cost is the gas to forward the deposit into the
 bridge, taken out of the deposit and **never more than 1%** of it. The payout on
 Telos, WAX, XPR and Vaulta is on us. `GET /v1/fees` shows the current forward
-cost per network and token, and `forwardsFrom`, the least worth sending now —
-it matters on Ethereum, where gas is dear.
+cost per network and token. It matters on Ethereum, where gas is dear: that is
+why `least` is higher there.
 
-### How it arrives
+### When something goes wrong
 
-On WAX, XPR and Vaulta: a `transfer` from `bridge.alcor` with the memo exactly
-as you set it — `wrap.alcor` for USDC, USDT, ETH, BNB and POL, the chain's own
-token contract for its coin. On Telos the memo is `<your memo>|<network>:<deposit address>`;
-read it up to the first `|`.
+Nothing is ever sent back to the sender: an exchange would not credit it. What
+cannot be delivered waits at the deposit address for support, under `held`.
 
-<Callout type="warn">
+* **Less than `least`**: waits at the address until more arrives.
+* **More than `max`**: a token is forwarded in parts; a native coin goes whole and waits on Telos until the limit allows.
+* **A token the address does not take**: not forwarded; support can return it.
+* **Your contract refuses the payout**: back to the address, `held`.
 
-If <code>to</code> is a contract: check that the transfer's first receiver is the token contract you expect and that it comes from <code>bridge.alcor</code> — anyone can notify you of a fake token. And never fail our transfer: a refused payout goes back to the deposit address and waits there for support. Accept it and settle with your user your own way.
+### Full reference
 
-</Callout>
-
-### Follow it and handle problems
-
-* `GET /v1/deposit-addresses/<address>` shows what has arrived and is not forwarded yet (`pending`), the last forwards and anything that came back (`held`). Poll it every 10 s or so while you wait.
-* After the forward it is an ordinary transfer: [Transfer status](#transfer-status) with `party=<the deposit address>`.
-* Nothing is ever sent back to the sender — an exchange would not credit it. What cannot be delivered waits at the deposit address for support: a token the address does not take, a payout your contract refused.
-
-The full reference — every field, the address computed on your side to check
-the API's answer, addresses that swap into another token — is the *Deposit
-addresses* section of [/docs](https://telos.alcor.exchange/api/bridge/docs).
+Every field, the EVM address computed on your side to check the API's answer,
+and addresses that swap into another token are in the *Deposit addresses*
+section of [/docs](https://telos.alcor.exchange/api/bridge/docs). The streams
+are `GET /v1/stream` and `GET /v1/events` there.
 
 ## Deposit link
 
@@ -257,7 +378,7 @@ https://telos.alcor.exchange/api/bridge/v1/
 
 Read-only HTTP, no key, open to any origin (CORS `*`). Chains are named by id:
 `mainnet` (Ethereum), `bsc`, `polygon`, `telos`, `wax`, `xpr`, `vaulta`, `sui`,
-`near`, `ton`. Amounts are integers in the token's smallest unit: divide by
+`near`, `ton`, `solana`. Amounts are integers in the token's smallest unit: divide by
 `10^precision`. Every field of every answer is in
 [/docs](https://telos.alcor.exchange/api/bridge/docs).
 
@@ -320,7 +441,7 @@ How the bridge works:
 
 <Callout type="warn">
 
-Do not hardcode addresses in a bot. Read them from <code>GET /v1/chains</code> (<code>sources[].contracts</code>) and <code>GET /v1/routes</code> (<code>how</code>). They are listed below for orientation, as of 2026-11-12.
+Do not hardcode addresses in a bot. Read them from <code>GET /v1/chains</code> (<code>sources[].contracts</code>) and <code>GET /v1/routes</code> (<code>how</code>). They are listed below for orientation, as of 2026-11-21.
 
 </Callout>
 
@@ -340,6 +461,7 @@ Do not hardcode addresses in a bot. Read them from <code>GET /v1/chains</code> (
 | Sui | vault | `0x9ed73de17914b0c146f0699774e014c4b529b55a65fedc9f4a5a521152ec682a` | Package `0x959e269b63de523d759e6b0ea57a963207f7aab07cfc28d4623daf557f80655c` |
 | NEAR | vault | `alcor-bridge.near` |  |
 | TON | vault | `0:35f5af9bc4e525499c8930a24cdb7c5f2eea36c5bdc0a48846dd03d8509075c7` |  |
+| Solana | program | `3YktyyBix3XjnVGvrViuUGfhD5GCjMz48sRB3UxCf2RM` | Mints are base58 and case-sensitive |
 
 On an EVM chain the native coin is token `0x0000000000000000000000000000000000000000`.
 
@@ -356,6 +478,7 @@ On an EVM chain the native coin is token `0x000000000000000000000000000000000000
 | Sui | `3856007665771390095` |
 | NEAR | `14338890689662875897` |
 | TON | `1703391080095596199` |
+| Solana | `4983630567019438759` |
 
 The domain names the far chain in every memo and key: an EVM chain id, or for
 the others the first 8 bytes of the chain's id. It is a decimal string in the
@@ -533,6 +656,7 @@ Measured on recent transfers; the live figures are `timing` in `GET /v1/chains`.
 | XPR Network | about 3 min | | XPR Network | about 2 min |
 | Vaulta | seconds | | Vaulta | seconds |
 | Sui, NEAR, TON | seconds | | Sui, NEAR, TON | about 20 s |
+| Solana | about 30 s | | Solana | about 2 min |
 
 A transfer between two other chains adds the two: BNB Smart Chain → WAX is
 about 3 minutes. Poll every 10–15 seconds, or follow `GET /v1/stream`.
