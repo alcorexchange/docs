@@ -2,6 +2,7 @@
   "title": "Smart Contracts",
   "pages": [
     "order-book",
+    "account-factory",
     "amm-swap-contract-api",
     "contract-actions",
     "contract-tables",
