@@ -1,0 +1,157 @@
+---
+title: "WharfKit plugin"
+description: "Connect a dApp to Alcor Signer with WharfKit Session Kit: install, sign-in, transactions, what is refused, errors, pop-ups and local development."
+---
+
+Alcor Signer connects through [WharfKit Session Kit](https://wharfkit.com) as a wallet plugin,
+[`@alcorexchange/wallet-plugin-alcor-signer`](https://www.npmjs.com/package/@alcorexchange/wallet-plugin-alcor-signer).
+If your dApp already uses Session Kit with Anchor or another wallet, it is one more entry in `walletPlugins`.
+
+<Callout type="warn">
+
+Your site must be on the Signer's list first. Write to the Alcor team in Telegram,
+[t.me/alcorexchange](https://t.me/alcorexchange), with your exact origins. See [Get your site listed](/alcor-signer#get-your-site-listed).
+
+</Callout>
+
+## Install
+
+```bash
+npm install @wharfkit/session @wharfkit/web-renderer @alcorexchange/wallet-plugin-alcor-signer
+```
+
+Version 0.2.0 or later has [`proveAccount`](/alcor-signer/prove-account).
+
+## Set up Session Kit
+
+```ts
+import { SessionKit } from '@wharfkit/session'
+import { WebRenderer } from '@wharfkit/web-renderer'
+import { WalletPluginAlcorSigner } from '@alcorexchange/wallet-plugin-alcor-signer'
+
+const sessionKit = new SessionKit({
+  appName: 'yourapp',
+  chains: [
+    { id: '1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4', url: 'https://wax.greymass.com' },
+  ],
+  ui: new WebRenderer(),
+  walletPlugins: [new WalletPluginAlcorSigner()],
+})
+```
+
+The networks the Signer signs on:
+
+| Network | Chain id |
+| --- | --- |
+| Telos | `4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11` |
+| WAX | `1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4` |
+| XPR Network | `384da888112027f0321850a169f737c33e53b388aad48b5adace4bab97f437e0` |
+| Vaulta | `aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906` |
+
+The `url` is for Session Kit's own reads and the push. The Signer never uses it: it builds and checks with its own
+nodes, and only the network's name travels to it.
+
+## Sign in
+
+```ts
+const { session } = await sessionKit.login()
+session.actor       // 'alice'
+session.permission  // 'active'
+```
+
+The Signer window opens; the person unlocks with their passkey and picks one of their accounts on that network
+(one passkey can hold several). The plugin then looks up which permission of that account holds the passkey and
+prefers `active`. A person with no account on the network is told so in the window, and `login` fails.
+
+Session Kit restores the session after a reload as usual; the plugin keeps only the passkey's public key.
+
+## Send a transaction
+
+```ts
+await session.transact({
+  actions: [
+    {
+      account: 'eosio.token',
+      name: 'transfer',
+      authorization: [session.permissionLevel],
+      data: { from: session.actor, to: 'bob', quantity: '1.00000000 WAX', memo: 'thanks' },
+    },
+  ],
+})
+```
+
+What happens:
+
+1. The plugin sends **only the actions** to the Signer window.
+2. The Signer builds the transaction itself: reference block and expiration from its own nodes, the chain id from
+   its registry. It decodes the actions with ABIs it checked and shows them in plain words, with warnings.
+3. The person clicks **Confirm** (and touches the passkey, unless they turned on Fast sign for this account).
+4. The plugin gets back the Signer's transaction and its signatures, checks that the actions are byte for byte the
+   ones you sent, and hands it to Session Kit, which pushes it.
+
+Because the Signer sets the transaction header, Session Kit's **`allowModify` must stay on**. It is on by default.
+
+### Refused before the window opens
+
+| What | Error |
+| --- | --- |
+| Context-free actions | `Alcor Signer does not sign context-free actions` |
+| Transaction extensions | `Alcor Signer does not sign transaction extensions` |
+| `delay_sec` | `Alcor Signer does not sign delayed transactions` |
+| A network the Signer does not sign on | `Alcor Signer does not sign on chain <id>` |
+
+### Refused in the window
+
+Permission changes are never signed for an app: `eosio::updateauth`, `deleteauth`, `linkauth`, `unlinkauth`,
+`canceldelay`, `setcode`, `setabi`, every `eosio.msig` action, and an action whose contract or name is not a canonical Antelope
+name. The window says so and the request fails. Nothing your dApp can send changes this.
+
+### Signing modes
+
+Each account has a mode in the person's browser, and your dApp can neither read nor change it:
+
+- **Passkey**: every signature needs the passkey.
+- **Fast**: a browser key on the account signs with a button in the window, no Face ID.
+- **Auto** works only on Alcor's own trading app. On your site every transaction opens the window.
+
+## Errors
+
+| Error | Means | Do |
+| --- | --- | --- |
+| `SignerRejected` (class), e.g. `Rejected by the user`, `The Alcor Signer window was closed` | The person said no or closed the window | Nothing to report. Let them try again |
+| `Alcor Signer did not open in time, or does not accept requests from <origin>` | The window never answered: your origin is not listed, or the page did not load | Check the listing, then the network |
+| `The browser blocked the Alcor Signer window. Allow pop-ups for this site.` | No pop-up and no WharfKit UI to ask for a click | Call `login` / `transact` from a click handler |
+| `Alcor Signer did not answer. Try again.` | The window loaded but gave no answer in 3 minutes | Retry |
+| `Alcor Signer returned other actions than the app asked to sign` | The signed transaction is not yours | Do not push; report it |
+| `Sign in with Alcor Signer again` | The session lost the passkey's key | `login` again |
+| `<account> is not authorized by this passkey` | The account no longer holds this passkey | `login` again |
+
+`SignerRejected` is exported: `import { SignerRejected } from '@alcorexchange/wallet-plugin-alcor-signer'`.
+
+## Pop-ups
+
+Safari opens a window only right after a click, and Session Kit may reach nodes before it calls the plugin. When
+the browser holds the window back, the plugin shows a button in the WharfKit dialog that opens it. Start `login`,
+`transact` and `proveAccount` from a click, and pass Session Kit's `ui` where you can.
+
+## Local development
+
+Run the Signer locally and point the plugin at it:
+
+```ts
+import { SIGNER_ORIGINS, WalletPluginAlcorSigner } from '@alcorexchange/wallet-plugin-alcor-signer'
+
+new WalletPluginAlcorSigner({ signerOrigin: SIGNER_ORIGINS.development }) // https://sign.localhost:8443
+```
+
+The local Signer answers one partner origin, `https://localhost:4000`: serve your dApp there over https. It signs
+on the real networks, with real accounts.
+
+## Checklist
+
+- [ ] Your production and staging origins are listed (Telegram, [t.me/alcorexchange](https://t.me/alcorexchange)).
+- [ ] `allowModify` is on.
+- [ ] No context-free actions, extensions or `delay_sec`.
+- [ ] `login`, `transact` and `proveAccount` start from a click.
+- [ ] `SignerRejected` is handled as a cancel, not as a failure.
+- [ ] Your dApp pays its own CPU and NET.

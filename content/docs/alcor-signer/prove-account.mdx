@@ -1,0 +1,207 @@
+---
+title: "Prove an account (Sign-In with Antelope)"
+description: "Ask the person to prove they control an Antelope account: the message Alcor Signer signs, the request, and how to verify it on your server or in a contract."
+---
+
+Sometimes you need to know **who controls an account** without a transaction: sign-in to your backend, an
+allowlist, a role in a Discord, linking a game profile, a claim on another system. Alcor Signer does this with a
+signed message, Sign-In with Antelope: the person reads your statement in the Signer window and signs it with
+their passkey. You verify the signature on your server or in a contract.
+
+It follows the established practice of Ethereum (the fields of [EIP-4361 / Sign-In with
+Ethereum](https://eips.ethereum.org/EIPS/eip-4361), made chain-agnostic in
+[CAIP-122](https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-122.md), and a prefix in the spirit of
+[EIP-191](https://eips.ethereum.org/EIPS/eip-191)) in a profile of our own for Antelope: no Antelope standard exists
+yet.
+
+<Callout type="error">
+
+A proof says **who controls the account**. It is **not permission to move funds** or to act for them. Anything that
+moves money must be a transaction the person confirms in the Signer. A backend that accepts a signed message as
+authority to withdraw lets anyone who can make the person sign a text skip every transaction screen.
+
+</Callout>
+
+## The flow
+
+```text
+your server ── nonce ──▶ your page ── proveAccount ──▶ Signer window: the person reads and signs
+your server ◀── proof ── your page ◀── message, signature, fields ──┘
+     └─ verify: text, domain, nonce, expiry, key on the account now ─▶ burn the nonce
+```
+
+1. Your server issues a **nonce**, 16–64 letters and digits, and remembers it.
+2. Your page, after `sessionKit.login()`, calls `proveAccount`.
+3. The person sees your site's name, your statement, the account and the network, and signs with the passkey.
+4. Your page sends the proof to your server; the server [verifies](#verify-on-your-server) it and burns the nonce.
+
+## Ask for a proof
+
+```ts
+const proof = await session.walletPlugin.proveAccount({
+  chain: session.chain.id,
+  account: String(session.actor),
+  // permission: 'active',             // default: the network's working permission
+  statement: 'Sign in to yourapp',     // shown to the person; up to 300 characters, one line
+  nonce,                               // from your server
+  expiresAt: new Date(Date.now() + 10 * 60_000).toISOString().replace(/\.\d{3}Z$/, 'Z'),
+})
+
+await fetch('/api/verify-proof', { method: 'POST', body: JSON.stringify(proof) })
+```
+
+Needs plugin version 0.2.0 or later. Start it from a click: it opens a window (see [Pop-ups](/alcor-signer/wharfkit-plugin#pop-ups)).
+
+| Field | Rules |
+| --- | --- |
+| `chain` | The session's chain id. One proof is for one network |
+| `account` | The account to prove, a canonical Antelope name |
+| `permission` | Optional. The passkey must satisfy it **alone** (weight ≥ threshold), or the window refuses |
+| `statement` | 1–300 characters, one line, no control, bidi or zero-width characters |
+| `nonce` | 16–64 characters of `A-Z a-z 0-9` |
+| `expiresAt` | UTC to the second, `2026-01-31T12:10:00Z`, in the future and at most an hour after now |
+
+The window refuses a request that breaks a rule, and `proveAccount` fails with the reason (for example
+`The nonce must be 16–64 letters and digits.`). The person can also reject it: `SignerRejected`.
+
+### What comes back
+
+```json
+{
+  "message": "yourapp.com wants you to sign in with your Antelope account:\nalice@active\n\nSign in to yourapp\n\nURI: https://yourapp.com\nVersion: 1\nChain ID: 1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4\nNonce: 8f3a9c21e7b04d55\nIssued At: 2026-01-31T12:00:00Z\nExpiration Time: 2026-01-31T12:10:00Z",
+  "signature": "SIG_WA_…",
+  "fields": {
+    "domain": "yourapp.com",
+    "uri": "https://yourapp.com",
+    "account": "alice",
+    "permission": "active",
+    "statement": "Sign in to yourapp",
+    "chainId": "1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4",
+    "nonce": "8f3a9c21e7b04d55",
+    "issuedAt": "2026-01-31T12:00:00Z",
+    "expiresAt": "2026-01-31T12:10:00Z"
+  }
+}
+```
+
+`domain` and `uri` come from **your page's origin as the browser reports it**, `chainId` from the Signer's own
+registry, `issuedAt` from its clock. Your page cannot set them, so a proof made for another site never names yours.
+
+## The message
+
+```text
+{domain} wants you to sign in with your Antelope account:
+{account}@{permission}
+
+{statement}
+
+URI: {uri}
+Version: 1
+Chain ID: {chain id, 64 hex}
+Nonce: {nonce}
+Issued At: {UTC, seconds, Z}
+Expiration Time: {UTC, seconds, Z}
+```
+
+Lines are joined with `\n`, no newline at the end. The signature covers
+
+```text
+sha256( "\x19Antelope Signed Message:\n" + <byte length of the text in UTF-8, decimal> + <text> )
+```
+
+**Why the prefix.** An Antelope transaction is signed as `sha256(chain_id ‖ transaction ‖ context-free data hash)`.
+A wallet that signed whatever bytes an app sent could be made to sign a transaction disguised as a message. The
+prefix puts bytes no real chain id starts with at the front, so a proof can never be a transaction's signature. For
+the same reason the Signer never signs raw bytes or digests.
+
+**Why the chain id.** XPR Network and Vaulta use the same key derivation, so one key can sign on both, and `alice`
+on WAX and `alice` on Telos are different people. A proof is valid on the network it names only.
+
+**The signature.** A passkey signature is `SIG_WA_`: WebAuthn signs `sha256(authenticatorData ‖
+sha256(clientDataJSON))`, and the digest above is the `challenge` inside `clientDataJSON`. Antelope chains verify
+this natively; off chain you check the challenge first, then recover the P-256 key (`src/proof.ts` below does it).
+
+## Verify on your server
+
+Copy [`src/proof.ts`](https://github.com/alcorexchange/alcor-examples/blob/main/src/proof.ts) from alcor-examples
+(it needs `@wharfkit/antelope`). Nothing to deploy:
+
+```ts
+import { verifyProof } from './proof'
+
+app.post('/api/verify-proof', async (req, res) => {
+  const proof = req.body
+  const nonce = await nonces.take(proof.fields?.nonce)          // yours, unused, then gone
+  if (!nonce) return res.status(400).send('Unknown nonce')
+
+  try {
+    const who = await verifyProof(proof, { domain: 'yourapp.com', nonce })
+    // who: { network: 'wax', account: 'alice', permission: 'active', key: 'PUB_WA_…' }
+    req.session.account = `${who.account}@${who.network}`
+    res.send('ok')
+  } catch (err) {
+    res.status(401).send(err.message)
+  }
+})
+```
+
+`verifyProof` checks, in order:
+
+1. `message` is exactly the text `fields` build. Never trust a field that is not in the signed text.
+2. `domain` and `uri` are yours, and the nonce is the one you issued.
+3. The chain id is one of the four networks.
+4. It is not expired, not issued more than a minute in the future, and lives at most an hour.
+5. The signature recovers a key: K1 directly, a passkey after checking `type: webauthn.get`, the challenge, the
+   origin `https://sign.alcor.exchange` and the site hash.
+6. That key **alone** satisfies `account@permission` on chain now (`get_account`: weight ≥ threshold). A key taken
+   off the account stops proving it at once.
+
+Then **burn the nonce**: a proof is good once. For decisions where a lying node would cost you, read the account from
+two nodes and require the same answer (`<NETWORK>_RPC` sets the node `verifyProof` reads).
+
+To try it: `node examples/09-verify-proof.ts proof.json yourapp.com <nonce>` in alcor-examples.
+
+## Verify in a contract
+
+[`contract/msgproof.cpp`](https://github.com/alcorexchange/alcor-examples/blob/main/contract/msgproof.cpp) does the
+same check on chain, with `recover_key` (passkey signatures included: the chain checks the WebAuthn challenge
+itself) and `check_permission_authorization`. Deploy it on your account; Alcor does not run a shared instance.
+
+```bash
+cdt-cpp -abigen -o msgproof.wasm msgproof.cpp
+cleos -u <node> set contract <your account> . msgproof.wasm msgproof.abi -p <your account>@active
+cleos -u <node> push action <your account> init '["<chain id of this network>"]' -p <your account>@active
+```
+
+| Action | What it does |
+| --- | --- |
+| `init(chain_id)` | The network it runs on: contracts cannot read the chain id. Contract's own auth |
+| `verify(message, sig) → public_key` | Read-only. Checks the proof and returns the key that signed it. Call it with `send_read_only_transaction`: no signature, no resources |
+| `consume(payer, message, sig)` | `verify`, then records `(domain, nonce)` for the account until it expires, so the same proof passes once. `payer` pays the RAM |
+
+`message` is the `fields` object with snake-case times and no `Z`:
+
+```json
+{
+  "message": {
+    "account": "alice", "permission": "active",
+    "domain": "yourapp.com", "uri": "https://yourapp.com",
+    "statement": "Sign in to yourapp", "nonce": "8f3a9c21e7b04d55",
+    "issued_at": "2026-01-31T12:00:00", "expires_at": "2026-01-31T12:10:00"
+  },
+  "sig": "SIG_WA_…"
+}
+```
+
+The contract does not know your site: compare `domain` with yours in the caller, or in your own contract before
+you call into it. Its errors name the reason: `the signing key does not satisfy alice@active`, `proof has expired`,
+`this proof was already used`, `Wrong webauthn challenge` (the passkey signed other bytes).
+
+## Rules, once more
+
+- The window shows your statement in full and signs only on a click with the passkey. Fast sign and Auto sign
+  never sign a proof.
+- One proof is one account on one network. Ask again for another network.
+- Issue a fresh nonce for every proof and burn it after. Keep proofs short-lived: minutes, not the full hour.
+- Write the statement for the person, in plain words: what they confirm and for whom.
+- A proof is not a permission to move funds. A transaction is.

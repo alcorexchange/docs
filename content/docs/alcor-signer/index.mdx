@@ -1,0 +1,73 @@
+---
+title: "Alcor Signer"
+description: "A passkey wallet for Telos, WAX, XPR Network and Vaulta on its own origin: what it is, what a dApp gets, how a site gets listed, and where the integration guides are."
+---
+
+[Alcor Signer](https://sign.alcor.exchange) is a wallet in the browser. The key is a **passkey** on the person's
+device (Face ID, Touch ID, Windows Hello, an Android fingerprint or a security key), so there is no extension to
+install, no app and no seed phrase to type in. It works on **Telos, WAX, XPR Network and Vaulta** (formerly EOS) with
+one passkey for all four.
+
+It lives on its own site, `sign.alcor.exchange`, apart from any app that uses it. An app opens the Signer in a
+window, the person sees what they are signing there and confirms with a click and their passkey. The app never
+holds the key, and code injected into the app cannot sign with it: the browser only hands the passkey to the site
+it was made for, and the chain checks that site inside every signature.
+
+<Cards>
+  <Card title="WharfKit plugin" href="/alcor-signer/wharfkit-plugin" description="Connect your dApp: sign-in, transactions, errors, local development." />
+  <Card title="Prove an account" href="/alcor-signer/prove-account" description="Sign-In with Antelope: the person signs a message, you verify it on your server or in a contract." />
+  <Card title="For AI agents" href="/alcor-signer/for-agents" description="What to use for which request, and the rules that keep the person's account safe." />
+</Cards>
+
+## What a dApp gets
+
+| | |
+| --- | --- |
+| **Sign in** | The person picks one of their accounts in the Signer window. You get the account and its permission. |
+| **Sign transactions** | You send actions; the Signer builds the transaction from its own nodes, shows it in plain words, and returns it signed. Every transaction opens the window and takes a click. |
+| **Prove an account** | The person signs a message with your statement (Sign-In with Antelope). Verify it on your server or in a contract to know who controls the account. |
+| **Networks** | Telos, WAX, XPR Network, Vaulta. |
+
+What a dApp does **not** get, by design:
+
+- **No signing of raw bytes or digests.** A signed digest can be a transaction. Use [proofs](/alcor-signer/prove-account) instead.
+- **No permission changes.** `updateauth`, `deleteauth`, `linkauth`, `unlinkauth`, `canceldelay`, `setcode`, `setabi`
+  and every `eosio.msig` action are refused for any app. The person changes their keys inside the Signer only.
+- **No Auto sign and no iframe.** Signing without a window is for Alcor's own trading app. A partner's site is
+  never framed and always gets the window.
+- **No resources.** Your dApp pays its own CPU and NET.
+
+## Get your site listed
+
+The Signer answers only the sites on its list. Requests from any other origin are ignored, and the plugin reports
+that the window *did not open in time, or does not accept requests from* your site.
+
+To get listed, **write to the Alcor team in Telegram, [t.me/alcorexchange](https://t.me/alcorexchange)**, with:
+
+- your exact origins: production and staging, with `https://` and the port if it is not 443
+  (`https://app.example.com`, `https://staging.example.com:8443`);
+- the networks you use and a line on what the dApp does.
+
+A local Signer for development answers `https://localhost:4000` without listing: see
+[local development](/alcor-signer/wharfkit-plugin#local-development).
+
+## How it protects the person
+
+- **What you see is what you sign.** The app sends only actions. The Signer builds the transaction (chain id,
+  reference block, expiration) and draws the screen from the transaction it signs, not from the request.
+- **Fixed networks.** An app only names a network. Nodes and chain ids are built into the Signer; a node that
+  reports another chain id is a refusal.
+- **Checked contracts.** ABIs are pinned by hash; one that does not match must be confirmed by a second node, and
+  the screen warns.
+- **Readable screens.** Swaps, orders, transfers, bridge moves and staking are shown in plain words; a missing
+  minimum, a foreign recipient or an unknown memo is shown in red or yellow, never hidden.
+- **Clicks only.** No hotkeys, no autofocus on the sign button, and the button ignores clicks right after the window
+  gets focus.
+- **Recovery.** The passkey derives 24 words (BIP-39) that bring the accounts back if the passkey is lost.
+
+## Links
+
+- [Alcor Signer](https://sign.alcor.exchange) and its [llms.txt](https://sign.alcor.exchange/llms.txt)
+- [WharfKit plugin on npm](https://www.npmjs.com/package/@alcorexchange/wallet-plugin-alcor-signer) and its [source](https://github.com/alcorexchange/wallet-plugin-alcor-signer)
+- [alcor-examples](https://github.com/alcorexchange/alcor-examples): proof verification on a backend and in a contract
+- [Alcor in Telegram](https://t.me/alcorexchange): listing, questions
