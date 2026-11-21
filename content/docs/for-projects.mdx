@@ -1,0 +1,46 @@
+---
+title: "Start here: building with Alcor"
+description: "For projects and their AI agents: what you can build on Alcor, which page and example to start from for each, and how to reach the team."
+---
+
+You are building a project on Telos, WAX, XPR Network or Vaulta, or bringing users there from other chains.
+Find what you need below, open its guide, and start from the runnable example. Hand this page and
+[alcor-examples](https://github.com/alcorexchange/alcor-examples) to your AI agent: its
+[AGENTS.md](https://github.com/alcorexchange/alcor-examples/blob/main/AGENTS.md) has the rules that keep your
+users' money safe.
+
+## What do you want to do?
+
+| You want | Use | Read | Example |
+| --- | --- | --- | --- |
+| Accept crypto payments: invoices, top-ups, a checkout in USDT or USDC | Deposit addresses: one per order or per user, paid out to your account with your memo | [Payments and processing](/api/bridge#payments-and-processing) | [`08-invoice.ts`](https://github.com/alcorexchange/alcor-examples/blob/main/examples/08-invoice.ts), [`contract/payments.cpp`](https://github.com/alcorexchange/alcor-examples/blob/main/contract/payments.cpp) |
+| Let users deposit from Ethereum, BSC, Polygon, TON, NEAR, Sui, Solana or an exchange | Deposit addresses | [Deposit addresses](/api/bridge#deposit-addresses) | [`01-deposit-address.ts`](https://github.com/alcorexchange/alcor-examples/blob/main/examples/01-deposit-address.ts), [`05-credit-users.ts`](https://github.com/alcorexchange/alcor-examples/blob/main/examples/05-credit-users.ts) |
+| Sign up a user who has no wallet | An address whose first deposit creates `<nick>.ac` on Telos | [Account through a deposit address](/developers-api/account-factory#with-a-deposit-address) | [`03-create-account.ts`](https://github.com/alcorexchange/alcor-examples/blob/main/examples/03-create-account.ts) |
+| Create accounts from one transfer on Telos, WAX or XPR | The account factory | [Account factory](/developers-api/account-factory) | |
+| Check in your contract that something happened on another chain | The bridge's light clients | [Light clients](/developers-api/light-clients) | [`07-light-clients.ts`](https://github.com/alcorexchange/alcor-examples/blob/main/examples/07-light-clients.ts) |
+| Give users a wallet with no extension: Face ID, Touch ID, a security key | Alcor Signer through WharfKit | [Alcor Signer](/alcor-signer), [WharfKit plugin](/alcor-signer/wharfkit-plugin) | |
+| Know who controls an account: sign-in to your backend, allowlists, linking profiles | Sign-In with Antelope | [Prove an account](/alcor-signer/prove-account) | [`09-verify-proof.ts`](https://github.com/alcorexchange/alcor-examples/blob/main/examples/09-verify-proof.ts), [`contract/msgproof.cpp`](https://github.com/alcorexchange/alcor-examples/blob/main/contract/msgproof.cpp) |
+| Put a swap on your site | The swap widget | [Swap Widget](/swap-widget) | |
+| Trade or make markets from code | The order book `book.alcor` | [Order book](/developers-api/order-book), [SDK](/developers-api/order-book/sdk), [Market making](/developers-api/order-book/market-making) | |
+| Prices, pools, markets, account history, live streams | The public API | [API Reference](/api) | |
+| Free CPU for transactions with Alcor contracts on WAX | The CPU payer | [CPU Payer](/api/cpu-payer) | |
+
+## For AI agents
+
+- Start from [alcor-examples](https://github.com/alcorexchange/alcor-examples): small runnable scripts, one per task,
+  and [AGENTS.md](https://github.com/alcorexchange/alcor-examples/blob/main/AGENTS.md) with the rules.
+- The whole site as text for a model: [llms.txt](/llms.txt) (an index) and [llms-full.txt](/llms-full.txt)
+  (every page).
+- Wallet and sign-in: [Alcor Signer for AI agents](/alcor-signer/for-agents).
+- The bridge API describes itself: [reference](https://telos.alcor.exchange/api/bridge/docs),
+  [signing on every chain](https://telos.alcor.exchange/api/bridge/docs/bot),
+  [OpenAPI](https://telos.alcor.exchange/api/bridge/openapi.yaml). Prefer them over memory.
+- Never move money without the user's explicit yes, for that amount, address and network.
+
+## Talk to us
+
+Write to the Alcor team in Telegram, [t.me/alcorexchange](https://t.me/alcorexchange):
+
+- to get your site listed for [Alcor Signer](/alcor-signer#get-your-site-listed) (send your exact origins);
+- to raise the limit of 20 new deposit addresses an hour for your server;
+- with anything this page does not answer. To add your token's logo and price, see [List your token](/adding-token-information).
