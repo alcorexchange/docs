@@ -16,6 +16,7 @@ There are five ways to bring it into your project:
 | **[Deposit widget](#deposit-widget)** | The bridge opens over your own page | A script tag |
 | **[Bridge API](#bridge-api)** | You show routes, limits and transfer status yourself | HTTP reads |
 | **[Bridge contracts](#bridge-contracts)** | A bot, wallet or exchange signs the transactions itself | Contract calls |
+| **[Light clients](/developers-api/light-clients)** | Your own contract checks what happened on another chain: a message, a lock, a vote | Table reads and merkle proofs |
 
 <Callout type="info">
 
@@ -217,6 +218,13 @@ cannot be delivered waits at the deposit address for support, under `held`.
 * **More than `max`**: a token is forwarded in parts; a native coin goes whole and waits on Telos until the limit allows.
 * **A token the address does not take**: not forwarded; support can return it.
 * **Your contract refuses the payout**: back to the address, `held`.
+
+### Addresses that do more
+
+* **Create an account.** An address whose first deposit creates `<nick>.ac` on Telos for a user with no wallet:
+  `{ "chain": "telos", "to": "ac", "leg": "<factory memo>" }`. See [Account factory](/developers-api/account-factory#with-a-deposit-address).
+* **Swap on the way.** An address that takes one token and delivers another ("send POL on Polygon, get BNB on
+  BSC"), in beta: *An address that swaps* in [/docs](https://telos.alcor.exchange/api/bridge/docs).
 
 ### Full reference
 

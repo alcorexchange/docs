@@ -1,0 +1,216 @@
+---
+title: "Light clients"
+description: "Check in your own contract that something happened on another chain: the Alcor bridge's light clients, what they store, how to prove an action or a log against them, how long it stays provable and whom you trust."
+---
+
+The Alcor bridge is built on on-chain light clients, and they know nothing about tokens. Each one does one
+thing: it checks that a block of another chain is final, by that chain's own validators' signatures, and
+writes the block's roots to a table. Any contract may read those tables, and anyone may add a block.
+
+So your contract can act on what happened on another chain (a message, a lock, a vote, a payment) without
+trusting a relayer to report it truthfully. It takes two checks:
+
+1. **The block is final.** The light client did this: the block's row is in its table.
+2. **Your event is in that block.** Your contract does this: a merkle proof from the event up to a root in that row.
+
+```text
+your event ──merkle proof──▶ root in the row ◀── light client: final, signed by the chain's validators
+```
+
+<Callout type="info">
+
+The light clients and their tables are open today. What we do not serve yet is the proofs for your own events:
+the bridge API builds proofs only for bridge transfers. You build the inclusion proof from the source chain's
+data (below, per chain). If you need proofs served for your events, write to us.
+
+</Callout>
+
+## Where they are
+
+### Other chains, checked on Telos
+
+Each is a Telos account. Its table is scoped to itself (`code` = `scope` = the account).
+
+| Chain | Account | Table, key | Root in the row | What you prove against it |
+| --- | --- | --- | --- | --- |
+| Ethereum | `eth.lc.alcor` | `headers`, first 8 bytes of `block_hash` (index `bynumber`) | `receipts_root`, `state_root` | A log, by a receipt proof (Merkle Patricia), or storage, by a state proof |
+| BNB Smart Chain | `bsc.lc.alcor` | `headers`, as Ethereum | `receipts_root` | A log |
+| Polygon | `pol.lc.alcor` | `headers`, as Ethereum | `receipts_root`, `state_root` | A log, or storage |
+| WAX | `wax.lc.alcor` | `blocks`, `block_num` | `action_mroot` | An action, by the block's action merkle tree |
+| XPR Network | `xpr.lc.alcor` | `blocks`, `block_num` | `action_mroot` | An action |
+| Vaulta | `vlt.lc.alcor` | `blocks`, `block_num` | `finality_mroot` (Savanna) | An action, through its block's finality leaf ([as on EVM](#telos-roots-on-an-evm-chain)) |
+| NEAR | `nearlc.alcor` | `heads`, `height` | `block_merkle_root` | A block, then an outcome in it |
+| Sui | `sui.lc.alcor` | `checkpoints`, `sequence` | `content_digest` | A transaction's effects and events in the checkpoint |
+| TON | `ton.lc.alcor` | `heads`, `seq_no` | `root_hash` (masterchain block) | A shard block, then a transaction in it |
+
+A row as it is on chain now:
+
+```json
+{
+  "version": 3,
+  "block_hash": "feb6606f9ec32b0cb75310f9bc72061ad6480bafbcf383519e1c0cbfb1b25cd8",
+  "block_number": 26266255,
+  "receipts_root": "3228fda9af996ed5d09df98a86e63a0bf326da864a29af1b548b3b3cdf220fc8",
+  "slot": 15505508,
+  "finalized": 0,
+  "depth": 12,
+  "signers": 505,
+  "payer": "bscrelayer11",
+  "at": "2026-10-25T01:02:20.500",
+  "state_root": "e750fe8abebde0d21663cbaaa70cfd2e40a6708a1f40808bb4a50924907b4e5b"
+}
+```
+
+```bash
+curl -s https://telos.greymass.com/v1/chain/get_table_rows \
+  -d '{"code":"wax.lc.alcor","scope":"wax.lc.alcor","table":"blocks","json":true,"limit":1,"reverse":true}'
+```
+
+### Telos, checked on other chains
+
+| Chain | Where | How to ask | Root |
+| --- | --- | --- | --- |
+| Ethereum | `TelosLightClient` `0xd6716330ce88b83b4d35b516e5b0abc2536c5651` | `trustedRoots(bytes32) returns (bool)` | Telos `finality_mroot` |
+| BNB Smart Chain | `TelosLightClient` `0x9ffbd7e850aca88141591fc2528c6091e162ce0a` | `trustedRoots(bytes32)` | the same |
+| Polygon | `TelosLightClient` `0x19282e8768062c090f1bf01c6f2c6e5d36fa7d54` | `trustedRoots(bytes32)` | the same |
+| WAX, XPR Network | `tls.lc.alcor` | table `blocks`, key `block_num` | `finality_mroot` |
+| Vaulta | `tls.lc.alcor` | table `blocks`, key `block_num` | `finality_mroot` |
+
+On Sui, NEAR and TON the Telos light client lives inside the bridge vault and is not meant for other contracts
+yet. Solana has no light client: deposits come in by Wormhole guardian messages and withdrawals are signed by
+NEAR chain signatures.
+
+These addresses are also in `GET https://telos.alcor.exchange/api/bridge/v1/chains`, as `lightClient` of each
+chain. Read them from there if you build for the long run.
+
+## Other chains' events, on Telos
+
+An Antelope contract cannot call another contract and get an answer back, but it can read any contract's table.
+So the pattern is one transaction with two actions:
+
+1. `<light client>::proveroot` (or `prove`, `addhead`, `provecp`), with **you as the payer**: it writes the row.
+2. Your contract's action: it reads the row, checks it, and checks your event against its root.
+
+If the block is already in the table, skip the first action. But read below why you should not rely on a row
+someone else paid for.
+
+Copy the row layout into your contract exactly as it is, and check `version`: we only ever append fields, and a
+reader that sees a version it does not know must refuse the row.
+
+```cpp
+// Ethereum, from eth.lc.alcor. BSC's and Polygon's rows start the same way; see their tables' ABI.
+struct [[eosio::table("headers")]] eth_header_row {
+   uint8_t            version;        // 3 today
+   eosio::checksum256 block_hash;
+   uint64_t           block_number;
+   eosio::checksum256 receipts_root;
+   uint64_t           slot;
+   bool               finalized;      // false: signed, not yet finalized (see below)
+   uint32_t           depth;          // blocks proved on top of it, for a row not finalized
+   uint32_t           signers;
+   eosio::name        payer;
+   eosio::time_point  at;
+   eosio::checksum256 state_root;
+   uint64_t primary_key() const;      // first 8 bytes of block_hash, big-endian
+};
+
+eth_header_row read_eth_block(const eosio::checksum256& block_hash) {
+   eosio::multi_index<"headers"_n, eth_header_row> t("eth.lc.alcor"_n, "eth.lc.alcor"_n.value);
+   auto it = t.find(key_of(block_hash));
+   eosio::check(it != t.end(), "block not proved");
+   eosio::check(it->block_hash == block_hash, "a different block under this key");
+   eosio::check(it->version == 3, "unknown row version");
+   eosio::check(it->finalized, "block not finalized yet");
+   return *it;
+}
+```
+
+```cpp
+// WAX and XPR, from wax.lc.alcor / xpr.lc.alcor.
+struct [[eosio::table("blocks")]] wax_block_row {
+   uint8_t            version;        // 1 today
+   uint64_t           block_num;
+   eosio::checksum256 id;
+   eosio::checksum256 action_mroot;
+   uint32_t           signers;
+   eosio::name        payer;
+   uint64_t primary_key() const { return block_num; }
+};
+```
+
+What to prove, per chain:
+
+* **Ethereum, BSC, Polygon: a log.** The proof is the receipt's path in the block's receipts trie
+  (`eth_getBlockReceipts` gives every receipt; build the trie and take the path to your receipt's index). Fold it
+  to `receipts_root`, decode the receipt, and check the log's emitter, topics and data yourself.
+* **WAX, XPR: an action.** The action receipt digests of a block are the leaves of a merkle tree whose root is
+  `action_mroot`. Compute your action's digest from its fields in your contract (never accept a digest as input:
+  that is what binds the content), fold the path up to `action_mroot`.
+* **On Ethereum, refuse a row with `finalized` false**, unless you accept the risk. Such a row has the sync
+  committee's signature on a block that the chain has not finalized yet, and `depth` blocks on top of it. The
+  bridge's fast path accepts such rows under its own limits; your contract decides for itself.
+
+## Telos roots, on an EVM chain
+
+```solidity
+interface ITelosLightClient {
+    function trustedRoots(bytes32 finalityMroot) external view returns (bool);
+}
+```
+
+A Telos `finality_mroot` commits to **every block** since Telos moved to Savanna, so an action proves against any
+root at or after its block, however old. Three steps, the way the bridge's own withdrawal contract does it:
+
+1. **The action is in its block.** Compute the action receipt digest from the action's fields, fold its path to
+   the block's `action_mroot`:
+
+   ```text
+   act_digest = sha256( sha256(pack(account, name, authorization)) || sha256(pack(data) || pack(return_value)) )
+   leaf       = sha256( receiver || recv_sequence || account || name || act_digest || witness )
+   ```
+
+   Names are `uint64` little-endian, `data` and `return_value` with their varuint32 lengths. `witness` is the rest
+   of the receipt, as the node gives it.
+2. **The block is in the finality tree.** Its finality leaf:
+
+   ```text
+   sha256( le32(major_version) || le32(minor_version) || le32(block_num)
+        || le32(timestamp) || le32(parent_timestamp) || finality_digest || action_mroot )
+   ```
+
+   Timestamps are in half-second slots, not unix seconds. Fold its path to a `finality_mroot`.
+3. **The root is trusted.** `trustedRoots(finality_mroot)` is true.
+
+The paths come from Telos itself: action receipts from a node's state history or traces, the finality tree from
+every block's finality leaf. Any root newer than your block will do. Roots are written when someone needs one:
+bridge withdrawals write them, and anyone can with `submitRoot` (a Telos block's finality inputs and its
+finalizers' signature; the contract checks the signature against the finalizer policy it holds).
+
+## How long it stays provable
+
+| Direction | Limit |
+| --- | --- |
+| Telos → Ethereum, BSC, Polygon | None. A newer root proves any older block. Roots on EVM are never pruned |
+| Telos → WAX, XPR, Vaulta | None, the same way. Rows are erased 30 days behind the newest, and a newer one proves older blocks |
+| Vaulta → Telos | None: Vaulta runs Savanna too |
+| Ethereum → Telos | Prove within **30 days**: `proveroot` refuses a committee signature older than that, and the walk from a fresh header back to an old block is not built yet |
+| BSC, Polygon → Telos | Recent blocks: provable while their validator set or Heimdall state is still served |
+| WAX, XPR → Telos | While the producer schedule that signed the block is current: a schedule change ends it |
+| NEAR, Sui, TON → Telos | Recent blocks: while the epoch's set is still in the light client |
+
+**Rows are a cache, not an archive.** Whoever paid for a row may prune it, and the bridge's relayer prunes its
+own rows once the bridge is done with them, often within minutes. So prove the block yourself, as the payer, in
+the same transaction that uses it. Your rows are yours to prune, and the RAM comes back to you.
+
+## Whom you trust
+
+* **The source chain's validators**, the way each light client counts them: Ethereum's sync committee (2/3 of
+  512), BSC's validators, Polygon's Heimdall milestones, WAX and XPR producers (2/3 + 1, over two rounds), NEAR's
+  block producers, Sui's committee, TON's validators, Telos and Vaulta finalizers.
+* **The keys that run the bridge.** The owner of each light client can bootstrap it again, reset it or change its
+  threshold, and the policy admin of each `TelosLightClient` can install a finalizer policy. Bridge users trust
+  the same keys. If your contract holds more than you want to leave to them, watch those accounts' admin actions
+  (`setschedule`, `setdomain`, `bootstrap`, `reset`, `setfloor`, `setPolicy`) and pause yourself on one.
+* **Not the relayer.** It only carries signatures and proofs: a wrong one fails the check.
+
+The source of the light clients is not public yet. Ask us for it if you are building on them.

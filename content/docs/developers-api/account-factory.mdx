@@ -137,6 +137,46 @@ The whole deposit memo must fit 256 bytes. When the text memo does not, use the 
 
 If the factory refuses a bridged deposit, it is bounced back to the sender's chain about an hour later.
 
+### With a deposit address
+
+The simplest sign-up for a user with no wallet: your app makes the keys, the user picks a name, and you show
+them an address. The first deposit to it, on any network the answer lists and straight from an exchange too,
+creates `<nick>.ac` on Telos and puts the rest on it. The user needs no gas and signs nothing. Telos only, for now.
+
+```shell
+curl -X POST https://telos.alcor.exchange/api/bridge/v1/deposit-addresses \
+  -H 'content-type: application/json' \
+  -d '{ "chain": "telos", "to": "ac", "leg": "vasya.ac:PUB_K1_6MRy…:PUB_WA_4d4B…" }'
+```
+
+* `leg` is the factory memo, text or 108 digits, exactly as in [Create an account](#create-an-account). It is
+  hashed into the address as sent: no spaces, no trimming. The digits form is shorter and gets an address on
+  more networks.
+* The answer is that of an ordinary [deposit address](/api/bridge#deposit-addresses), plus `account`, the name it
+  creates. `tokens` lists only what the factory takes, and `least` already includes the factory fee.
+* `400 NAME_TAKEN`: the name is someone else's, ask for another. `400 INVALID_REQUEST`: the factory would refuse
+  the memo. Show the message.
+* The address stays the account's. Later deposits to it reach the account whole.
+
+`GET /v1/deposit-addresses/<address>` adds `accountState`: `free` (not created yet), `created` (created, with
+these keys) or `taken` (someone else registered the name before the deposit arrived). In that last case the
+deposit comes back to the address and waits under `held`, with `code: "NAME_TAKEN"`. Let the user choose another
+name:
+
+```shell
+curl -X POST https://telos.alcor.exchange/api/bridge/v1/deposit-addresses/<address>/rename \
+  -H 'content-type: application/json' -d '{ "account": "petya.ac" }'
+```
+
+The money goes on to the new name about two days later. Show the new name's own address for further deposits.
+
+<Callout type="warn">
+
+The keys are the account. Generate them on the user's device, keep the private keys there, and send only the
+public keys. Anyone who has seen a private key owns the account.
+
+</Callout>
+
 ## Refusals
 
 Every check fails the whole transfer: the tokens never leave the sender.
@@ -163,3 +203,4 @@ Every check fails the whole transfer: the tokens never leave the sender.
 3. Read the fee for the token you will send from `fees`.
 4. Build the memo: text form, or digits-only if the sender allows only digits.
 5. Send at least the fee. After the transaction, `get_account <name>` shows the new account with your keys.
+6. No wallet to send from? Ask for a [deposit address](#with-a-deposit-address) instead of steps 3–5, and show it.

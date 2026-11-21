@@ -3,6 +3,7 @@
   "pages": [
     "order-book",
     "account-factory",
+    "light-clients",
     "amm-swap-contract-api",
     "contract-actions",
     "contract-tables",
