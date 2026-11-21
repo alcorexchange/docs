@@ -11,7 +11,7 @@ There are five ways to bring it into your project:
 
 | Way | Best when | Your code |
 | --- | --- | --- |
-| **[Deposit addresses](#deposit-addresses)** | Your users fund an account from other chains, often straight from an exchange | One API call per user |
+| **[Deposit addresses](#deposit-addresses)** | Your users fund an account or [pay you](#payments-and-processing) from other chains, often straight from an exchange | One API call per user or order |
 | **[Deposit link](#deposit-link)** | You send users to the Alcor bridge page with the transfer filled in | None |
 | **[Deposit widget](#deposit-widget)** | The bridge opens over your own page | A script tag |
 | **[Bridge API](#bridge-api)** | You show routes, limits and transfer status yourself | HTTP reads |
@@ -218,6 +218,34 @@ cannot be delivered waits at the deposit address for support, under `held`.
 * **More than `max`**: a token is forwarded in parts; a native coin goes whole and waits on Telos until the limit allows.
 * **A token the address does not take**: not forwarded; support can return it.
 * **Your contract refuses the payout**: back to the address, `held`.
+
+### Payments and processing
+
+Deposit addresses are a crypto payment processor with nothing to run: no keys on the addresses, nothing to
+sweep, no fee but the forward's gas.
+
+* **Top-ups:** one address per user, `memo` = the user's id. The address is permanent: the user pays into it
+  again and again.
+* **Invoices:** one address per order, `memo` = the order id. Show it at checkout with the price; the order is
+  paid when payouts with that memo add up to it. What arrives is a little less than what was sent (the
+  forward's gas): decide how close counts as paid.
+* **Your contract** as `to`: the payout is a `transfer` from `bridge.alcor`, so the contract sees it in
+  `on_notify` and credits the order by the memo.
+
+```cpp
+[[eosio::on_notify("*::transfer")]]
+void on_transfer(name from, name to, asset quantity, std::string memo) {
+   if (to != get_self() || from != "bridge.alcor"_n) return;        // not a payout: ignore, never fail
+   if (get_first_receiver() != "wrap.alcor"_n) return;               // a fake token with the same symbol
+   if (quantity.symbol != symbol("USDC", 6) && quantity.symbol != symbol("USDT", 6)) return;
+   const std::string order = memo.substr(0, memo.find('|'));        // Telos appends |<network>:<address>
+   credit(order, quantity);
+}
+```
+
+Limits to plan for: each network's `least` and `max`, 20 new addresses an hour from one client (ask us to raise
+it for your server), and a memo of 1–64 characters. A swapping address takes no memo. The whole flow, with a
+compiled contract and an invoice script: [alcor-examples](https://github.com/alcorexchange/alcor-examples).
 
 ### Addresses that do more
 
