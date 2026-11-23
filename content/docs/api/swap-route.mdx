@@ -1,0 +1,180 @@
+---
+title: "Swap route"
+description: "The best route to swap one token for another, ready to sign: through the AMM pools, or the AMM and the order books together."
+---
+
+The route service finds the best way to swap one token for another and answers with the transfers to send, so a
+swap needs no pool math on the client. It runs on each chain's host and stays as it is: it is not part of the
+[deprecated API](/api/legacy). For new integrations use [Swap route v3](#swap-route-v3).
+
+## Swap route
+
+The best way to swap one token for another through the AMM pools, ready to be sent as transfers to `swap.alcor`.
+
+`GET https://wax.alcor.exchange/api/v2/swapRouter/getRoute`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| trade_type | string | yes | `EXACT_INPUT`: `amount` is what you send. `EXACT_OUTPUT`: `amount` is what you receive |
+| input | string | yes | Token id you send |
+| output | string | yes | Token id you receive |
+| amount | string | yes | Amount in token units, e.g. `1.5`. No more decimals than the token has |
+| slippage | number | no | Tolerance in percent. Default `0.3` |
+| receiver | string | no | Account written into the memos. Default is the literal `<receiver>`, to replace before signing |
+| maxHops | number | no | Most pools per route. Default and maximum `3` |
+| v2 | any | no | Any non-empty value splits the trade across up to 5 routes. Without it, one route |
+| includePoolDetails | boolean | no | `true` adds `pools`: fee and tokens of every pool used |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v2/swapRouter/getRoute?trade_type=EXACT_INPUT&input=wax-eosio.token&output=tlm-alien.worlds&amount=10&slippage=0.3&receiver=alcordexfund&maxHops=2"
+```
+
+```json
+{
+  "route": [12501, 12406],
+  "memo": "swapexactin#12501,12406#alcordexfund#39.7961 TLM@alien.worlds#0",
+  "swaps": [
+    {
+      "input": "10.00000000 WAX",
+      "route": [12501, 12406],
+      "output": "39.9155 TLM",
+      "percent": 100,
+      "memo": "swapexactin#12501,12406#alcordexfund#39.7961 TLM@alien.worlds#0",
+      "maxSent": "10.00000000",
+      "minReceived": "39.7961"
+    }
+  ],
+  "input": "10.00000000",
+  "output": "39.9155",
+  "minReceived": "39.7961",
+  "maxSent": "10.00000000",
+  "priceImpact": "0.31",
+  "executionPrice": { "numerator": "399155", "denominator": "1000000000" }
+}
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| swaps | array | One transfer per split, see below |
+| input | string | Total amount sent |
+| output | string | Total amount expected |
+| minReceived | string | Exact input: the least the trade may return, after slippage |
+| maxSent | string | Exact output: the most the trade may take, after slippage |
+| priceImpact | string | Percent below the pools' spot prices |
+| executionPrice | object | Raw output per raw input, as a fraction |
+| route, memo | array, string | Pools and memo of the first swap only. Kept for old clients; use `swaps` |
+| pools | object | Only with `includePoolDetails=true`: pool id to `fee`, `tokenA`, `tokenB` |
+
+**Each swap**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| input | string | Asset to transfer |
+| output | string | Asset this swap is expected to return |
+| percent | number | Share of the trade |
+| route | array | Pool ids the swap goes through |
+| memo | string | Memo for the transfer |
+| minReceived, maxSent | string | This swap's bounds |
+
+To swap, put one `transfer` of the input token per element of `swaps` into a single transaction: `to: "swap.alcor"`,
+`quantity: swap.input`, `memo: swap.memo` with `<receiver>` replaced by the user's account.
+
+Errors are plain text: HTTP 403 with `Invalid request`, `Invalid amount`, `Invalid slippage` or `Invalid input/output`,
+and HTTP 404 with `No trading route available. Try again in a few moments.`
+
+## Swap route v3
+
+Routes through the AMM pools and the spot order books together. Answers with the transfers to send and, given the
+user's account, the actions ready to sign. Use it for new integrations.
+
+`GET https://wax.alcor.exchange/api/v3/swapRouter/getRoute`
+
+**Parameters**
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| tradeType | string | yes | `exactIn`: `amount` is what you send. `exactOut`: `amount` is what you receive (AMM only) |
+| input | string | yes | Token id you send |
+| output | string | yes | Token id you receive |
+| amount | string | yes | Amount in token units, e.g. `1.5` |
+| slippage | number | no | Tolerance in percent. Default `0.3` |
+| account | string | no | The user's account: receiver of every swap and signer of `actions`. Without it the memos carry `<account>` and there are no `actions` |
+| permission | string | no | Permission for `actions`. Default `active` |
+| maxHops | number | no | Pools per AMM route, `1` to `3`. Default `3` |
+| orderbook | boolean | no | `false` keeps the trade on the AMM. Default `true` |
+
+**Example**
+
+```shell
+curl "https://wax.alcor.exchange/api/v3/swapRouter/getRoute?tradeType=exactIn&input=wax-eosio.token&output=tlm-alien.worlds&amount=10&slippage=0.3&account=alcordexfund"
+```
+
+```json
+{
+  "tradeType": "exactIn",
+  "input": { "id": "wax-eosio.token", "symbol": "WAX", "contract": "eosio.token", "decimals": 8, "amount": "10.00000000" },
+  "output": { "id": "tlm-alien.worlds", "symbol": "TLM", "contract": "alien.worlds", "decimals": 4, "amount": "39.9242" },
+  "minReceived": "39.8047",
+  "maxSent": "10.00000000",
+  "priceImpact": "0.3",
+  "routes": [
+    {
+      "percent": 61,
+      "input": "6.10000000",
+      "output": "24.3483",
+      "hops": [
+        { "venue": "amm", "pool": 12501, "input": "wax-eosio.token", "output": "usdt-wrap.alcor", "fee": "0.01" },
+        { "venue": "amm", "pool": 12406, "input": "usdt-wrap.alcor", "output": "tlm-alien.worlds", "fee": "0.3" }
+      ]
+    }
+  ],
+  "transfers": [
+    {
+      "tokenContract": "eosio.token",
+      "to": "swap.alcor",
+      "quantity": "6.10000000 WAX",
+      "memo": "swapexactin#12501,12406#alcordexfund#24.2754 TLM@alien.worlds#0"
+    }
+  ],
+  "actions": [
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "authorization": [{ "actor": "alcordexfund", "permission": "active" }],
+      "data": {
+        "from": "alcordexfund",
+        "to": "swap.alcor",
+        "quantity": "6.10000000 WAX",
+        "memo": "swapexactin#12501,12406#alcordexfund#24.2754 TLM@alien.worlds#0"
+      }
+    }
+  ]
+}
+```
+
+**Response fields**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| tradeType | string | As requested |
+| input, output | object | Token metadata and the total `amount` sent or expected |
+| minReceived | string | Exact input: the least the trade may return |
+| maxSent | string | Exact output: the most the trade may take |
+| priceImpact | string | Percent below the venues' spot prices |
+| routes | array | Paths the input takes: `percent`, `input`, `output` and `hops`. Each hop has `venue` (`amm` or `orderbook`), `pool` or `market`, `input` and `output` token ids, `fee` in percent |
+| transfers | array | What to send, in order: `tokenContract`, `to`, `quantity`, `memo` |
+| actions | array | Only with `account`: the transfers as actions, ready to sign |
+
+Sign `actions` as they are, in order, in one transaction. An AMM leg is a transfer to `swap.alcor`. An order book leg is
+a transfer to the DEX contract with the memo `<minimum> SYM@contract|min`: a market order that reverts the whole
+transaction if it pays less than the minimum.
+
+Errors are JSON, `{"error": "<message>"}`: HTTP 400 for a bad parameter (`Invalid tradeType`, `Unknown token`,
+`Invalid amount`, `Invalid slippage`, `Invalid maxHops`, `Invalid orderbook`, `Input and output are the same token`),
+HTTP 404 for `No route`.

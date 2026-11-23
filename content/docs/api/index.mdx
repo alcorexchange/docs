@@ -1,55 +1,134 @@
 ---
 title: "API Reference"
-description: "Public read-only HTTP and WebSocket API of Alcor Exchange."
+description: "Alcor's public read-only API: tokens, prices, AMM pools, positions, order book markets, charts, analytics and live events on every chain, from one host."
 ---
 
-The Alcor API serves market data for the spot order book DEX and the AMM: tokens, prices, tickers, order books,
-trades, candles, pools, positions and account history, over HTTP and WebSocket. It is read-only and needs no key.
-Placing orders and swapping are blockchain transactions, signed by the user and sent to a node (see
-[Trade API](/api/trade-api) and [Swap route](/api/swap#swap-route)).
+The Alcor API serves the data of the AMM and the order books on every chain Alcor runs: tokens and their USD
+prices, pools with their live state, liquidity positions, markets, candles, analytics, farms, staking, OTC and
+account history, plus a stream of live events. It is read-only and needs no key. Swapping and placing orders are
+blockchain transactions, signed by the user and sent to a node (see [Swap route](/api/swap-route) and
+[Trade API](/api/trade-api)).
 
-## Chains and base URLs
+<Cards>
+  <Card title="Reference (Swagger)" href="https://api.alcor.exchange/docs" description="Every endpoint, parameter and response field, generated from the API's own schemas. Try requests in the browser." />
+  <Card title="OpenAPI document" href="https://api.alcor.exchange/docs/json" description="OpenAPI 3.1 JSON, for client generators and AI agents." />
+</Cards>
 
-Each chain has its own host. The chain of a request is taken from the host name.
+## Base URL
 
-| Chain | Base URL |
-| --- | --- |
-| WAX | `https://wax.alcor.exchange/api/` |
-| EOS | `https://eos.alcor.exchange/api/` |
-| Telos | `https://telos.alcor.exchange/api/` |
-| XPR Network | `https://proton.alcor.exchange/api/` |
+One host for every chain. The chain is the first segment of the path:
 
-All examples use WAX; change the host for another chain. `https://alcor.exchange/api/...` redirects to WAX, so call
-the chain's host directly. An unknown chain name answers HTTP 404.
+```
+https://api.alcor.exchange/<chain>/...
+```
+
+| Chain | `<chain>` | Example |
+| --- | --- | --- |
+| WAX | `wax` | `https://api.alcor.exchange/wax/pools` |
+| Vaulta (EOS) | `eos` | `https://api.alcor.exchange/eos/pools` |
+| Telos | `telos` | `https://api.alcor.exchange/telos/pools` |
+| XPR Network | `xpr` | `https://api.alcor.exchange/xpr/pools` |
+
+`GET https://api.alcor.exchange/chains` lists the chains. XPR is `xpr` here, not `proton` as in the
+[legacy API](/api/legacy).
+
+```bash
+curl https://api.alcor.exchange/wax/tokens/tlm-alien.worlds/price
+```
+
+```json
+{
+  "chain": "wax",
+  "tokenId": "tlm-alien.worlds",
+  "price_usd": 0.000938,
+  "source": "derived",
+  "via_pool": 0,
+  "updated_at": "2026-11-23T15:36:53.677Z"
+}
+```
 
 ## Conventions
 
-* **Token id**: `<symbol>-<contract>` in lower case, e.g. `tlm-alien.worlds`. Any contract can issue any symbol, so the
-  contract is part of the id.
-* **Ticker id**: two token ids, base first, `<base>_<target>`, e.g. `tlm-alien.worlds_wax-eosio.token`.
-* **Time**: units differ between endpoints (unix seconds, unix milliseconds or ISO 8601 strings). Each endpoint states
-  its own.
-* **Errors**: most v2 endpoints answer errors as plain text with an HTTP status; v3 endpoints answer
-  `{"error": "<message>"}`.
-* **Rate limits**: requests are rate-limited per IP address. Over the limit, the API answers HTTP 429.
+* **Token id**: `<symbol>-<contract>` with the symbol in lower case, e.g. `tlm-alien.worlds`. Any contract can issue
+  any symbol, so the contract is part of the id.
+* **Amounts**: fields named `*_raw` or `*_amount` are integers in the token's smallest units, as strings: divide by
+  `10^decimals`. Amounts in a position's `state` are the exception: they are already decimal.
+* **Big integers**: int64 values (block numbers, counters) are strings.
+* **Time**: responses carry ISO 8601 UTC strings. The `from`, `to` and `before` query parameters take unix
+  milliseconds.
+* **Paging**: lists take `limit` with `page`, `offset` or a cursor (`before`, `cursor`), as each endpoint states.
+* **Errors**: `{"error": "<message>"}` in JSON. HTTP 400 for an invalid parameter, with the details in `issues`;
+  HTTP 404 when the thing does not exist.
+* **Rate limits**: requests are limited per IP address; over the limit the API answers HTTP 429. For a higher limit
+  for a bot or an integration, write to the [Alcor Telegram](/social-media-contact).
 
-## Sections
+## What it covers
 
-<Cards>
-  <Card title="Tokens" href="/api/tokens" description="Token prices, scores and logos." />
-  <Card title="Market Data" href="/api/market-data" description="Spot tickers, order books, trades and candles; the AMM ticker feed." />
-  <Card title="Swap" href="/api/swap" description="AMM pools, positions, swaps, candles and swap routes." />
-  <Card title="Order book" href="/api/order-book" description="The book.alcor indexer: markets, depth, trades, candles, accounts and a WebSocket stream." />
-  <Card title="Market API" href="/api/market-api" description="Per-block prices, depth, pools and order books for bots, with a WebSocket stream." />
-  <Card title="Global Data" href="/api/global-data" description="Exchange-wide TVL, volume and fees." />
-  <Card title="Analytics (v3)" href="/api/analytics" description="Paged token, pool and spot market lists with TVL, volume and scores." />
-  <Card title="Account" href="/api/account" description="An account's trades, positions and swap history." />
-  <Card title="WebSocket" href="/api/websocket" description="Live trades, order books, candles and account events over Socket.IO." />
-  <Card title="On-chain Data" href="/api/onchain-data" description="Reading markets and orders from the DEX contract tables." />
-  <Card title="Trade API" href="/api/trade-api" description="Placing and cancelling spot orders with contract actions." />
-  <Card title="CPU Payer" href="/api/cpu-payer" description="Free CPU for transactions with Alcor contracts on WAX." />
-  <Card title="Bridge" href="/api/bridge" description="Deposit link, widget, status API and contracts of the Alcor bridge." />
-</Cards>
+| Area | Endpoints |
+| --- | --- |
+| Tokens | `/<chain>/tokens`, `tokens/<id>`, `tokens/<id>/price`, `tokens/<id>/holders`, `tokens/<id>/logo` |
+| AMM pools | `/<chain>/pools`, `pools/<id>`, `pools/<id>/stats`, `pools/<id>/trades`, `pools/<id>/positions`, `pools/<id>/liquidity`, `pools/<id>/activity` |
+| Positions | `/<chain>/positions/<id>`, `positions/<id>/events` |
+| Accounts | `/<chain>/accounts/<account>/positions`, `activity`, `balances`, `transfers`, `farms`, `staking/events`, `staking/withdraws` |
+| Order book markets | `/<chain>/markets`, `markets/<id>` |
+| Candles | `/<chain>/charts/amm/<poolId>`, `charts/pair?base=&quote=`, `charts/orderbook/<marketId>` |
+| Analytics | `/<chain>/analytics/overview`, `charts`, `tokens`, `pools`, `markets`, `lp-leaderboard` |
+| Farms | `/<chain>/farms`, `farms/<id>`, `farms/<id>/events` |
+| Staking (liquid.alcor) | `/<chain>/staking/system`, `staking/withdraws` |
+| OTC | `/<chain>/otc/orders`, `otc/orders/<id>`, `otc/history`, `otc/tokens` |
+| Meme terminal | `/<chain>/launchpad/tokens`, `launchpad/token/<id>/summary`, `trades`, `holders` |
+| Search | `/<chain>/search?q=` |
+| Live events | `/<chain>/events?channels=` |
+
+Parameters and response fields of each are in the [reference](https://api.alcor.exchange/docs).
+
+## Live events
+
+`GET /<chain>/events?channels=<channel>,<channel>` is a stream of
+[Server-Sent Events](https://developer.mozilla.org/docs/Web/API/Server-sent_events): one connection, any number of
+channels. A browser reads it with `EventSource`; no client library is needed.
+
+| Channel | Events |
+| --- | --- |
+| `pool:<poolId>` | Swaps, position and farm actions on the pool, its new state |
+| `pools:all` | `pool.updated` of every pool, at most once per pool per block |
+| `account:<name>` | The account's swaps, transfers, balance changes, position, farm and staking actions |
+| `token:<tokenId>` | Transfers, balance changes and USD price changes of the token |
+| `tokens:all` | `tokens.prices`: the prices that changed in each pricing pass |
+| `position:<positionId>` | Actions on the position |
+| `incentive:<incentiveId>` | Farm actions on the incentive |
+| `book:<marketId>` | Fills on the order book market and the price levels that changed |
+| `launchpad:all` | The meme terminal's cards that changed |
+| `staking:all` | Every liquid.alcor staking action |
+
+```javascript
+const events = new EventSource('https://api.alcor.exchange/wax/events?channels=pool:1252,tokens:all')
+
+events.addEventListener('swap', e => console.log('swap', JSON.parse(e.data)))
+events.addEventListener('tokens.prices', e => console.log('prices', JSON.parse(e.data).prices))
+```
+
+Each message is `event: <type>` and `data: <JSON>`; the schema of every event type is under components in the
+[reference](https://api.alcor.exchange/docs).
+
+## Other services
+
+These run beside the API on their own and are current:
+
+| Service | Page |
+| --- | --- |
+| Best route for a swap, ready to sign | [Swap route](/api/swap-route) |
+| Prices, depth, pools and order books for bots, every block | [Market API](/api/market-api) |
+| The `book.alcor` order book | [Order book](/api/order-book) |
+| Free CPU for Alcor transactions on WAX | [CPU Payer](/api/cpu-payer) |
+| The Alcor bridge | [Bridge](/api/bridge) |
+| Placing and cancelling spot orders | [Trade API](/api/trade-api), [On-chain Data](/api/onchain-data) |
+
+## Legacy API
+
+The old API on each chain's host (`https://wax.alcor.exchange/api/...`, versions v1, v2 and v3) is deprecated. It
+still answers, but gets no new features and will be switched off. [Legacy API](/api/legacy) lists what replaces
+each old endpoint.
 
 ## Contracts
 

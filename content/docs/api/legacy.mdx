@@ -1,0 +1,101 @@
+---
+title: "Legacy API (deprecated)"
+description: "The old Alcor API on each chain's host, v1, v2 and v3: deprecated, and what replaces each endpoint in the current API."
+---
+
+<Callout type="warn">
+
+The API on each chain's host, `https://<chain>.alcor.exchange/api/...` (v1 `/api/...`, `/api/v2/...` and
+`/api/v3/...`), is deprecated. It still answers in its old format, but gets no new features and will be switched off.
+New integrations use the [current API](/api) at `https://api.alcor.exchange/<chain>/...`; existing ones should move to
+it.
+
+</Callout>
+
+Not deprecated, although they live on the same hosts: [Swap route](/api/swap-route),
+[Market API](/api/market-api) (`/api/v3/market/...`), the [Order book](/api/order-book) of `book.alcor`
+(`/api/v2/orderbook/...`), [CPU Payer](/api/cpu-payer) (`/api/v2/cpu/...`) and the [Bridge](/api/bridge).
+
+## Hosts
+
+Each chain has its own host, and the chain of a request is taken from the host name.
+
+| Chain | Base URL |
+| --- | --- |
+| WAX | `https://wax.alcor.exchange/api/` |
+| EOS | `https://eos.alcor.exchange/api/` |
+| Telos | `https://telos.alcor.exchange/api/` |
+| XPR Network | `https://proton.alcor.exchange/api/` |
+
+`https://alcor.exchange/api/...` redirects to WAX. Errors of most v2 endpoints are plain text with an HTTP status; v3
+endpoints answer `{"error": "<message>"}`. An endpoint that has been switched off answers HTTP 410 with
+`{"error": "gone"}`.
+
+## What replaces what
+
+Paths on the right are under `https://api.alcor.exchange/<chain>`; parameters and fields are in the
+[reference](https://api.alcor.exchange/docs). The current API keeps its own field names and units (see
+[Conventions](/api#conventions)), so a client changes its parsing too, not only the URL.
+
+| Legacy endpoint | Current API |
+| --- | --- |
+| `/api/v2/tokens` | `/tokens` |
+| `/api/v2/tokens/<id>`, `/api/v2/tokens/<id>/score` | `/tokens/<id>` (`price_usd`, `score`), `/tokens/<id>/price` |
+| `/api/v2/tokens/<id>/logo` | `/tokens/<id>/logo` |
+| `/api/v2/swap/pools`, `/api/v2/swap/pools/<id>` | `/pools`, `/pools/<id>`, `/pools/<id>/stats` |
+| `/api/v2/swap/pools/<id>/positions` | `/pools/<id>/positions` |
+| `/api/v2/swap/pools/<id>/swaps` | `/pools/<id>/trades` |
+| `/api/v2/swap/pools/<id>/ticks`, `liquidityChartSeries` | `/pools/<id>/liquidity` |
+| `/api/v2/swap/pools/<id>/candles` | `/charts/amm/<poolId>` |
+| `/api/v2/swap/candles`, `/api/v2/swap/charts` | `/charts/pair?base=<id>&quote=<id>` |
+| `/api/v2/account/<a>/positions`, `positions-stats`, `/api/v2/swap/pools/positions/<id>` | `/accounts/<a>/positions`, `/positions/<id>`, `/positions/<id>/events` |
+| `/api/v2/account/<a>/swap-history` | `/accounts/<a>/activity?kinds=swap` |
+| `/api/v2/account/<a>/farms`, `/api/v2/farms/incentives`, `/api/v3/analytics/farms` | `/accounts/<a>/farms`, `/farms`, `/farms/<id>` |
+| `/api/v2/analytics/global`, `/api/v3/analytics/overview` | `/analytics/overview` |
+| `/api/v2/analytics/charts`, `/api/v3/analytics/global/charts` | `/analytics/charts` |
+| `/api/v3/analytics/tokens`, `tokens/<id>` | `/analytics/tokens`, `/analytics/tokens/<id>` |
+| `/api/v3/analytics/tokens/<id>/holders` | `/tokens/<id>/holders` |
+| `/api/v3/analytics/pools`, `pools/<id>`, `pools/<id>/candles` | `/analytics/pools`, `/analytics/pools/<id>`, `/charts/amm/<poolId>` |
+| `/api/v3/analytics/spot-pairs`, `spot-pairs/<id>/candles` | `/analytics/markets`, `/charts/orderbook/<marketId>` |
+| `/api/v3/analytics/lp-leaderboard/<a>` | `/analytics/lp-leaderboard`, `/analytics/lp-leaderboard/<a>` |
+| `/api/v3/launchpad/*` | `/launchpad/tokens`, `/launchpad/token/<id>/summary`, `trades`, `holders` |
+| `/api/markets`, `/api/markets/<id>` | `/markets`, `/markets/<id>` |
+| `/api/markets/<id>/charts`, `/api/v2/tickers/<id>/charts` | `/charts/orderbook/<marketId>` |
+| `/api/v2/otc/*` | `/otc/orders`, `/otc/orders/<id>`, `/otc/history`, `/otc/tokens` |
+| [WebSocket](/api/websocket) (Socket.IO) | `/events?channels=...` ([Live events](/api#live-events)) |
+
+## Not in the current API yet
+
+Keep using these legacy endpoints until the current API has them:
+
+| Legacy endpoint | What it gives |
+| --- | --- |
+| `/api/v2/tickers`, `/api/v2/tickers/<id>`, `/api/v2/pairs` | Spot tickers with 24-hour figures, in the CoinGecko shape |
+| `/api/v2/tickers/<id>/orderbook`, `/api/markets/<id>/orderbook` | A snapshot of an order book market's depth |
+| `/api/v2/tickers/<id>/historical_trades`, `/api/markets/<id>/deals` | Trade history of an order book market |
+| `/api/v2/account/<a>/deals`, `/api/account/<a>/deals` | An account's spot trades |
+| `/api/v2/amm/pairs`, `/api/v2/amm/tickers`, `/api/v2/amm/historical_trades` | The AMM feed for aggregators |
+| `/api/v3/feed/gecko/<chain>/*` | The GeckoTerminal adapter |
+
+Live fills and level changes of an order book market are in the current API already, as the `book:<marketId>`
+channel of [Live events](/api#live-events).
+
+## Switched off
+
+These answer HTTP 410:
+
+* `/api/v3/feed/*` and `/api/v3/feed/cmc/*`, the [Market Feed](/api/feed) of every chain in one feed (the
+  GeckoTerminal adapter under `/api/v3/feed/gecko/` still answers);
+* the endpoints that wrote: the scam list admin and IPFS upload;
+* a few endpoints the old interface used and nothing calls any more.
+
+## Pages of the legacy API
+
+* [Tokens](/api/tokens)
+* [Market Data](/api/market-data)
+* [Swap](/api/swap)
+* [Global Data](/api/global-data)
+* [Analytics (v3)](/api/analytics)
+* [Account](/api/account)
+* [WebSocket](/api/websocket)
+* [Market Feed](/api/feed)

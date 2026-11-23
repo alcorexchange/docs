@@ -1,19 +1,22 @@
 {
   "title": "API Reference",
   "pages": [
+    "swap-route",
+    "market-api",
+    "order-book",
+    "cpu-payer",
+    "bridge",
+    "trade-api",
+    "onchain-data",
+    "---Legacy API (deprecated)---",
+    "legacy",
     "tokens",
     "market-data",
     "swap",
-    "order-book",
-    "market-api",
-    "feed",
     "global-data",
     "analytics",
     "account",
     "websocket",
-    "onchain-data",
-    "trade-api",
-    "cpu-payer",
-    "bridge"
+    "feed"
   ]
 }

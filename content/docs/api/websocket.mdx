@@ -3,6 +3,12 @@ title: "WebSocket"
 description: "Live trades, order books, candles and account events over Socket.IO."
 ---
 
+<Callout type="warn">
+
+**Deprecated.** This page is part of the [legacy API](/api/legacy), which will be switched off. Use the live events of the current API instead: one [Server-Sent Events](/api#live-events) stream, `/<chain>/events?channels=...`, with no Socket.IO client.
+
+</Callout>
+
 Live updates are served over [Socket.IO](https://socket.io/) (version 4 client). Connect once, then join rooms with
 `subscribe` and leave them with `unsubscribe`. Every room takes the chain in its `params`: `wax`, `eos`, `telos` or
 `proton`.

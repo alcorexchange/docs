@@ -3,6 +3,12 @@ title: "Market Data"
 description: "Spot markets and AMM pairs: tickers, order books, trades and candles."
 ---
 
+<Callout type="warn">
+
+**Deprecated.** This page is part of the [legacy API](/api/legacy), which will be switched off. Pairs and their candles are in the current API ([`/<chain>/markets`, `/<chain>/charts/...`](https://api.alcor.exchange/docs#/markets)). Order book snapshots, trade history, tickers and the AMM feed are not in it yet: until they are, the endpoints on this page are the ones to use.
+
+</Callout>
+
 Alcor has two venues: **spot** order book markets and **AMM** pools. Both are described with the same ticker format.
 
 A token id is `<symbol>-<contract>` in lower case, because any contract can issue a token with any symbol. A ticker id
