@@ -1,9 +1,11 @@
 ---
 title: "OTC"
-description: "Peer-to-peer trades at a fixed price"
+description: "Peer-to-peer trades at a fixed price, with no fee"
 ---
 
 OTC (over-the-counter, `/v/<network>/otc`) lets you offer an amount of one token for a fixed amount of another. There is no slippage: whoever fills the order gets exactly the amounts in it. Orders are held by Alcor's OTC contract on the selected network.
+
+OTC has **no fee**: the maker receives exactly the amount the order asks for and the buyer exactly the amount it offers. With no fee and no slippage, it is the way to trade a large amount at a known price. Stablecoins and coins from other chains — USDT, USDC, ETH, and on some networks SOL, BNB or POL — come in through the [Alcor Bridge](/main-page-overview/bridge) and can be traded here.
 
 ## Tabs
 
@@ -17,7 +19,7 @@ Click **Create**, enter what **You sell** and what **You receive**, and confirm 
 
 ## Filling or cancelling an order
 
-Open an order to see its price and amounts. **Buy** sends the requested tokens and you receive the offered ones in the same transaction. The maker can **Cancel Order** at any time to get the tokens back.
+Open an order to see its price and amounts. **Buy** sends the requested tokens and you receive the offered ones in the same transaction. An order is filled whole; if you send more than it asks, the extra comes back to you in the same transaction. The maker can **Cancel Order** at any time to get the tokens back.
 
 <Callout type="warn">
 Anyone can create an OTC order with any token. Check the token contract before buying; orders that involve a known scam token are marked with a warning.
