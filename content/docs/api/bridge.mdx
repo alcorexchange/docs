@@ -93,6 +93,11 @@ The answer, trimmed:
 **Call it whenever you show the address.** It answers the same addresses for the
 same request, so you do not have to store them, though you may.
 
+**Keep the request, not just the address.** The address is a hash of `chain`,
+`to` and `memo`: it cannot be turned back into them. With the three you can always
+call again, get the same address, and anything sent to it is forwarded. Store
+them for every address you hand out.
+
 **Limit:** 20 new addresses an hour from one client, 2000 a day in all
 (`429 RATE_LIMITED`). An address asked for before always answers. Call it from
 the user's browser and each user has their own allowance. If you register from
